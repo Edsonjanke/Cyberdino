@@ -50,3 +50,9 @@ net jog-x-neg  <=  ams32.status.01
 # Z invertido: botao "Z+" (M202) gera jog-z-neg; "Z-" (M203) gera jog-z-pos
 net jog-z-pos  <=  ams32.status.03
 net jog-z-neg  <=  ams32.status.02
+
+# Alarme servos X/Z (HLTNC T3D) -> M207 (ladder bloco 7) -> E-stop
+# Ladder AMS32 agrega X7 OR /X10 OR /X11 em M207 (= ams32.status.07).
+# Reset: pressionar reset fisico (GPIO.022) apos servos ficarem OK.
+net servo-fault <= ams32.status.07
+net servo-fault => halui.estop.activate

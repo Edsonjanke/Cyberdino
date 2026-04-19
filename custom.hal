@@ -195,11 +195,4 @@ net home-shared <= hm2_7i92.0.gpio.014.in
 net home-shared => joint.0.home-sw-in
 net home-shared => joint.1.home-sw-in
 
-# =============================================
-#  ALARME SERVOS X/Z (HLTNC T3D) -> E-STOP
-# =============================================
-# Ladder AMS32 agrega /X10 (servo X) e /X11 (servo Z) em M207 (falha geral).
-# M207 = ams32.status.07. Quando qualquer servo alarma -> HIGH -> halui.estop.activate.
-# Reset do alarme: pressionar reset fisico (GPIO.022) apos servo ficar OK.
-net servo-fault <= ams32.status.07
-net servo-fault => halui.estop.activate
+# Alarme servos: ver probe_basic_postgui_fix.hal (ams32 so carrega no postgui)
