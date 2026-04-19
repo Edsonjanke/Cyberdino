@@ -11,10 +11,11 @@ import time
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QLabel, QPushButton, QFrame, QGridLayout,
-    QStackedWidget, QLineEdit, QListWidget, QListWidgetItem
+    QStackedWidget, QLineEdit, QListWidget, QListWidgetItem,
+    QSlider, QTextEdit
 )
 from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QTextCursor, QColor, QTextCharFormat
 
 # linuxcnc importado sob demanda para nao interferir com ProbeBasic
 linuxcnc = None
@@ -160,20 +161,22 @@ STYLESHEET = f"""
         color: {TEXT_WHITE};
         border: 2px solid #555555;
         border-radius: 4px;
-        font-size: 18px;
+        font-size: 28px;
         font-family: "Monospace";
+        font-weight: bold;
         padding: 4px 8px;
     }}
     QLineEdit#mdi-entry:focus {{
         border-color: {COPPER_LIGHT};
     }}
     QListWidget#mdi-history {{
-        background-color: #ffffff;
-        color: #000000;
+        background-color: #2a2a2a;
+        color: {TEXT_WHITE};
         border: 2px solid #555555;
         border-radius: 4px;
-        font-size: 15px;
+        font-size: 44px;
         font-family: "Monospace";
+        font-weight: bold;
     }}
     QListWidget#mdi-history::item {{
         padding: 2px 4px;
@@ -263,6 +266,70 @@ STYLESHEET = f"""
     QPushButton#page-inactive:pressed {{
         background-color: #555555;
     }}
+    QSlider#ovr-slider::groove:horizontal {{
+        background: #444444;
+        height: 18px;
+        border: 1px solid #555555;
+        border-radius: 3px;
+    }}
+    QSlider#ovr-slider::sub-page:horizontal {{
+        background: {COPPER};
+        border: 1px solid {COPPER_DIM};
+        border-radius: 3px;
+    }}
+    QSlider#ovr-slider::handle:horizontal {{
+        background: #e0e0e0;
+        border: 1px solid #777777;
+        width: 24px;
+        margin: -4px 0;
+        border-radius: 3px;
+    }}
+    QLabel#load-value {{
+        background-color: #1a1a1a;
+        color: {TEXT_WHITE};
+        border: 1px solid #555555;
+        border-radius: 3px;
+        font-size: 14px;
+        font-weight: bold;
+        padding: 2px;
+    }}
+    QLabel#slider-value {{
+        background-color: #e0e0e0;
+        color: black;
+        border: 1px solid #999999;
+        border-radius: 3px;
+        font-size: 13px;
+        font-weight: bold;
+        padding: 2px;
+    }}
+    QPushButton#slider-reset {{
+        background-color: #333333;
+        color: {TEXT_WHITE};
+        border: 1px solid #555555;
+        border-radius: 3px;
+        font-size: 11px;
+        font-weight: bold;
+        padding: 2px;
+    }}
+    QPushButton#slider-reset:pressed {{
+        background-color: #555555;
+    }}
+    QSlider#gcode-scroll::groove:vertical {{
+        background: #2a2a2a;
+        width: 30px;
+        border: 1px solid #555555;
+        border-radius: 4px;
+    }}
+    QSlider#gcode-scroll::handle:vertical {{
+        background: {COPPER};
+        border: 2px solid {COPPER_LIGHT};
+        height: 80px;
+        margin: 0 -20px;
+        border-radius: 6px;
+    }}
+    QSlider#gcode-scroll::handle:vertical:pressed {{
+        background: {COPPER_LIGHT};
+    }}
 """
 
 
@@ -306,6 +373,11 @@ class SecondaryPanel(QWidget):
         mdi_page = QWidget()
         self._build_mdi_page(mdi_page)
         self.stack.addWidget(mdi_page)
+
+        # Page 2: GCODE
+        gcode_page = QWidget()
+        self._build_gcode_page(gcode_page)
+        self.stack.addWidget(gcode_page)
 
         self.stack.setCurrentIndex(0)
 
@@ -401,14 +473,56 @@ class SecondaryPanel(QWidget):
         info_row.addStretch()
         left_layout.addLayout(info_row)
 
-        # G-code viewer (5 before + current + 5 after)
-        self.gcode_label = QLabel("")
-        self.gcode_label.setStyleSheet(f"color: #cccc00; font-size: 17px; font-weight: bold; font-family: Monospace; background-color: {BG_DARK}; padding: 4px;")
-        self.gcode_label.setAlignment(Qt.AlignLeft | Qt.AlignTop)
-        left_layout.addWidget(self.gcode_label, 1)
+        # Separator
+        sep3 = QFrame()
+        sep3.setFrameShape(QFrame.HLine)
+        sep3.setStyleSheet(f"color: {COPPER_DIM};")
+        left_layout.addWidget(sep3)
+
+        # Spindle LOAD header
+        load_row = QHBoxLayout()
+        load_row.setSpacing(6)
+        self.spindle_load_value = QLabel("0 %")
+        self.spindle_load_value.setObjectName("load-value")
+        self.spindle_load_value.setAlignment(Qt.AlignCenter)
+        load_lbl = QLabel("SPINDLE\nLOAD")
+        load_lbl.setObjectName("slider-reset")
+        load_lbl.setAlignment(Qt.AlignCenter)
+        load_lbl.setFixedWidth(60)
+        load_row.addWidget(self.spindle_load_value, 1)
+        load_row.addWidget(load_lbl)
+        left_layout.addLayout(load_row)
+
+        # 4 sliders: MVEL / FEED / RPM / RAPID
+        self.override_sliders = {}
+        for name, key in [("MVEL", "mvel"), ("FEED", "feed"),
+                          ("RPM", "rpm"), ("RAPID", "rapid")]:
+            row = QHBoxLayout()
+            row.setSpacing(6)
+            slider = QSlider(Qt.Horizontal)
+            slider.setObjectName("ovr-slider")
+            slider.setRange(0, 200)
+            slider.setValue(100)
+            value_lbl = QLabel("100%")
+            value_lbl.setObjectName("slider-value")
+            value_lbl.setAlignment(Qt.AlignCenter)
+            value_lbl.setFixedWidth(55)
+            btn_reset = QPushButton(f"{name}\n100%")
+            btn_reset.setObjectName("slider-reset")
+            btn_reset.setFixedWidth(60)
+            btn_reset.clicked.connect(lambda _, s=slider: s.setValue(100))
+            slider.valueChanged.connect(
+                lambda v, lbl=value_lbl: lbl.setText(f"{v}%"))
+            row.addWidget(slider, 1)
+            row.addWidget(value_lbl)
+            row.addWidget(btn_reset)
+            left_layout.addLayout(row)
+            self.override_sliders[key] = (slider, value_lbl)
 
         self._gcode_lines = []
         self._gcode_file = ""
+        self._gcode_rendered_file = ""
+        self._gcode_last_line = -1
         main.addWidget(left_frame, 3)
 
         # === RIGHT: Spindle Override + Rapid Override ===
@@ -524,13 +638,70 @@ class SecondaryPanel(QWidget):
             self.rapid_buttons.append((pct, btn))
         right_layout.addLayout(rapid_row3)
 
-        # Botao para ir ao MDI
+        # Botoes de navegacao (GCODE + MDI)
+        nav_row = QHBoxLayout()
+        nav_row.setSpacing(6)
+        btn_gcode = QPushButton("GCODE")
+        btn_gcode.setObjectName("page-btn")
+        btn_gcode.clicked.connect(lambda: self.stack.setCurrentIndex(2))
+        nav_row.addWidget(btn_gcode)
         btn_mdi = QPushButton("MDI")
         btn_mdi.setObjectName("page-btn")
         btn_mdi.clicked.connect(lambda: self.stack.setCurrentIndex(1))
+        nav_row.addWidget(btn_mdi)
         right_layout.addStretch()
-        right_layout.addWidget(btn_mdi)
+        right_layout.addLayout(nav_row)
         main.addWidget(right_frame, 4)
+
+    # ── GCODE Page (dedicated viewer) ────────────────────────────────
+
+    def _build_gcode_page(self, page):
+        outer = QVBoxLayout(page)
+        outer.setContentsMargins(10, 10, 10, 10)
+        outer.setSpacing(6)
+
+        title = QLabel("GCODE")
+        title.setObjectName("title")
+        title.setAlignment(Qt.AlignCenter)
+        outer.addWidget(title)
+
+        body = QHBoxLayout()
+        body.setSpacing(6)
+
+        self.gcode_label = QTextEdit()
+        self.gcode_label.setReadOnly(True)
+        self.gcode_label.setStyleSheet(
+            f"color: #cccc00; font-size: 20px; font-weight: bold; "
+            f"font-family: Monospace; background-color: {BG_DARK}; "
+            f"padding: 8px; border: 2px solid #555555; border-radius: 4px;"
+        )
+        body.addWidget(self.gcode_label, 1)
+
+        self._scroll_syncing = False
+        self.gcode_scroll = QSlider(Qt.Vertical)
+        self.gcode_scroll.setObjectName("gcode-scroll")
+        self.gcode_scroll.setFixedWidth(70)
+        self.gcode_scroll.setInvertedAppearance(True)
+        bar = self.gcode_label.verticalScrollBar()
+        bar.rangeChanged.connect(
+            lambda mn, mx: self.gcode_scroll.setRange(mn, mx))
+        bar.valueChanged.connect(self._gcode_bar_to_slider)
+        self.gcode_scroll.valueChanged.connect(self._gcode_slider_to_bar)
+        body.addWidget(self.gcode_scroll)
+
+        outer.addLayout(body, 1)
+
+        nav = QHBoxLayout()
+        nav.setSpacing(6)
+        btn_dro = QPushButton("DRO")
+        btn_dro.setObjectName("page-btn")
+        btn_dro.clicked.connect(lambda: self.stack.setCurrentIndex(0))
+        nav.addWidget(btn_dro)
+        btn_mdi = QPushButton("MDI")
+        btn_mdi.setObjectName("page-btn")
+        btn_mdi.clicked.connect(lambda: self.stack.setCurrentIndex(1))
+        nav.addWidget(btn_mdi)
+        outer.addLayout(nav)
 
     # ── MDI Page (ProbeBasic style) ─────────────────────────────────
 
@@ -552,65 +723,20 @@ class SecondaryPanel(QWidget):
         self.mdi_history_list.itemDoubleClicked.connect(self._mdi_history_recall)
         left.addWidget(self.mdi_history_list, 1)
 
-        # Action row 1: DEL SEL, DEL ALL, CLR QUE, PAUSE, ▲
-        act1 = QHBoxLayout()
-        act1.setSpacing(3)
-        for text, slot in [
-            ("DEL SEL", self._mdi_del_selected),
-            ("DEL ALL", self._mdi_clear_history),
-            ("CLR QUE", self._mdi_clear_history),
-            ("PAUSE", None),
-        ]:
-            btn = QPushButton(text)
-            btn.setObjectName("mdi-action")
-            btn.setFixedHeight(34)
-            if slot:
-                btn.clicked.connect(slot)
-            act1.addWidget(btn)
-        btn_up = QPushButton("\u25B2")
-        btn_up.setObjectName("mdi-action")
-        btn_up.setFixedHeight(34)
-        btn_up.setFixedWidth(34)
-        btn_up.clicked.connect(self._mdi_history_up)
-        act1.addWidget(btn_up)
-        left.addLayout(act1)
+        body.addLayout(left, 5)
 
-        # Action row 2: RUN FROM, RUN SEL, GCODE, ▼
-        act2 = QHBoxLayout()
-        act2.setSpacing(3)
-        for text, slot in [
-            ("RUN FROM", self._mdi_run_from),
-            ("RUN SEL", self._mdi_rerun_selected),
-            ("GCODE", None),
-        ]:
-            btn = QPushButton(text)
-            btn.setObjectName("mdi-action")
-            btn.setFixedHeight(34)
-            if slot:
-                btn.clicked.connect(slot)
-            act2.addWidget(btn)
-        btn_down = QPushButton("\u25BC")
-        btn_down.setObjectName("mdi-action")
-        btn_down.setFixedHeight(34)
-        btn_down.setFixedWidth(34)
-        btn_down.clicked.connect(self._mdi_history_down)
-        act2.addWidget(btn_down)
-        left.addLayout(act2)
-
-        body.addLayout(left, 3)
-
-        # === RIGHT: Keyboard grid 5 cols ===
+        # === RIGHT: Keyboard grid 4 cols (T M S G F X Z + numerico) ===
         kbd = QGridLayout()
-        kbd.setSpacing(3)
+        kbd.setHorizontalSpacing(3)
+        kbd.setVerticalSpacing(0)
 
         keys = [
-            (0, 0, "I", "L"), (0, 1, "J", "L"), (0, 2, "K", "L"), (0, 3, "D", "L"), (0, 4, "R", "L"),
-            (1, 0, "X", "L"), (1, 1, "Y", "L"), (1, 2, "Z", "L"), (1, 3, "A", "L"), (1, 4, "B", "L"),
-            (2, 0, "G", "L"), (2, 1, "7", "N"), (2, 2, "8", "N"), (2, 3, "9", "N"), (2, 4, "F", "L"),
-            (3, 0, "M", "L"), (3, 1, "4", "N"), (3, 2, "5", "N"), (3, 3, "6", "N"), (3, 4, "S", "L"),
-            (4, 0, "T", "L"), (4, 1, "1", "N"), (4, 2, "2", "N"), (4, 3, "3", "N"), (4, 4, "H", "L"),
-            (5, 0, "O", "L"), (5, 1, "-", "M"), (5, 2, "0", "N"), (5, 3, ".", "N"), (5, 4, "P", "L"),
-            (6, 0, "L", "L"), (6, 4, "Q", "L"),
+            (0, 0, "T", "L"), (0, 1, "M", "L"), (0, 2, "S", "L"), (0, 3, "G", "L"),
+            (1, 0, "F", "L"), (1, 1, "X", "L"), (1, 2, "Z", "L"), (1, 3, "-", "M"),
+            (2, 0, "7", "N"), (2, 1, "8", "N"), (2, 2, "9", "N"),
+            (3, 0, "4", "N"), (3, 1, "5", "N"), (3, 2, "6", "N"),
+            (4, 0, "1", "N"), (4, 1, "2", "N"), (4, 2, "3", "N"),
+            (5, 0, "0", "N"), (5, 1, ".", "N"),
         ]
 
         for row, col, text, ktype in keys:
@@ -620,34 +746,34 @@ class SecondaryPanel(QWidget):
             btn.clicked.connect(lambda _, ch=text: self._mdi_key(ch))
             kbd.addWidget(btn, row, col)
 
-        # Row 6 special: ⌫ (col1), SPACE (col2-3)
+        # Col 3 laterais: ⌫ / ◄ / ►
         btn_bksp = QPushButton("\u232B")
         btn_bksp.setObjectName("kbd-dark")
         btn_bksp.clicked.connect(self._mdi_backspace)
-        kbd.addWidget(btn_bksp, 6, 1)
+        kbd.addWidget(btn_bksp, 2, 3)
 
-        btn_space = QPushButton("SPACE")
-        btn_space.setObjectName("kbd-dark")
-        btn_space.clicked.connect(lambda: self._mdi_key(" "))
-        kbd.addWidget(btn_space, 6, 2, 1, 2)
-
-        # Row 7: ◄  ►  ENTER(span3)
         btn_left = QPushButton("\u25C4")
         btn_left.setObjectName("kbd-dark")
         btn_left.clicked.connect(self._mdi_cursor_left)
-        kbd.addWidget(btn_left, 7, 0)
+        kbd.addWidget(btn_left, 3, 3)
 
         btn_right = QPushButton("\u25BA")
         btn_right.setObjectName("kbd-dark")
         btn_right.clicked.connect(self._mdi_cursor_right)
-        kbd.addWidget(btn_right, 7, 1)
+        kbd.addWidget(btn_right, 4, 3)
+
+        # SPACE e ENTER na mesma linha
+        btn_space = QPushButton("SPACE")
+        btn_space.setObjectName("kbd-dark")
+        btn_space.clicked.connect(lambda: self._mdi_key(" "))
+        kbd.addWidget(btn_space, 5, 2)
 
         btn_enter = QPushButton("ENTER")
         btn_enter.setObjectName("kbd-dark")
         btn_enter.clicked.connect(self._mdi_submit)
-        kbd.addWidget(btn_enter, 7, 2, 1, 3)
+        kbd.addWidget(btn_enter, 5, 3)
 
-        body.addLayout(kbd, 7)
+        body.addLayout(kbd, 5)
         outer.addLayout(body, 1)
 
         # === BOTTOM BAR: MDI entry + DRO/MDI buttons ===
@@ -657,20 +783,27 @@ class SecondaryPanel(QWidget):
         self.mdi_entry = QLineEdit()
         self.mdi_entry.setObjectName("mdi-entry")
         self.mdi_entry.setPlaceholderText("MDI")
-        self.mdi_entry.setFixedHeight(34)
+        self.mdi_entry.setFixedHeight(68)
         self.mdi_entry.returnPressed.connect(self._mdi_submit)
         bottom.addWidget(self.mdi_entry, 1)
 
         btn_dro = QPushButton("DRO")
         btn_dro.setObjectName("page-inactive")
-        btn_dro.setFixedHeight(34)
+        btn_dro.setFixedHeight(68)
         btn_dro.setFixedWidth(70)
         btn_dro.clicked.connect(lambda: self.stack.setCurrentIndex(0))
         bottom.addWidget(btn_dro)
 
+        btn_gcode_page = QPushButton("GCODE")
+        btn_gcode_page.setObjectName("page-inactive")
+        btn_gcode_page.setFixedHeight(68)
+        btn_gcode_page.setFixedWidth(80)
+        btn_gcode_page.clicked.connect(lambda: self.stack.setCurrentIndex(2))
+        bottom.addWidget(btn_gcode_page)
+
         btn_mdi_page = QPushButton("MDI")
         btn_mdi_page.setObjectName("page-active")
-        btn_mdi_page.setFixedHeight(34)
+        btn_mdi_page.setFixedHeight(68)
         btn_mdi_page.setFixedWidth(70)
         bottom.addWidget(btn_mdi_page)
 
@@ -843,6 +976,8 @@ class SecondaryPanel(QWidget):
             self._prev_interp_state = None
             self._gcode_file = ""
             self._gcode_lines = []
+            self._gcode_rendered_file = ""
+            self._gcode_last_line = -1
         except Exception:
             self.stat = None
             self.cmd = None
@@ -922,25 +1057,35 @@ class SecondaryPanel(QWidget):
                     self._gcode_lines = []
             if gcode_file and self._gcode_lines:
                 line = self.stat.motion_line if interp != linuxcnc.INTERP_IDLE else 0
-                idx = max(0, line - 1)
-                start = max(0, idx - 5)
-                end = min(len(self._gcode_lines), idx + 6)
-                display = []
-                for i in range(start, end):
-                    num = i + 1
-                    txt = self._gcode_lines[i].rstrip()[:40]
-                    if i == idx and line > 0:
-                        display.append(f'<span style="color:{COPPER_LIGHT};">{num:4d}▸ {txt}</span>')
-                    else:
+                if gcode_file != self._gcode_rendered_file:
+                    display = []
+                    for i, raw in enumerate(self._gcode_lines):
+                        num = i + 1
+                        txt = raw.rstrip()
                         display.append(f'{num:4d}  {txt}')
-                self.gcode_label.setText('<pre>' + '\n'.join(display) + '</pre>')
+                    self.gcode_label.setHtml('<pre>' + '\n'.join(display) + '</pre>')
+                    self._gcode_rendered_file = gcode_file
+                    self._gcode_last_line = -1
+                if line != self._gcode_last_line:
+                    self._highlight_gcode_line(line)
+                    self._gcode_last_line = line
             else:
-                self.gcode_label.setText("")
+                if self._gcode_rendered_file:
+                    self.gcode_label.setHtml("")
+                    self._gcode_rendered_file = ""
+                    self._gcode_last_line = -1
 
             # Rapid override
             rapid_pct = int(self.stat.rapidrate * 100)
             self.rapid_value_label.setText(f"{rapid_pct}%")
             self._update_rapid_buttons(rapid_pct)
+
+            # Sliders de override (read-only por enquanto)
+            feed_pct = int(self.stat.feedrate * 100)
+            self._sync_slider("feed", feed_pct)
+            self._sync_slider("rpm", ovr)
+            self._sync_slider("rapid", rapid_pct)
+            self._sync_slider("mvel", 100)
 
         except Exception:
             # Conexao perdida
@@ -948,6 +1093,45 @@ class SecondaryPanel(QWidget):
             self.cmd = None
             self._reconnect_counter = 0
             self._reset_display()
+
+    def _highlight_gcode_line(self, line):
+        selections = []
+        if line > 0:
+            doc = self.gcode_label.document()
+            block = doc.findBlockByLineNumber(line - 1)
+            if block.isValid():
+                cursor = QTextCursor(block)
+                cursor.select(QTextCursor.LineUnderCursor)
+                sel = QTextEdit.ExtraSelection()
+                sel.cursor = cursor
+                fmt = QTextCharFormat()
+                fmt.setBackground(QColor(COPPER))
+                fmt.setForeground(QColor("black"))
+                sel.format = fmt
+                selections.append(sel)
+        self.gcode_label.setExtraSelections(selections)
+
+    def _gcode_bar_to_slider(self, value):
+        if self._scroll_syncing:
+            return
+        self._scroll_syncing = True
+        self.gcode_scroll.setValue(value)
+        self._scroll_syncing = False
+
+    def _gcode_slider_to_bar(self, value):
+        if self._scroll_syncing:
+            return
+        self._scroll_syncing = True
+        self.gcode_label.verticalScrollBar().setValue(value)
+        self._scroll_syncing = False
+
+    def _sync_slider(self, key, value):
+        if key in self.override_sliders:
+            slider, lbl = self.override_sliders[key]
+            slider.blockSignals(True)
+            slider.setValue(value)
+            slider.blockSignals(False)
+            lbl.setText(f"{value}%")
 
     def _reset_display(self):
         self.x_value.setText("+000.000")

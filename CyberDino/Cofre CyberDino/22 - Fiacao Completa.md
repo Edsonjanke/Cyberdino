@@ -73,6 +73,6 @@ Ambos soltos = JOG
 ## Painel Secundario (Pi 3B+)
 
 ```
-PC (192.168.0.113) ──── WiFi ──── Pi (192.168.0.103)
+PC (192.168.0.120) ──── Cabo ──── Pi (192.168.0.103)
                    VNC porta 5901
 ```

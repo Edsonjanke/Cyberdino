@@ -46,7 +46,7 @@ Todo controle real fica no PC com Mesa 7i92.
 - [x] Tela mostrando login do Linux (console)
 
 ### FEITO no PC (2026-04-08):
-- [x] IP da segunda placa de rede descoberto: **192.168.0.113** (enp3s0)
+- [x] IP da segunda placa de rede descoberto: **192.168.0.120** (enp3s0)
 - [x] Corrigido `/etc/default/grub` (tinha CRLF do Windows, quebrava grub-mkconfig)
 - [x] Removido pacote `raspi-firmware` do PC (nao deveria estar no PC, travava dpkg)
 - [x] dpkg destravado, kernel RT configurado com sucesso
@@ -68,7 +68,7 @@ Todo controle real fica no PC com Mesa 7i92.
 3. No Pi (via SSH no Pi):
    ```bash
    export DISPLAY=:0
-   xtigervncviewer 192.168.0.113:0 -fullscreen
+   xtigervncviewer 192.168.0.120:0 -fullscreen
    ```
 
 4. Se funcionar, configurar autostart no Pi:
@@ -87,13 +87,13 @@ Todo controle real fica no PC com Mesa 7i92.
 ## Credenciais
 - **Pi SSH:** `ssh evo@cyberdino.local`
 - **User/senha:** evo / (definida no rpi-imager)
-- **PC LinuxCNC:** usuario evo, IP 192.168.0.113
+- **PC LinuxCNC:** usuario evo, IP 192.168.0.120
 
 ## Rede
 ```
 PC LinuxCNC (Debian 12)
 ├── enp2s0: 10.10.10.1/24 ── Mesa 7i92 (10.10.10.10)
-└── enp3s0: 192.168.0.113/24 ── rede "evo" (192.168.0.x)
+└── enp3s0: 192.168.0.120/24 ── rede "evo" (192.168.0.x)
 
 Pi 3B+ (Raspberry Pi OS Lite 32-bit)
 ├── eth0: link-local (cabo ethernet direto)

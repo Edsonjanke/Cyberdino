@@ -4,18 +4,18 @@
 | Componente      | Detalhe                                       |
 | --------------- | --------------------------------------------- |
 | **Pi**          | Raspberry Pi 3B+                              |
-| **IP WiFi**     | 192.168.0.103 (hostname: cyberdino)           |
+| **IP Cabo**     | 192.168.0.103 (hostname: cyberdino)           |
 | **Tela**        | BTT PITFT70, DSI, **800x480** (nao 1024x600!) |
 | **Touch**       | Capacitivo USB                                |
-| **PC LinuxCNC** | 192.168.0.113                                 |
+| **PC LinuxCNC** | 192.168.0.120                                 |
 
 ## Arquitetura
 ```
-PC (192.168.0.113):
+PC (192.168.0.120):
   Xvfb :1 (800x480) -> secondary_panel.py -> x11vnc porta 5901
 
 Pi (192.168.0.103):
-  xtigervncviewer 192.168.0.113::5901 -FullScreen
+  xtigervncviewer 192.168.0.120::5901 -FullScreen
 ```
 - Separado do ProbeBasic principal (display :0 do PC)
 - Pi e terminal burro (VNC client), processamento no PC
