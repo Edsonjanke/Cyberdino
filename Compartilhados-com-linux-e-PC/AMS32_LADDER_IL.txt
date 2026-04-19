@@ -72,9 +72,13 @@ LDI   X6
 OUT   M206
 
 // ============================================================
-// BLOCO 7: FALHA GERAL (X7 NF, imediato)
+// BLOCO 7: FALHA GERAL (X7 + alarmes servos HLTNC T3D)
+// X7 NF, X10 (servo X ALM), X11 (servo Z ALM) — todos NF
+// Opto HLTNC conduz quando OK, corta em alarme -> X = OFF
 // ============================================================
 LDI   X7
+ORI   X10
+ORI   X11
 OUT   M207
 LD    M207
 OR    M205
@@ -100,6 +104,19 @@ LD    M10
 ANI   M206
 ANI   M207
 OUT   Y3
+
+// ============================================================
+// BLOCO 9: STATUS ALARME SERVO X (HLTNC T3D CN1 DO2 ALM)
+// Opto corta em falha -> X10 OFF -> M210 = flag pra LinuxCNC
+// ============================================================
+LDI   X10
+OUT   M210
+
+// ============================================================
+// BLOCO 10: STATUS ALARME SERVO Z (HLTNC T3D CN1 DO2 ALM)
+// ============================================================
+LDI   X11
+OUT   M211
 
 // ============================================================
 // FIM
