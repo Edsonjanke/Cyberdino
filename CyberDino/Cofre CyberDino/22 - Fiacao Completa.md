@@ -76,3 +76,31 @@ Ambos soltos = JOG
 PC (192.168.0.120) ──── Cabo ──── Pi (192.168.0.103)
                    VNC porta 5901
 ```
+
+## Alarme Servos HLTNC T3D (X e Z) -> PLC AMS32
+
+PLC AMS32 configurado sourcing (S/S=0V, X ativa com 24V).
+Saida de alarme dos T3D e optoacoplador Darlington (max 24V, 50mA),
+conduz quando servo OK, corta em falha.
+
+```
+FONTE 24V                     SERVO X (HL-T3D-L20A)      AMS32 PLC
+==========                    =====================       =========
++24V  ──────────────────── CN1 ALM+ (DO2+)
+                                │
+                           opto interno
+                                │
+                           CN1 ALM- (DO2-) ──────────── X10
+0V    ──────────────────── S/S (comum DIs)
+
+                              SERVO Z (HL-T3DF-L30F)
+                              ======================
++24V  ──────────────────── CN1 ALM+ (DO2+)
+                                │
+                           opto interno
+                                │
+                           CN1 ALM- (DO2-) ──────────── X11
+```
+
+Logica: servo OK -> X10/X11 ON. Alarme -> opto corta -> X = OFF.
+Ladder trata /X10 e /X11 como alarme (blocos 9 e 10, doc 08).

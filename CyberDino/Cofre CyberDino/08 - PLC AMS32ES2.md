@@ -48,6 +48,20 @@
 | 6 | Alarme lube: X6 -> M206 |
 | 7 | Falha geral: X7 -> M207 (bloqueia tudo) |
 | 8 | Lube temporizada: M103 -> Y3 (D110/D111 config) |
+| 9 | Alarme servo X: /X10 -> M210 + M207 + Y4 (X OFF = opto cortou) |
+| 10 | Alarme servo Z: /X11 -> M211 + M207 + Y4 |
+
+## Mapa de X (entradas) atualizado
+| X | Funcao |
+|---|--------|
+| X0-X3 | Jog (X+/X-/Z+/Z-) |
+| X4 | livre |
+| X5 | Alarme coolant |
+| X6 | Alarme lube |
+| X7 | Falha geral externa |
+| X10 | **Alarme servo X** (ALM- HLTNC T3D, opto conduz = OK) |
+| X11 | **Alarme servo Z** (ALM- HLTNC T3D) |
+| X12-X17 | livre |
 
 ## Funcoes Planejadas
 - Encoder FYSETC (EC11) -> PLC X0/X1 -> feed override
