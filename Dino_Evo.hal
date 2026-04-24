@@ -13,9 +13,8 @@ setp    hm2_7i92.0.watchdog.timeout_ns 5000000
 loadrt pid names=pid.x,pid.z,pid.s
 loadrt near names=near.spindle
 loadrt abs    names=abs.spindle
-loadrt lowpass names=lowpass.spindle
+loadrt lowpass names=lowpass.spindle,lowpass.spindle-rps
 loadrt scale  names=scale.spindle
-loadrt timedelay names=timedelay.spindle-enable
 
 addf hm2_7i92.0.read          servo-thread
 addf motion-command-handler   servo-thread
@@ -26,8 +25,8 @@ addf pid.s.do-pid-calcs       servo-thread
 addf near.spindle             servo-thread
 addf abs.spindle              servo-thread
 addf lowpass.spindle          servo-thread
+addf lowpass.spindle-rps      servo-thread
 addf scale.spindle            servo-thread
-addf timedelay.spindle-enable servo-thread
 addf hm2_7i92.0.write         servo-thread
 setp hm2_7i92.0.dpll.01.timer-us -50
 setp hm2_7i92.0.stepgen.timer-number 1
@@ -180,9 +179,14 @@ setp    hm2_7i92.0.encoder.00.index-mask-invert 0
 setp    hm2_7i92.0.encoder.00.scale  [SPINDLE_0]ENCODER_SCALE
 
 net spindle-revs         <= hm2_7i92.0.encoder.00.position
-net spindle-vel-fb-rps   <= hm2_7i92.0.encoder.00.velocity
-net spindle-vel-fb-rpm   <= hm2_7i92.0.encoder.00.velocity-rpm
 net spindle-index-enable <=> hm2_7i92.0.encoder.00.index-enable
+
+# Filtro lowpass no feedback pra suavizar leitura jitter
+setp lowpass.spindle-rps.gain 0.02
+net spindle-vel-fb-rps-raw   <= hm2_7i92.0.encoder.00.velocity
+net spindle-vel-fb-rps-raw   => lowpass.spindle-rps.in
+net spindle-vel-fb-rps       <= lowpass.spindle-rps.out
+net spindle-vel-fb-rpm       <= hm2_7i92.0.encoder.00.velocity-rpm
 
 net spindle-revs         => spindle.0.revs
 net spindle-vel-fb-rps   => spindle.0.speed-in
@@ -213,23 +217,17 @@ net spindle-at-speed        <= near.spindle.out
 
 # --- Spindle PWM output ---
 setp hm2_7i92.0.pwmgen.00.output-type 1
-setp hm2_7i92.0.pwmgen.00.scale 1700
+setp hm2_7i92.0.pwmgen.00.scale 2975
 net spindle-output => hm2_7i92.0.pwmgen.00.value
 net spindle-enable => hm2_7i92.0.pwmgen.00.enable
 
-# --- Inversor CFW-07: Enable via PWM1 com timer de frenagem ---
-# PWM1 (P2-14) -> Rele 1 NA -> DI1 (borne 09) = Habilita Geral
-# Timer mantem DI1 ativo por 5s apos M5, permitindo rampa + frenagem CC
-setp timedelay.spindle-enable.on-delay  0
-setp timedelay.spindle-enable.off-delay 1
-net spindle-enable => timedelay.spindle-enable.in
-net spindle-enable-delayed timedelay.spindle-enable.out
+# --- VFD 9600 two-line mode 1: X1=FWD, X2=REV (mutuamente exclusivos) ---
+# PWM1 (P2-14) -> Rele 1 NA -> X1 do VFD = FWD (M3)
 setp hm2_7i92.0.pwmgen.01.output-type 1
 setp hm2_7i92.0.pwmgen.01.scale 1
 setp hm2_7i92.0.pwmgen.01.value 1
-net spindle-enable-delayed => hm2_7i92.0.pwmgen.01.enable
-# PWM2 (P2-15) -> Rele 2 NA -> DI2 (borne 10) = Sentido de Giro
-# Rele fecha quando M4 (CCW), DI2=0V=anti-horario. Aberto=horario(CW)
+net spindle-cw => hm2_7i92.0.pwmgen.01.enable
+# PWM2 (P2-15) -> Rele 2 NA -> X2 do VFD = REV (M4)
 setp hm2_7i92.0.pwmgen.02.output-type 1
 setp hm2_7i92.0.pwmgen.02.scale 1
 setp hm2_7i92.0.pwmgen.02.value 1
