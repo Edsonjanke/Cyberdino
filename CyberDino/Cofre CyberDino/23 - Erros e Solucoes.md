@@ -28,6 +28,44 @@
 **Problema:** HalButton padrao aceita click do mouse, sobreescrevendo o estado do pin.
 **Solucao:** Criar widget custom `ReadOnlyAction` que bloqueia mouse.
 
+## PLC AMS32 / Comunicacao
+
+### CLP nao funciona / sem resposta ao LinuxCNC
+**Sintoma:** `ams32_hal.py` em loop de reconexao, `/tmp/ams32_hal.log` mostra `could not open port /dev/ttyAMS32`, coolant/jog/servo-fault mortos.
+
+**Causa comum:** cabo USB do CH340 mudou de porta fisica. A regra udev em `/etc/udev/rules.d/99-ams32.rules` esta ancorada em `ID_PATH` hardcoded (ex.: `pci-0000:00:1d.0-usb-0:X.Y:1.0`). Se o cabo sair da porta, o symlink `/dev/ttyAMS32` nao e criado.
+
+**Diagnostico:**
+```bash
+ls -la /dev/ttyAMS32                               # symlink existe?
+tail /tmp/ams32_hal.log                            # erros de conexao?
+udevadm info -q all -n /dev/ttyUSB0 | grep ID_PATH # porta atual
+cat /etc/udev/rules.d/99-ams32.rules               # porta esperada
+```
+
+**Fix (atualizar a regra pra porta atual):**
+```bash
+sudo sed -i 's|usb-0:OLD:1.0|usb-0:NEW:1.0|' /etc/udev/rules.d/99-ams32.rules
+sudo udevadm control --reload-rules
+sudo udevadm trigger --subsystem-match=tty
+ls -la /dev/ttyAMS32   # deve mostrar -> ttyUSB0
+```
+
+**Teste rapido (sem mexer em udev) — verificar se e o CLP mesmo:**
+```python
+from pymodbus.client import ModbusSerialClient
+c = ModbusSerialClient(port="/dev/ttyUSB0", framer="ascii",
+                      baudrate=9600, bytesize=7, parity="E", stopbits=1,
+                      timeout=0.5)
+c.connect()
+r = c.read_holding_registers(address=0x1000, count=1, device_id=1)
+print(r.registers if not r.isError() else "sem resposta")
+```
+
+**Historico:**
+- 2026-04-17 (proj): regra criada pra porta `1.5`
+- 2026-04-24: cabo foi pra porta `1.2` (porta `1.5` parece nao existir fisicamente nessa maquina). Regra atualizada para `1.2`.
+
 ## CFW-07
 
 ### Saida analogica da placa nao chega em 10V

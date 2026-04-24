@@ -64,13 +64,41 @@ setp hm2_7i92.0.encoder.00.scale [SPINDLE_0]ENCODER_SCALE  # 400
 net spindle-revs         <= hm2_7i92.0.encoder.00.position
 net spindle-index-enable <=> hm2_7i92.0.encoder.00.index-enable
 
-# Lowpass para suavizar display/feedback (jitter reducao)
+# 1a etapa: lowpass no feedback RPS (afeta PID/at-speed/display)
+# gain 0.02 @ 1ms servo = ~50ms TC
 setp lowpass.spindle-rps.gain 0.02
 net spindle-vel-fb-rps-raw <= hm2_7i92.0.encoder.00.velocity
 net spindle-vel-fb-rps-raw => lowpass.spindle-rps.in
 net spindle-vel-fb-rps     <= lowpass.spindle-rps.out
 net spindle-vel-fb-rpm     <= hm2_7i92.0.encoder.00.velocity-rpm
 ```
+
+### Cadeia de display (scale + abs + lowpass dedicado)
+Sinal consumido pelo DRO do Probe Basic: `spindle-fb-rpm-abs-filtered`.
+```hal
+setp scale.spindle.gain    60          # RPS -> RPM
+setp lowpass.spindle.gain  0.05        # ~20ms TC EXTRA so no display (2026-04-24)
+net spindle-vel-fb-rps          => scale.spindle.in
+net spindle-fb-rpm               scale.spindle.out  => abs.spindle.in
+net spindle-fb-rpm-abs           abs.spindle.out    => lowpass.spindle.in
+net spindle-fb-rpm-abs-filtered  lowpass.spindle.out
+```
+**Nota:** gain original era 1.0 (sem filtrar). Abaixado para 0.05 para estabilizar display sem impactar at-speed nem PID. Se ainda oscilar, baixar para 0.02 (~50ms TC).
+
+### At-speed (near.spindle)
+Trava motion: eixos so avancam apos `spindle.0.at-speed=TRUE`. Formula:
+`at-speed = TRUE quando |cmd - fb| <= max(difference, scale * |cmd|)`
+
+```hal
+# (2026-04-24) scale 1.5 era 150% — sempre TRUE, motion nao esperava
+setp near.spindle.scale      0.05      # 5% relativo
+setp near.spindle.difference 0.5       # piso 0.5 RPS = 30 RPM (protege RPM baixo)
+net spindle-vel-cmd-rps-abs => near.spindle.in1
+net spindle-vel-fb-rps      => near.spindle.in2
+net spindle-at-speed        <= near.spindle.out
+net spindle-at-speed        => spindle.0.at-speed
+```
+Exemplo: M3 S1500 → VFD rampeia 6s (P0-17) → at-speed vira TRUE em ~1425 RPM → G1 libera.
 
 ## Tabela de Comandos G-code
 

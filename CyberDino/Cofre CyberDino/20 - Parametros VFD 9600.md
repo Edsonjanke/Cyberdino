@@ -61,6 +61,23 @@ Apos P1-37=2 + RUN no painel, os seguintes sao preenchidos automaticamente:
 | P6-10 | 0 | Decelerate to stop (default) |
 | P6-15 | 100 | Brake use ratio (%) — usa resistor 100% do tempo |
 
+### Sugeridos para suavizar partida/parada (pendente aplicar no teclado do VFD)
+| Param | Valor | Descricao |
+|---|---|---|
+| P0-17 | **6.0** | Accel time (reduz de 10s para partida mais responsiva) |
+| P0-18 | **5.0** | Decel time (parada um pouco mais rapida que accel) |
+| P6-15 | **70** | Brake ratio (duty do chopper; deixa margem termica no resistor) |
+
+### Frenagem DC opcional (mandril trava no final — util p/ troca de castanha)
+| Param | Valor | Descricao |
+|---|---|---|
+| P6-11 | 5.0 | Freq inicial da frenagem DC (Hz) |
+| P6-12 | 0.5 | Tempo de espera antes do DC brake (s) |
+| P6-13 | 30 | Corrente DC brake (%) |
+| P6-14 | 1.0 | Tempo DC brake (s) |
+
+Sem travamento DC: deixar P6-13=0 e P6-14=0.
+
 ## Grupo PP - Protecao
 
 | Param | Valor | Descricao |

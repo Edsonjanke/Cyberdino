@@ -195,17 +195,20 @@ net spindle-index-enable <=> spindle.0.index-enable
 net spindle-vel-fb-rpm   => motion.analog-in-00
 
 # filtro de velocidade (abs + lowpass) para display suavizado
+# lowpass.spindle.gain 0.05 = ~20ms TC extra so no display (nao afeta at-speed nem PID)
 setp  scale.spindle.gain 60
-setp  lowpass.spindle.gain 1.0
+setp  lowpass.spindle.gain 0.05
 net spindle-vel-fb-rps          =>  scale.spindle.in
 net spindle-fb-rpm               scale.spindle.out     => abs.spindle.in
 net spindle-fb-rpm-abs           abs.spindle.out       => lowpass.spindle.in
 net spindle-fb-rpm-abs-filtered  lowpass.spindle.out
 
 # ---Setup spindle at speed signals---
-# near: at-speed = true quando |cmd - fb| < scale * |cmd|
-# scale 1.5 = tolerancia de 50% (ampla, segura para comecar)
-setp near.spindle.scale 1.5
+# near: at-speed = TRUE quando |cmd - fb| <= max(difference, scale * |cmd|)
+# inputs em RPS (1 RPS = 60 RPM). scale 0.05 = 5% relativo; difference 0.5 RPS = 30 RPM piso.
+# Eixos so avancam apos spindle.0.at-speed = TRUE (travamento automatico do motion).
+setp near.spindle.scale      0.05
+setp near.spindle.difference 0.5
 net spindle-vel-cmd-rps-abs => near.spindle.in1
 net spindle-vel-fb-rps      => near.spindle.in2
 net spindle-at-speed        <= near.spindle.out
