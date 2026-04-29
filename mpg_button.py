@@ -3,9 +3,10 @@
 MpgButton        - indicador MPG controlado por HAL pin
 ReadOnlyAction   - indicador de modo (MAN/AUTO/MDI) que nao aceita click
 SafeCycleStart   - cycle start que exige modo AUTO, senao mostra mensagem
+GearButton       - botao toggle de marcha (alta/reduzida) com QSettings persistente
 """
 import linuxcnc
-from qtpy.QtCore import Qt, Property
+from qtpy.QtCore import Qt, Property, QSettings
 from qtpy.QtWidgets import QPushButton, QMessageBox
 from qtpyvcp import hal
 from qtpyvcp.widgets import HALWidget, VCPWidget
@@ -107,3 +108,50 @@ class SafeCycleStart(ActionButton):
         except Exception:
             pass
         super(SafeCycleStart, self).mousePressEvent(event)
+
+
+class GearButton(QPushButton, HALWidget, VCPWidget):
+    """Botao toggle de marcha (alta/reduzida) com persistencia QSettings.
+
+    HAL pins:
+      .checked  (bit out)  - estado da marcha (TRUE = reduzida)
+      .spinning (bit in)   - desabilita botao quando spindle ligado
+    Estado salvo entre sessoes em QSettings(DinoEvo/Gearbox).
+    Texto/cor mudam conforme estado.
+    """
+
+    def __init__(self, parent=None):
+        super(GearButton, self).__init__(parent)
+        self.setCheckable(True)
+        self.setFocusPolicy(Qt.NoFocus)
+        self._checked_pin = None
+        self._spinning_pin = None
+        self._settings = QSettings("DinoEvo", "Gearbox")
+        saved = self._settings.value("gear_low", False, type=bool)
+        self.setChecked(saved)
+        self._update_label()
+        self.toggled.connect(self._on_toggled)
+
+    def _on_toggled(self, checked):
+        self._update_label()
+        self._settings.setValue("gear_low", checked)
+        self._settings.sync()
+        if self._checked_pin is not None:
+            self._checked_pin.value = checked
+
+    def _update_label(self):
+        if self.isChecked():
+            self.setText("REDUZIDA 600")
+        else:
+            self.setText("ALTA 2360")
+
+    def _on_spinning_changed(self, spinning):
+        self.setEnabled(not spinning)
+
+    def initialize(self):
+        comp = hal.getComponent()
+        obj_name = self.getPinBaseName()
+        self._checked_pin = comp.addPin(obj_name + ".checked", "bit", "out")
+        self._checked_pin.value = self.isChecked()
+        self._spinning_pin = comp.addPin(obj_name + ".spinning", "bit", "in")
+        self._spinning_pin.valueChanged.connect(self._on_spinning_changed)

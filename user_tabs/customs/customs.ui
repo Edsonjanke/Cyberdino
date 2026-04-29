@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CUSTOMS</class>
+ <widget class="QWidget" name="CUSTOMS">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1645</width>
+    <height>619</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>CUSTOMS</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget#CUSTOMS {
+    background: rgb(46, 46, 47);
+}
+QGroupBox {
+    font: 18pt &quot;Bebas Kai&quot;;
+    color: white;
+    border: 2px solid rgb(96, 96, 97);
+    border-radius: 8px;
+    margin-top: 18px;
+    padding-top: 10px;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top center;
+    padding: 0 10px;
+    color: rgb(238, 165, 35);
+}
+QLabel {
+    color: white;
+    font: 14pt &quot;Bebas Kai&quot;;
+}</string>
+  </property>
+  <property name="sidebar" stdset="0">
+   <bool>false</bool>
+  </property>
+  <layout class="QHBoxLayout" name="rootLayout">
+   <property name="leftMargin"><number>20</number></property>
+   <property name="topMargin"><number>20</number></property>
+   <property name="rightMargin"><number>20</number></property>
+   <property name="bottomMargin"><number>20</number></property>
+   <property name="spacing"><number>30</number></property>
+   <item>
+    <widget class="QGroupBox" name="gearbox_group">
+     <property name="title">
+      <string>CAIXA DE MARCHAS</string>
+     </property>
+     <property name="maximumSize">
+      <size><width>500</width><height>250</height></size>
+     </property>
+     <layout class="QVBoxLayout" name="gearLayout">
+      <property name="leftMargin"><number>15</number></property>
+      <property name="topMargin"><number>15</number></property>
+      <property name="rightMargin"><number>15</number></property>
+      <property name="bottomMargin"><number>15</number></property>
+      <property name="spacing"><number>15</number></property>
+      <item>
+       <widget class="QLabel" name="gear_hint">
+        <property name="text">
+         <string>Trocar somente com a maquina parada</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="GearButton" name="gear_button">
+        <property name="minimumSize">
+         <size><width>0</width><height>80</height></size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    font: 24pt &quot;Bebas Kai&quot;;
+    color: white;
+    border: 3px solid rgb(96, 96, 97);
+    border-radius: 8px;
+    background: rgb(86, 86, 87);
+}
+QPushButton:checked {
+    background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255, 165, 0, 255), stop:1 rgba(180, 100, 0, 255));
+    color: black;
+}
+QPushButton:disabled {
+    background: rgb(50, 50, 50);
+    color: rgb(120, 120, 120);
+    border-color: rgb(70, 70, 70);
+}</string>
+        </property>
+        <property name="text">
+         <string>ALTA 2360</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>Clique para alternar entre marcha alta (2360 RPM) e reduzida (600 RPM). Desabilitado enquanto o spindle gira.</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="counter_group">
+     <property name="title">
+      <string>CONTADOR DE PECAS</string>
+     </property>
+     <property name="maximumSize">
+      <size><width>500</width><height>250</height></size>
+     </property>
+     <layout class="QVBoxLayout" name="counterLayout">
+      <property name="leftMargin"><number>15</number></property>
+      <property name="topMargin"><number>15</number></property>
+      <property name="rightMargin"><number>15</number></property>
+      <property name="bottomMargin"><number>15</number></property>
+      <property name="spacing"><number>15</number></property>
+      <item>
+       <widget class="HalLabel" name="parts_count">
+        <property name="minimumSize">
+         <size><width>0</width><height>80</height></size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">HalLabel {
+    font: 48pt &quot;Bebas Kai&quot;;
+    color: rgb(238, 165, 35);
+    background: rgb(30, 30, 30);
+    border: 2px solid rgb(96, 96, 97);
+    border-radius: 6px;
+    padding: 10px;
+}</string>
+        </property>
+        <property name="text">
+         <string>0</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="pinBaseName" stdset="0">
+         <string>parts-count</string>
+        </property>
+        <property name="textFormat" stdset="0">
+         <string>d</string>
+        </property>
+        <property name="pinType" stdset="0">
+         <enum>HalLabel::s32</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="HalButton" name="parts_reset">
+        <property name="minimumSize">
+         <size><width>0</width><height>50</height></size>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    font: 16pt &quot;Bebas Kai&quot;;
+    color: white;
+    border: 2px solid rgb(96, 96, 97);
+    border-radius: 6px;
+    background: rgb(86, 86, 87);
+}
+QPushButton:pressed {
+    background: rgb(180, 60, 60);
+}</string>
+        </property>
+        <property name="text">
+         <string>RESET CONTADOR</string>
+        </property>
+        <property name="pulseOnPress" stdset="0">
+         <bool>true</bool>
+        </property>
+        <property name="pulseDuration" stdset="0">
+         <number>200</number>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <spacer name="rightSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size><width>40</width><height>20</height></size>
+     </property>
+    </spacer>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>HalLabel</class>
+   <extends>QLabel</extends>
+   <header>qtpyvcp.widgets.hal_widgets.hal_label</header>
+  </customwidget>
+  <customwidget>
+   <class>HalButton</class>
+   <extends>QPushButton</extends>
+   <header>qtpyvcp.widgets.hal_widgets.hal_button</header>
+  </customwidget>
+  <customwidget>
+   <class>GearButton</class>
+   <extends>QPushButton</extends>
+   <header>mpg_button</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

@@ -14,7 +14,10 @@ loadrt pid names=pid.x,pid.z,pid.s
 loadrt near names=near.spindle
 loadrt abs    names=abs.spindle,abs.spindle-rps
 loadrt lowpass names=lowpass.spindle,lowpass.spindle-rps
-loadrt scale  names=scale.spindle
+loadrt scale  names=scale.spindle,scale.spindle-pwm
+loadrt mult2  names=mult2.spindle-gear
+loadrt mux2   names=mux2.spindle-cmd,mux2.gear-factor
+loadrt limit2 names=limit2.spindle-cmd-high,limit2.spindle-cmd-low
 
 addf hm2_7i92.0.read          servo-thread
 addf motion-command-handler   servo-thread
@@ -28,6 +31,12 @@ addf abs.spindle              servo-thread
 addf lowpass.spindle          servo-thread
 addf lowpass.spindle-rps      servo-thread
 addf scale.spindle            servo-thread
+addf scale.spindle-pwm        servo-thread
+addf limit2.spindle-cmd-high  servo-thread
+addf limit2.spindle-cmd-low   servo-thread
+addf mux2.spindle-cmd         servo-thread
+addf mux2.gear-factor         servo-thread
+addf mult2.spindle-gear       servo-thread
 addf hm2_7i92.0.write         servo-thread
 setp hm2_7i92.0.dpll.01.timer-us -50
 setp hm2_7i92.0.stepgen.timer-number 1
@@ -155,7 +164,7 @@ setp   pid.s.error-previous-target true
 
 net spindle-index-enable  =>  pid.s.index-enable
 net spindle-enable        =>  pid.s.enable
-net spindle-vel-cmd-rpm     => pid.s.command
+# spindle-vel-cmd-rpm vai para pid.s.command via gearbox (clamp por marcha) - ver secao CAIXA DE MARCHAS
 net spindle-vel-fb-rpm      => pid.s.feedback
 net spindle-output        <=  pid.s.output
 
@@ -208,8 +217,8 @@ net spindle-fb-rpm-abs-filtered  lowpass.spindle.out
 # near: at-speed = TRUE quando |cmd - fb| <= max(difference, scale * |cmd|)
 # inputs em RPS (1 RPS = 60 RPM). scale 0.05 = 5% relativo; difference 0.5 RPS = 30 RPM piso.
 # Eixos so avancam apos spindle.0.at-speed = TRUE (travamento automatico do motion).
-setp near.spindle.scale      0.15
-setp near.spindle.difference 1.0
+setp near.spindle.scale      0.30
+setp near.spindle.difference 2.0
 net spindle-vel-cmd-rps-abs => near.spindle.in1
 # Feedback passa por abs antes do near para funcionar em M3 (positivo) e M4 (negativo).
 # near.spindle.in1 e ABSOLUTO (cmd-rps-abs); precisamos do feedback tambem absoluto.
@@ -218,14 +227,54 @@ net spindle-vel-fb-rps-abs  <= abs.spindle-rps.out  => near.spindle.in2
 net spindle-at-speed        <= near.spindle.out
 
 #*******************************************
+# CAIXA DE MARCHAS - 2 marchas manuais (troca com maquina parada)
+# Marcha ALTA      : max 2360 RPM, ratio 1:1
+# Marcha REDUZIDA  : max  600 RPM, ratio 1:3.9333  (2360/600)
+# Sinal gear-low (TRUE = reduzida) controla 2 mux2:
+#   - mux2.spindle-cmd  : seleciona limit2 (clampa cmd_chuck por marcha)
+#   - mux2.gear-factor  : seleciona ratio aplicado ao motor (mult2 antes do scale.spindle-pwm)
+# Encoder fica na placa (chuck), entao at-speed/PID/threading operam em RPM real do chuck.
+#*******************************************
+setp limit2.spindle-cmd-high.max  2360
+setp limit2.spindle-cmd-high.min -2360
+setp limit2.spindle-cmd-low.max   600
+setp limit2.spindle-cmd-low.min  -600
+# maxv = max rate de mudanca (RPM/s). Alto para nao limitar (queremos clamp puro de valor)
+setp limit2.spindle-cmd-high.maxv 1e9
+setp limit2.spindle-cmd-low.maxv  1e9
+
+setp mux2.gear-factor.in0  1.0       # ALTA: ratio 1:1
+setp mux2.gear-factor.in1  3.9333    # REDUZIDA: 2360/600
+
+# Sinal gear-low: source vem do botao GearButton da UI (postgui hal)
+# Destinos: ambos os mux (clamp do cmd e ratio do PWM)
+net gear-low => mux2.spindle-cmd.sel
+net gear-low => mux2.gear-factor.sel
+
+# Caminho do comando: cmd_chuck -> limit2 (clampa por marcha) -> mux2 -> pid.s.command
+net spindle-vel-cmd-rpm => limit2.spindle-cmd-high.in
+net spindle-vel-cmd-rpm => limit2.spindle-cmd-low.in
+net spindle-cmd-high     <= limit2.spindle-cmd-high.out  => mux2.spindle-cmd.in0
+net spindle-cmd-low      <= limit2.spindle-cmd-low.out   => mux2.spindle-cmd.in1
+net spindle-cmd-clamped  <= mux2.spindle-cmd.out         => pid.s.command
+
+#*******************************************
 #  CONEXOES FISICAS - GPIOs Mesa 7i92
 #  (Referencia: mesa（部分配置可参考）.hal)
 #*******************************************
 
 # --- Spindle PWM output ---
 setp hm2_7i92.0.pwmgen.00.output-type 1
-setp hm2_7i92.0.pwmgen.00.scale 3735
-net spindle-output => hm2_7i92.0.pwmgen.00.value
+setp hm2_7i92.0.pwmgen.00.scale 4980
+# Linearizacao do VFD 9600: medido actual = 0.579*cmd + 51.3
+# Inverso: pwmgen.value = (cmd - 51.3) / 0.579 = 1.727*cmd - 88.6
+# Caixa de marchas: spindle-output (chuck RPM) -> mult2 (x ratio) -> scale.spindle-pwm (linearizacao motor)
+setp scale.spindle-pwm.gain 1.727
+setp scale.spindle-pwm.offset -88.6
+net spindle-output       => mult2.spindle-gear.in0
+net spindle-gear-factor  <= mux2.gear-factor.out         => mult2.spindle-gear.in1
+net spindle-output-motor <= mult2.spindle-gear.out       => scale.spindle-pwm.in
+net spindle-output-pwm   <= scale.spindle-pwm.out        => hm2_7i92.0.pwmgen.00.value
 net spindle-enable => hm2_7i92.0.pwmgen.00.enable
 
 # --- VFD 9600 two-line mode 1: X1=FWD, X2=REV (mutuamente exclusivos) ---

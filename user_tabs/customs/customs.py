@@ -1,19 +1,7 @@
 import os
-import linuxcnc
 
 from qtpy import uic
-from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QWidget
-
-from qtpyvcp.plugins import getPlugin
-from qtpyvcp.utilities import logger
-
-LOG = logger.getLogger(__name__)
-
-STATUS = getPlugin('status')
-TOOL_TABLE = getPlugin('tooltable')
-
-INI_FILE = linuxcnc.ini(os.getenv('INI_FILE_NAME'))
 
 
 class UserTab(QWidget):
