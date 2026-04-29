@@ -6,13 +6,13 @@
 loadrt [KINS]KINEMATICS
 loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS
 loadrt hostmot2
-loadrt hm2_eth board_ip="10.10.10.10" config="num_encoders=1 num_pwmgens=3 num_stepgens=5"
+loadrt hm2_eth board_ip="10.10.10.10" config="num_encoders=2 num_pwmgens=1 num_stepgens=4"
 setp    hm2_7i92.0.pwmgen.pwm_frequency 500
 setp    hm2_7i92.0.pwmgen.pdm_frequency 6000000
 setp    hm2_7i92.0.watchdog.timeout_ns 5000000
 loadrt pid names=pid.x,pid.z,pid.s
 loadrt near names=near.spindle
-loadrt abs    names=abs.spindle
+loadrt abs    names=abs.spindle,abs.spindle-rps
 loadrt lowpass names=lowpass.spindle,lowpass.spindle-rps
 loadrt scale  names=scale.spindle
 
@@ -22,6 +22,7 @@ addf motion-controller        servo-thread
 addf pid.x.do-pid-calcs       servo-thread
 addf pid.z.do-pid-calcs       servo-thread
 addf pid.s.do-pid-calcs       servo-thread
+addf abs.spindle-rps          servo-thread
 addf near.spindle             servo-thread
 addf abs.spindle              servo-thread
 addf lowpass.spindle          servo-thread
@@ -171,22 +172,22 @@ net spindle-brake              <=  spindle.0.brake
 net spindle-at-speed           =>  spindle.0.at-speed
 
 # --- Encoder hardware 7i92 (portado do Dino) ---
-setp    hm2_7i92.0.encoder.00.counter-mode 0
-setp    hm2_7i92.0.encoder.00.filter 1
-setp    hm2_7i92.0.encoder.00.index-invert 0
-setp    hm2_7i92.0.encoder.00.index-mask 0
-setp    hm2_7i92.0.encoder.00.index-mask-invert 0
-setp    hm2_7i92.0.encoder.00.scale  [SPINDLE_0]ENCODER_SCALE
+setp    hm2_7i92.0.encoder.01.counter-mode 0
+setp    hm2_7i92.0.encoder.01.filter 1
+setp    hm2_7i92.0.encoder.01.index-invert 0
+setp    hm2_7i92.0.encoder.01.index-mask 0
+setp    hm2_7i92.0.encoder.01.index-mask-invert 0
+setp    hm2_7i92.0.encoder.01.scale  [SPINDLE_0]ENCODER_SCALE
 
-net spindle-revs         <= hm2_7i92.0.encoder.00.position
-net spindle-index-enable <=> hm2_7i92.0.encoder.00.index-enable
+net spindle-revs         <= hm2_7i92.0.encoder.01.position
+net spindle-index-enable <=> hm2_7i92.0.encoder.01.index-enable
 
 # Filtro lowpass no feedback pra suavizar leitura jitter
 setp lowpass.spindle-rps.gain 0.02
-net spindle-vel-fb-rps-raw   <= hm2_7i92.0.encoder.00.velocity
+net spindle-vel-fb-rps-raw   <= hm2_7i92.0.encoder.01.velocity
 net spindle-vel-fb-rps-raw   => lowpass.spindle-rps.in
 net spindle-vel-fb-rps       <= lowpass.spindle-rps.out
-net spindle-vel-fb-rpm       <= hm2_7i92.0.encoder.00.velocity-rpm
+net spindle-vel-fb-rpm       <= hm2_7i92.0.encoder.01.velocity-rpm
 
 net spindle-revs         => spindle.0.revs
 net spindle-vel-fb-rps   => spindle.0.speed-in
@@ -207,10 +208,13 @@ net spindle-fb-rpm-abs-filtered  lowpass.spindle.out
 # near: at-speed = TRUE quando |cmd - fb| <= max(difference, scale * |cmd|)
 # inputs em RPS (1 RPS = 60 RPM). scale 0.05 = 5% relativo; difference 0.5 RPS = 30 RPM piso.
 # Eixos so avancam apos spindle.0.at-speed = TRUE (travamento automatico do motion).
-setp near.spindle.scale      0.05
-setp near.spindle.difference 0.5
+setp near.spindle.scale      0.15
+setp near.spindle.difference 1.0
 net spindle-vel-cmd-rps-abs => near.spindle.in1
-net spindle-vel-fb-rps      => near.spindle.in2
+# Feedback passa por abs antes do near para funcionar em M3 (positivo) e M4 (negativo).
+# near.spindle.in1 e ABSOLUTO (cmd-rps-abs); precisamos do feedback tambem absoluto.
+net spindle-vel-fb-rps      => abs.spindle-rps.in
+net spindle-vel-fb-rps-abs  <= abs.spindle-rps.out  => near.spindle.in2
 net spindle-at-speed        <= near.spindle.out
 
 #*******************************************
@@ -220,21 +224,18 @@ net spindle-at-speed        <= near.spindle.out
 
 # --- Spindle PWM output ---
 setp hm2_7i92.0.pwmgen.00.output-type 1
-setp hm2_7i92.0.pwmgen.00.scale 2975
+setp hm2_7i92.0.pwmgen.00.scale 3735
 net spindle-output => hm2_7i92.0.pwmgen.00.value
 net spindle-enable => hm2_7i92.0.pwmgen.00.enable
 
 # --- VFD 9600 two-line mode 1: X1=FWD, X2=REV (mutuamente exclusivos) ---
-# PWM1 (P2-14) -> Rele 1 NA -> X1 do VFD = FWD (M3)
-setp hm2_7i92.0.pwmgen.01.output-type 1
-setp hm2_7i92.0.pwmgen.01.scale 1
-setp hm2_7i92.0.pwmgen.01.value 1
-net spindle-cw => hm2_7i92.0.pwmgen.01.enable
-# PWM2 (P2-15) -> Rele 2 NA -> X2 do VFD = REV (M4)
-setp hm2_7i92.0.pwmgen.02.output-type 1
-setp hm2_7i92.0.pwmgen.02.scale 1
-setp hm2_7i92.0.pwmgen.02.value 1
-net spindle-ccw => hm2_7i92.0.pwmgen.02.enable
+# Firmware novo: PWM1/PWM2 nao funcionam como saida digital. Usa GPIO direto.
+# GPIO 001 (P2-14) -> Rele 1 NA -> X1 do VFD = FWD (M3)
+# GPIO 003 (P2-15) -> Rele 2 NA -> X2 do VFD = REV (M4)
+setp hm2_7i92.0.gpio.001.is_output 1
+setp hm2_7i92.0.gpio.003.is_output 1
+net spindle-cw  => hm2_7i92.0.gpio.001.out
+net spindle-ccw => hm2_7i92.0.gpio.003.out
 
 # --- Coolant flood output (TODO: mover para outra saida) ---
 # net coolant-flood =>
@@ -284,19 +285,7 @@ net machine-is-enabled        <=  motion.motion-enabled
 #  ---estop signals---
 # Configurado no custom.hal (and2.estop precisa ser carregado primeiro)
 
-#  ---manual tool change signals---
-
-net tool-change-request    <= iocontrol.0.tool-change
-net tool-change-confirmed  => iocontrol.0.tool-changed
-net tool-number            <= iocontrol.0.tool-prep-number
-
-#  ---Use external manual tool change dialog---
-
-loadusr -W hal_manualtoolchange
-net tool-change-request    =>  hal_manualtoolchange.change
-net tool-change-confirmed  <=  hal_manualtoolchange.changed
-net tool-number            =>  hal_manualtoolchange.number
-
-#  ---ignore tool prepare requests---
-net tool-prepare-loopback   iocontrol.0.tool-prepare      =>  iocontrol.0.tool-prepared
+#  ---tool change signals (loopback direto - torno com torre que sempre completa)---
+net tool-change-loop    iocontrol.0.tool-change   iocontrol.0.tool-changed
+net tool-prepare-loop   iocontrol.0.tool-prepare  iocontrol.0.tool-prepared
 

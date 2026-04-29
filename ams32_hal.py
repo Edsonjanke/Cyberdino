@@ -278,25 +278,29 @@ def main():
                     errors += 1
                     log.exception("Erro salvando posicao")
 
-            # --- 5. Restaurar posicao salva apos home (1x) ---
-            if not pos_applied:
-                try:
-                    stat.poll()
-                    if stat.homed[0] and stat.homed[1]:
-                        if h["pos-valid"]:
-                            saved_x = h["pos-saved-x"]
-                            saved_z = h["pos-saved-z"]
-                            cmd.mode(linuxcnc.MODE_MDI)
-                            cmd.wait_complete()
-                            cmd.mdi(f"G10 L20 P1 X{saved_x:.4f} Z{saved_z:.4f}")
-                            cmd.wait_complete(5)
-                            cmd.mode(linuxcnc.MODE_MANUAL)
-                            cmd.wait_complete()
-                            log.info(f"Posicao restaurada: X={saved_x:.4f} Z={saved_z:.4f}")
-                            print(f"ams32_hal: Posicao restaurada! X={saved_x:.4f} Z={saved_z:.4f}")
-                        pos_applied = True
-                except Exception:
-                    log.exception("Erro restaurando posicao")
+            # --- 5. Restaurar posicao salva apos home (DESATIVADO) ---
+            # Estava sobrescrevendo G54 com a posicao de maquina salva, corrompendo
+            # o zeramento da peca toda vez que se fazia Ref All. A logica original
+            # (G10 L20 P1) muda o WCS, nao a posicao fisica da maquina.
+            # Mantida a gravacao da posicao no PLC (bloco 4) caso seja util como log.
+            # if not pos_applied:
+            #     try:
+            #         stat.poll()
+            #         if stat.homed[0] and stat.homed[1]:
+            #             if h["pos-valid"]:
+            #                 saved_x = h["pos-saved-x"]
+            #                 saved_z = h["pos-saved-z"]
+            #                 cmd.mode(linuxcnc.MODE_MDI)
+            #                 cmd.wait_complete()
+            #                 cmd.mdi(f"G10 L20 P1 X{saved_x:.4f} Z{saved_z:.4f}")
+            #                 cmd.wait_complete(5)
+            #                 cmd.mode(linuxcnc.MODE_MANUAL)
+            #                 cmd.wait_complete()
+            #                 log.info(f"Posicao restaurada: X={saved_x:.4f} Z={saved_z:.4f}")
+            #                 print(f"ams32_hal: Posicao restaurada! X={saved_x:.4f} Z={saved_z:.4f}")
+            #             pos_applied = True
+            #     except Exception:
+            #         log.exception("Erro restaurando posicao")
 
             h["num-errors"] = errors
 

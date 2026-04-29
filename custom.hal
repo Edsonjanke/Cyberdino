@@ -109,10 +109,12 @@ net mode-manual halui.mode.manual   <= and2.mode-jog.out
 # =============================================
 #  INTERLOCK: Cycle Start so funciona em AUTO
 # =============================================
-# Se programa rodar sem chave em AUTO -> para imediatamente
+# Se programa AUTO rodar e chave sair de AUTO -> para imediatamente
+# Usa halui.mode.is-auto (modo atual) em vez de halui.program.is-running
+# (que tambem fica TRUE durante MDI e mataria comandos do painel)
 net mode-auto  => not.interlock.in
 net not-auto-sw   not.interlock.out   => and2.interlock.in0
-net prog-is-running  halui.program.is-running => and2.interlock.in1
+net mode-is-auto     => and2.interlock.in1
 net force-stop    and2.interlock.out  => halui.program.stop
 
 # =============================================

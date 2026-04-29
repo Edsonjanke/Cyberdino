@@ -4,7 +4,8 @@ M70
 #<gage_thickness> = #1
 #5 = #<_abs_z>
 #<current_tool_number> = #5400
-#<new_tool_offset> = [#<_abs_z> - #<gage_thickness>]
+#<current_g54_z> = #5223
+#<new_tool_offset> = [#<_abs_z> - #<gage_thickness> - #<current_g54_z>]
 G10 L1 P #5400 Z #<new_tool_offset>
 M61 Q0
 G49
