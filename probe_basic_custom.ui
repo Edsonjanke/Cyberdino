@@ -11674,7 +11674,7 @@ background-color: transparent;
                     <number>5</number>
                    </property>
                    <item>
-                    <widget class="ToolTable" name="tooltable">
+                    <widget class="WearToolTable" name="tooltable">
                      <property name="enabled">
                       <bool>true</bool>
                      </property>
@@ -11838,6 +11838,39 @@ background-color: transparent;
                      </property>
                      <property name="text">
                       <string>RELOAD TABLE</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="tool_table_clear_wear_button">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>140</width>
+                       <height>33</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>140</width>
+                       <height>33</height>
+                      </size>
+                     </property>
+                     <property name="focusPolicy">
+                      <enum>Qt::NoFocus</enum>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true">QPushButton {
+   	font: 14pt &quot;Bebas Kai&quot;;
+}</string>
+                     </property>
+                     <property name="text">
+                      <string>ZERAR WEAR</string>
                      </property>
                     </widget>
                    </item>
@@ -19728,6 +19761,67 @@ border-radius: 4px;
                           </widget>
                          </item>
                          <item>
+                          <widget class="QWidget" name="widget_parts" native="true">
+                           <property name="maximumSize">
+                            <size>
+                             <width>200</width>
+                             <height>16777215</height>
+                            </size>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">padding-left: 10px;</string>
+                           </property>
+                           <layout class="QHBoxLayout" name="horizontalLayout_parts">
+                            <item>
+                             <widget class="QLabel" name="parts_label_dro">
+                              <property name="styleSheet">
+                               <string notr="true">QLabel {
+    border: none;
+    color: white;
+    background: transparent;
+    font: 18pt &quot;Bebas Kai&quot;;
+}</string>
+                              </property>
+                              <property name="text">
+                               <string>PCS</string>
+                              </property>
+                              <property name="alignment">
+                               <set>Qt::AlignCenter</set>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="HalLabel" name="parts_count_dro">
+                              <property name="styleSheet">
+                               <string notr="true">HalLabel {
+    border: none;
+    color: rgb(94, 115, 255);
+    background: transparent;
+    font: 28pt &quot;Bebas Kai&quot;;
+    padding-right: 10px;
+}</string>
+                              </property>
+                              <property name="text">
+                               <string>0</string>
+                              </property>
+                              <property name="alignment">
+                               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                              </property>
+                              <property name="pinBaseName" stdset="0">
+                               <string>parts-count-dro</string>
+                              </property>
+                              <property name="textFormat" stdset="0">
+                               <string>d</string>
+                              </property>
+                              <property name="pinType" stdset="0">
+                               <enum>HalLabel::s32</enum>
+                              </property>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                         </item>
+                         <item>
                           <widget class="QWidget" name="widget" native="true">
                            <property name="sizePolicy">
                             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -24271,6 +24365,11 @@ font: 11pt bebas kai;
    <header>qtpyvcp.widgets.input_widgets.tool_table</header>
   </customwidget>
   <customwidget>
+   <class>WearToolTable</class>
+   <extends>QTableView</extends>
+   <header>dino_widgets.wear_tool_table</header>
+  </customwidget>
+  <customwidget>
    <class>JogIncrementWidget</class>
    <extends>QWidget</extends>
    <header>qtpyvcp.widgets.input_widgets.jog_increment</header>
@@ -24686,6 +24785,22 @@ font: 11pt bebas kai;
    <signal>clicked()</signal>
    <receiver>tooltable</receiver>
    <slot>loadToolTable()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>940</x>
+     <y>633</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>121</x>
+     <y>77</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>tool_table_clear_wear_button</sender>
+   <signal>clicked()</signal>
+   <receiver>tooltable</receiver>
+   <slot>clearWear()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>940</x>
