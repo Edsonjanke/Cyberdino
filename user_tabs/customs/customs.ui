@@ -51,14 +51,14 @@ QLabel {
       <string>CAIXA DE MARCHAS</string>
      </property>
      <property name="maximumSize">
-      <size><width>500</width><height>250</height></size>
+      <size><width>900</width><height>340</height></size>
      </property>
      <layout class="QVBoxLayout" name="gearLayout">
       <property name="leftMargin"><number>15</number></property>
       <property name="topMargin"><number>15</number></property>
       <property name="rightMargin"><number>15</number></property>
       <property name="bottomMargin"><number>15</number></property>
-      <property name="spacing"><number>15</number></property>
+      <property name="spacing"><number>10</number></property>
       <item>
        <widget class="QLabel" name="gear_hint">
         <property name="text">
@@ -70,16 +70,16 @@ QLabel {
        </widget>
       </item>
       <item>
-       <widget class="GearButton" name="gear_button">
+       <widget class="GearSelector" name="gear_selector">
         <property name="minimumSize">
-         <size><width>0</width><height>80</height></size>
+         <size><width>0</width><height>240</height></size>
         </property>
         <property name="styleSheet">
          <string notr="true">QPushButton {
-    font: 24pt &quot;Bebas Kai&quot;;
+    font: 14pt &quot;Bebas Kai&quot;;
     color: white;
-    border: 3px solid rgb(96, 96, 97);
-    border-radius: 8px;
+    border: 2px solid rgb(96, 96, 97);
+    border-radius: 6px;
     background: rgb(86, 86, 87);
 }
 QPushButton:checked {
@@ -92,14 +92,11 @@ QPushButton:disabled {
     border-color: rgb(70, 70, 70);
 }</string>
         </property>
-        <property name="text">
-         <string>ALTA 2360</string>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
-        </property>
         <property name="toolTip">
-         <string>Clique para alternar entre marcha alta (2360 RPM) e reduzida (600 RPM). Desabilitado enquanto o spindle gira.</string>
+         <string>Selecione a marcha (16 marchas em ordem decrescente: 2360, 1500, 950, 750, 600, 475, 375, 300, 236, 150, 118, 95, 90, 75, 60, 30 RPM). Desabilitado enquanto o spindle gira.</string>
+        </property>
+        <property name="pinBaseName" stdset="0">
+         <string>gear-selector</string>
         </property>
        </widget>
       </item>
@@ -151,6 +148,74 @@ QPushButton:disabled {
          <enum>HalLabel::s32</enum>
         </property>
        </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="presetRow">
+        <property name="spacing"><number>10</number></property>
+        <item>
+         <widget class="HalQSpinBox" name="parts_preset">
+          <property name="minimumSize">
+           <size><width>0</width><height>50</height></size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">HalQSpinBox {
+    font: 22pt &quot;Bebas Kai&quot;;
+    color: white;
+    background: rgb(50, 50, 50);
+    border: 2px solid rgb(96, 96, 97);
+    border-radius: 6px;
+    padding: 4px;
+}</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+          <property name="minimum">
+           <number>0</number>
+          </property>
+          <property name="maximum">
+           <number>999999</number>
+          </property>
+          <property name="value">
+           <number>0</number>
+          </property>
+          <property name="pinBaseName" stdset="0">
+           <string>parts-preset</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="HalButton" name="parts_load">
+          <property name="minimumSize">
+           <size><width>120</width><height>50</height></size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QPushButton {
+    font: 16pt &quot;Bebas Kai&quot;;
+    color: white;
+    border: 2px solid rgb(96, 96, 97);
+    border-radius: 6px;
+    background: rgb(86, 86, 87);
+}
+QPushButton:pressed {
+    background: rgb(60, 120, 180);
+}</string>
+          </property>
+          <property name="text">
+           <string>SET</string>
+          </property>
+          <property name="toolTip">
+           <string>Carrega o valor digitado no contador</string>
+          </property>
+          <property name="pulseOnPress" stdset="0">
+           <bool>true</bool>
+          </property>
+          <property name="pulseDuration" stdset="0">
+           <number>200</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <widget class="HalButton" name="parts_reset">
@@ -207,8 +272,13 @@ QPushButton:pressed {
    <header>qtpyvcp.widgets.hal_widgets.hal_button</header>
   </customwidget>
   <customwidget>
-   <class>GearButton</class>
-   <extends>QPushButton</extends>
+   <class>HalQSpinBox</class>
+   <extends>QSpinBox</extends>
+   <header>qtpyvcp.widgets.hal_widgets.hal_spinbox</header>
+  </customwidget>
+  <customwidget>
+   <class>GearSelector</class>
+   <extends>QWidget</extends>
    <header>mpg_button</header>
   </customwidget>
  </customwidgets>

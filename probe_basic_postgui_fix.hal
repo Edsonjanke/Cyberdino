@@ -27,12 +27,15 @@ net mpg-enabled => qtpyvcp.mpg-indicator.in
 # --- Aviso botao fisico: cycle-start fora de AUTO mostra mensagem na tela ---
 net cycle-blocked => qtpyvcp.cycle-start-button.blocked
 
-# --- Caixa de marchas: GearButton da UI controla gear-low ---
-# qtpyvcp.gear-button.checked (out): TRUE = reduzida, FALSE = alta
-# qtpyvcp.gear-button.spinning (in): desabilita widget quando spindle gira (M3/M4 ativo)
+# --- Caixa de marchas: GearSelector da UI (16 marchas) controla gear-sel{0..3} ---
+# qtpyvcp.gear-selector.sel{0,1,2,3} (out): indice da marcha em binario (0..15)
+# qtpyvcp.gear-selector.spinning     (in): desabilita widget quando spindle gira
 # Reusa sinal spindle-enable (ja existe como source spindle.0.on em Dino_Evo.hal)
-net gear-low <= qtpyvcp.gear-button.checked
-net spindle-enable => qtpyvcp.gear-button.spinning
+net gear-sel0 <= qtpyvcp.gear-selector.sel0
+net gear-sel1 <= qtpyvcp.gear-selector.sel1
+net gear-sel2 <= qtpyvcp.gear-selector.sel2
+net gear-sel3 <= qtpyvcp.gear-selector.sel3
+net spindle-enable => qtpyvcp.gear-selector.spinning
 
 # ############################################################################
 # AMS32 - PLC Modbus ASCII via Python (coolant)
@@ -43,11 +46,14 @@ loadusr -Wn ams32 python3 ams32_hal.py
 # Contador de pecas - incrementa em M30/M2, persiste em parts_count.txt
 # ############################################################################
 loadusr -Wn partcounter python3 partcounter.py
-net prog-is-running halui.program.is-running => partcounter.running
 # Display do contador na aba CUSTOMS (HalLabel parts_count)
-net parts-count <= partcounter.count => qtpyvcp.parts-count.in
+net parts-count <= partcounter.count => qtpyvcp.parts-count.in => qtpyvcp.parts-count-dro.in
 # Reset do contador via botao na aba CUSTOMS (HalButton parts_reset, pulse 200ms)
 net parts-count-reset <= qtpyvcp.parts-reset.out => partcounter.reset
+# Preset digitado + botao SET (HalQSpinBox parts_preset, HalButton parts_load)
+net parts-preset-val  <= qtpyvcp.parts-preset.out => partcounter.preset
+net parts-preset-load <= qtpyvcp.parts-load.out   => partcounter.load
+# partcounter.trigger fica solto: M101 pulsa via halcmd setp
 
 # Coolant M8/M9 -> PLC M100 -> Y0 (bomba)
 net coolant-flood    => ams32.cmd.00
