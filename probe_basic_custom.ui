@@ -19835,14 +19835,20 @@ border-radius: 4px;
                             </property>
                             <item>
                              <widget class="GearLabel" name="gear_current_dro">
+                              <property name="minimumSize">
+                               <size>
+                                <width>320</width>
+                                <height>0</height>
+                               </size>
+                              </property>
                               <property name="styleSheet">
                                <string notr="true">GearLabel {
     border: none;
     color: rgb(94, 115, 255);
     background: transparent;
     font: 28pt &quot;Bebas Kai&quot;;
-    padding-left: 12px;
-    padding-right: 12px;
+    padding-left: 8px;
+    padding-right: 8px;
 }</string>
                               </property>
                               <property name="text">
