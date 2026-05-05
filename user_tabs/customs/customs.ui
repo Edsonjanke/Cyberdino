@@ -249,6 +249,160 @@ QPushButton:pressed {
     </widget>
    </item>
    <item>
+    <widget class="QGroupBox" name="mdi_macros_group">
+     <property name="title">
+      <string>MACROS MDI</string>
+     </property>
+     <property name="maximumSize">
+      <size><width>700</width><height>340</height></size>
+     </property>
+     <layout class="QGridLayout" name="mdiMacrosLayout">
+      <property name="leftMargin"><number>15</number></property>
+      <property name="topMargin"><number>15</number></property>
+      <property name="rightMargin"><number>15</number></property>
+      <property name="bottomMargin"><number>15</number></property>
+      <property name="horizontalSpacing"><number>8</number></property>
+      <property name="verticalSpacing"><number>8</number></property>
+      <item row="0" column="0">
+       <widget class="MDIButton" name="mdi_m03_s300">
+        <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    font: 16pt &quot;Bebas Kai&quot;;
+    color: white;
+    border: 2px solid rgb(96, 96, 97);
+    border-radius: 6px;
+    background: rgb(86, 86, 87);
+}
+QPushButton:pressed { background: rgb(60, 120, 180); }</string>
+        </property>
+        <property name="text"><string>M03 S300</string></property>
+        <property name="MDICommand" stdset="0"><string>M3 S300</string></property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="MDIButton" name="mdi_m03_s600">
+        <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    font: 16pt &quot;Bebas Kai&quot;;
+    color: white;
+    border: 2px solid rgb(96, 96, 97);
+    border-radius: 6px;
+    background: rgb(86, 86, 87);
+}
+QPushButton:pressed { background: rgb(60, 120, 180); }</string>
+        </property>
+        <property name="text"><string>M03 S600</string></property>
+        <property name="MDICommand" stdset="0"><string>M3 S600</string></property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="MDIButton" name="mdi_m03_s900">
+        <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    font: 16pt &quot;Bebas Kai&quot;;
+    color: white;
+    border: 2px solid rgb(96, 96, 97);
+    border-radius: 6px;
+    background: rgb(86, 86, 87);
+}
+QPushButton:pressed { background: rgb(60, 120, 180); }</string>
+        </property>
+        <property name="text"><string>M03 S900</string></property>
+        <property name="MDICommand" stdset="0"><string>M3 S900</string></property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="MDIButton" name="mdi_m03_s1200">
+        <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    font: 16pt &quot;Bebas Kai&quot;;
+    color: white;
+    border: 2px solid rgb(96, 96, 97);
+    border-radius: 6px;
+    background: rgb(86, 86, 87);
+}
+QPushButton:pressed { background: rgb(60, 120, 180); }</string>
+        </property>
+        <property name="text"><string>M03 S1200</string></property>
+        <property name="MDICommand" stdset="0"><string>M3 S1200</string></property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="MDIButton" name="mdi_m04_s300">
+        <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    font: 16pt &quot;Bebas Kai&quot;;
+    color: white;
+    border: 2px solid rgb(96, 96, 97);
+    border-radius: 6px;
+    background: rgb(86, 86, 87);
+}
+QPushButton:pressed { background: rgb(180, 100, 60); }</string>
+        </property>
+        <property name="text"><string>M04 S300</string></property>
+        <property name="MDICommand" stdset="0"><string>M4 S300</string></property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="MDIButton" name="mdi_m04_s600">
+        <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    font: 16pt &quot;Bebas Kai&quot;;
+    color: white;
+    border: 2px solid rgb(96, 96, 97);
+    border-radius: 6px;
+    background: rgb(86, 86, 87);
+}
+QPushButton:pressed { background: rgb(180, 100, 60); }</string>
+        </property>
+        <property name="text"><string>M04 S600</string></property>
+        <property name="MDICommand" stdset="0"><string>M4 S600</string></property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="MDIButton" name="mdi_m04_s900">
+        <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    font: 16pt &quot;Bebas Kai&quot;;
+    color: white;
+    border: 2px solid rgb(96, 96, 97);
+    border-radius: 6px;
+    background: rgb(86, 86, 87);
+}
+QPushButton:pressed { background: rgb(180, 100, 60); }</string>
+        </property>
+        <property name="text"><string>M04 S900</string></property>
+        <property name="MDICommand" stdset="0"><string>M4 S900</string></property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="MDIButton" name="mdi_m04_s1200">
+        <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton {
+    font: 16pt &quot;Bebas Kai&quot;;
+    color: white;
+    border: 2px solid rgb(96, 96, 97);
+    border-radius: 6px;
+    background: rgb(86, 86, 87);
+}
+QPushButton:pressed { background: rgb(180, 100, 60); }</string>
+        </property>
+        <property name="text"><string>M04 S1200</string></property>
+        <property name="MDICommand" stdset="0"><string>M4 S1200</string></property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <spacer name="rightSpacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -280,6 +434,11 @@ QPushButton:pressed {
    <class>GearSelector</class>
    <extends>QWidget</extends>
    <header>mpg_button</header>
+  </customwidget>
+  <customwidget>
+   <class>MDIButton</class>
+   <extends>QPushButton</extends>
+   <header>qtpyvcp.widgets.button_widgets.mdi_button</header>
   </customwidget>
  </customwidgets>
  <resources/>
