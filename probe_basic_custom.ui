@@ -19840,15 +19840,14 @@ border-radius: 4px;
     border: none;
     color: rgb(94, 115, 255);
     background: transparent;
-    font: 18pt &quot;Bebas Kai&quot;;
-    padding-right: 10px;
+    font: 28pt &quot;Bebas Kai&quot;;
 }</string>
                               </property>
                               <property name="text">
                                <string>RPM MAX 2360</string>
                               </property>
                               <property name="alignment">
-                               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                               <set>Qt::AlignCenter</set>
                               </property>
                               <property name="pinBaseName" stdset="0">
                                <string>gear-current-dro</string>

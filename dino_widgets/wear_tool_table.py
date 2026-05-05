@@ -9,7 +9,7 @@ The X / Z columns shown in the UI are computed as total - wear (= geometry).
 import json
 import os
 
-from qtpy.QtCore import Qt, Slot, QSortFilterProxyModel
+from qtpy.QtCore import Qt, Slot, QLocale, QSortFilterProxyModel
 from qtpy.QtGui import QBrush, QColor
 from qtpy.QtWidgets import QTableView, QDoubleSpinBox
 
@@ -184,6 +184,10 @@ class WearToolModel(ToolModel):
 
 class WearItemDelegate(ItemDelegate):
 
+    # Locale C: aceita "." como separador decimal (teclado virtual envia ".";
+    # locale pt_BR padrao do sistema usa "," e o QDoubleSpinBox rejeita ".")
+    _C_LOCALE = QLocale(QLocale.C)
+
     def createEditor(self, parent, option, index):
         col = self._columns[index.column()]
         if col in ('XW', 'ZW'):
@@ -193,8 +197,12 @@ class WearItemDelegate(ItemDelegate):
             editor.setDecimals(4)
             editor.setProperty('stepType', 1)
             editor.setRange(-100, 100)
+            editor.setLocale(self._C_LOCALE)
             return editor
-        return super().createEditor(parent, option, index)
+        editor = super().createEditor(parent, option, index)
+        if isinstance(editor, QDoubleSpinBox):
+            editor.setLocale(self._C_LOCALE)
+        return editor
 
 
 class WearToolTable(ToolTable):
