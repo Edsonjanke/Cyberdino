@@ -19823,6 +19823,12 @@ border-radius: 4px;
                          </item>
                          <item>
                           <widget class="QWidget" name="widget_gear_dro" native="true">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="styleSheet">
                             <string notr="true"/>
                            </property>
