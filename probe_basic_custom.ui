@@ -19834,6 +19834,19 @@ border-radius: 4px;
                              <number>0</number>
                             </property>
                             <item>
+                             <spacer name="gear_dro_left_spacer">
+                              <property name="orientation">
+                               <enum>Qt::Horizontal</enum>
+                              </property>
+                              <property name="sizeHint" stdset="0">
+                               <size>
+                                <width>0</width>
+                                <height>0</height>
+                               </size>
+                              </property>
+                             </spacer>
+                            </item>
+                            <item>
                              <widget class="GearLabel" name="gear_current_dro">
                               <property name="minimumSize">
                                <size>
@@ -19861,6 +19874,19 @@ border-radius: 4px;
                                <string>gear-current-dro</string>
                               </property>
                              </widget>
+                            </item>
+                            <item>
+                             <spacer name="gear_dro_right_spacer">
+                              <property name="orientation">
+                               <enum>Qt::Horizontal</enum>
+                              </property>
+                              <property name="sizeHint" stdset="0">
+                               <size>
+                                <width>0</width>
+                                <height>0</height>
+                               </size>
+                              </property>
+                             </spacer>
                             </item>
                            </layout>
                           </widget>
