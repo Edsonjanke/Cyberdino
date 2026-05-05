@@ -27,15 +27,19 @@ net mpg-enabled => qtpyvcp.mpg-indicator.in
 # --- Aviso botao fisico: cycle-start fora de AUTO mostra mensagem na tela ---
 net cycle-blocked => qtpyvcp.cycle-start-button.blocked
 
-# --- Caixa de marchas: GearSelector da UI (16 marchas) controla gear-sel{0..3} ---
-# qtpyvcp.gear-selector.sel{0,1,2,3} (out): indice da marcha em binario (0..15)
-# qtpyvcp.gear-selector.spinning     (in): desabilita widget quando spindle gira
+# --- Caixa de marchas: GearSelector da UI (6 marchas) controla gear-sel{0..2} ---
+# qtpyvcp.gear-selector.sel{0,1,2} (out): indice da marcha em binario (0..5)
+# qtpyvcp.gear-selector.spinning   (in): desabilita widget quando spindle gira
 # Reusa sinal spindle-enable (ja existe como source spindle.0.on em Dino_Evo.hal)
 net gear-sel0 <= qtpyvcp.gear-selector.sel0
 net gear-sel1 <= qtpyvcp.gear-selector.sel1
 net gear-sel2 <= qtpyvcp.gear-selector.sel2
-net gear-sel3 <= qtpyvcp.gear-selector.sel3
 net spindle-enable => qtpyvcp.gear-selector.spinning
+
+# GearLabel no DRO: mostra a marcha selecionada (le os mesmos sinais)
+net gear-sel0 => qtpyvcp.gear-current-dro.sel0
+net gear-sel1 => qtpyvcp.gear-current-dro.sel1
+net gear-sel2 => qtpyvcp.gear-current-dro.sel2
 
 # ############################################################################
 # AMS32 - PLC Modbus ASCII via Python (coolant)

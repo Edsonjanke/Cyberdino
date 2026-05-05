@@ -93,7 +93,7 @@ QPushButton:disabled {
 }</string>
         </property>
         <property name="toolTip">
-         <string>Selecione a marcha (16 marchas em ordem decrescente: 2360, 1500, 950, 750, 600, 475, 375, 300, 236, 150, 118, 95, 90, 75, 60, 30 RPM). Desabilitado enquanto o spindle gira.</string>
+         <string>Selecione a marcha (6 marchas em ordem decrescente: 2360, 1500, 950, 600, 375, 236 RPM). Desabilitado enquanto o spindle gira.</string>
         </property>
         <property name="pinBaseName" stdset="0">
          <string>gear-selector</string>

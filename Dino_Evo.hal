@@ -17,7 +17,7 @@ loadrt lowpass names=lowpass.spindle,lowpass.spindle-rps
 loadrt scale  names=scale.spindle,scale.spindle-pwm
 loadrt mult2  names=mult2.spindle-gear
 loadrt mux16  names=mux16.spindle-cmd,mux16.gear-factor
-loadrt limit2 names=limit2.g01,limit2.g02,limit2.g03,limit2.g04,limit2.g05,limit2.g06,limit2.g07,limit2.g08,limit2.g09,limit2.g10,limit2.g11,limit2.g12,limit2.g13,limit2.g14,limit2.g15,limit2.g16
+loadrt limit2 names=limit2.g01,limit2.g02,limit2.g03,limit2.g04,limit2.g05,limit2.g06
 
 addf hm2_7i92.0.read          servo-thread
 addf motion-command-handler   servo-thread
@@ -38,16 +38,6 @@ addf limit2.g03               servo-thread
 addf limit2.g04               servo-thread
 addf limit2.g05               servo-thread
 addf limit2.g06               servo-thread
-addf limit2.g07               servo-thread
-addf limit2.g08               servo-thread
-addf limit2.g09               servo-thread
-addf limit2.g10               servo-thread
-addf limit2.g11               servo-thread
-addf limit2.g12               servo-thread
-addf limit2.g13               servo-thread
-addf limit2.g14               servo-thread
-addf limit2.g15               servo-thread
-addf limit2.g16               servo-thread
 addf mux16.spindle-cmd        servo-thread
 addf mux16.gear-factor        servo-thread
 addf mult2.spindle-gear       servo-thread
@@ -241,28 +231,19 @@ net spindle-vel-fb-rps-abs  <= abs.spindle-rps.out  => near.spindle.in2
 net spindle-at-speed        <= near.spindle.out
 
 #*******************************************
-# CAIXA DE MARCHAS - 16 marchas manuais (troca com maquina parada)
+# CAIXA DE MARCHAS - 6 marchas manuais (troca com maquina parada)
 #   idx  Marcha   RPM    ratio (motor/chuck = 2360/RPM)
 #    0   M01     2360    1.0000
 #    1   M02     1500    1.5733
 #    2   M03      950    2.4842
-#    3   M04      750    3.1467
-#    4   M05      600    3.9333
-#    5   M06      475    4.9684
-#    6   M07      375    6.2933
-#    7   M08      300    7.8667
-#    8   M09      236   10.0000
-#    9   M10      150   15.7333
-#   10   M11      118   20.0000
-#   11   M12       95   24.8421
-#   12   M13       90   26.2222
-#   13   M14       75   31.4667
-#   14   M15       60   39.3333
-#   15   M16       30   78.6667
-# Selecao via 4 bits (sel0/sel1/sel2/sel3) vindos do widget GearSelector na UI:
+#    3   M04      600    3.9333
+#    4   M05      375    6.2933
+#    5   M06      236   10.0000
+# Selecao via 3 bits (sel0/sel1/sel2) vindos do widget GearSelector na UI:
 #   - mux16.spindle-cmd  : seleciona limit2.gNN (clampa cmd_chuck por marcha)
 #   - mux16.gear-factor  : seleciona ratio aplicado ao motor (mult2 antes do scale.spindle-pwm)
 # Encoder fica na placa (chuck), entao at-speed/PID/threading operam em RPM real do chuck.
+# Mantem mux16 (sel3 amarrado em 0 via setp); apenas in00..in05 usados.
 #*******************************************
 setp limit2.g01.max  2360
 setp limit2.g01.min -2360
@@ -270,32 +251,12 @@ setp limit2.g02.max  1500
 setp limit2.g02.min -1500
 setp limit2.g03.max   950
 setp limit2.g03.min  -950
-setp limit2.g04.max   750
-setp limit2.g04.min  -750
-setp limit2.g05.max   600
-setp limit2.g05.min  -600
-setp limit2.g06.max   475
-setp limit2.g06.min  -475
-setp limit2.g07.max   375
-setp limit2.g07.min  -375
-setp limit2.g08.max   300
-setp limit2.g08.min  -300
-setp limit2.g09.max   236
-setp limit2.g09.min  -236
-setp limit2.g10.max   150
-setp limit2.g10.min  -150
-setp limit2.g11.max   118
-setp limit2.g11.min  -118
-setp limit2.g12.max    95
-setp limit2.g12.min   -95
-setp limit2.g13.max    90
-setp limit2.g13.min   -90
-setp limit2.g14.max    75
-setp limit2.g14.min   -75
-setp limit2.g15.max    60
-setp limit2.g15.min   -60
-setp limit2.g16.max    30
-setp limit2.g16.min   -30
+setp limit2.g04.max   600
+setp limit2.g04.min  -600
+setp limit2.g05.max   375
+setp limit2.g05.min  -375
+setp limit2.g06.max   236
+setp limit2.g06.min  -236
 # maxv = max rate de mudanca (RPM/s). Alto para nao limitar (queremos clamp puro de valor)
 setp limit2.g01.maxv 1e9
 setp limit2.g02.maxv 1e9
@@ -303,35 +264,19 @@ setp limit2.g03.maxv 1e9
 setp limit2.g04.maxv 1e9
 setp limit2.g05.maxv 1e9
 setp limit2.g06.maxv 1e9
-setp limit2.g07.maxv 1e9
-setp limit2.g08.maxv 1e9
-setp limit2.g09.maxv 1e9
-setp limit2.g10.maxv 1e9
-setp limit2.g11.maxv 1e9
-setp limit2.g12.maxv 1e9
-setp limit2.g13.maxv 1e9
-setp limit2.g14.maxv 1e9
-setp limit2.g15.maxv 1e9
-setp limit2.g16.maxv 1e9
 
 setp mux16.gear-factor.in00  1.0000     # M01: 2360 RPM
 setp mux16.gear-factor.in01  1.5733     # M02: 1500 RPM
 setp mux16.gear-factor.in02  2.4842     # M03:  950 RPM
-setp mux16.gear-factor.in03  3.1467     # M04:  750 RPM
-setp mux16.gear-factor.in04  3.9333     # M05:  600 RPM
-setp mux16.gear-factor.in05  4.9684     # M06:  475 RPM
-setp mux16.gear-factor.in06  6.2933     # M07:  375 RPM
-setp mux16.gear-factor.in07  7.8667     # M08:  300 RPM
-setp mux16.gear-factor.in08 10.0000     # M09:  236 RPM
-setp mux16.gear-factor.in09 15.7333     # M10:  150 RPM
-setp mux16.gear-factor.in10 20.0000     # M11:  118 RPM
-setp mux16.gear-factor.in11 24.8421     # M12:   95 RPM
-setp mux16.gear-factor.in12 26.2222     # M13:   90 RPM
-setp mux16.gear-factor.in13 31.4667     # M14:   75 RPM
-setp mux16.gear-factor.in14 39.3333     # M15:   60 RPM
-setp mux16.gear-factor.in15 78.6667     # M16:   30 RPM
+setp mux16.gear-factor.in03  3.9333     # M04:  600 RPM
+setp mux16.gear-factor.in04  6.2933     # M05:  375 RPM
+setp mux16.gear-factor.in05 10.0000     # M06:  236 RPM
 
-# Sinais gear-sel{0..3}: source vem do widget GearSelector da UI (postgui hal)
+# sel3 nao e usado (idx max = 5); fixa em 0
+setp mux16.spindle-cmd.sel3  0
+setp mux16.gear-factor.sel3  0
+
+# Sinais gear-sel{0..2}: source vem do widget GearSelector da UI (postgui hal)
 # Destinos: ambos os mux16 (clamp do cmd e ratio do PWM)
 net gear-sel0 => mux16.spindle-cmd.sel0
 net gear-sel0 => mux16.gear-factor.sel0
@@ -339,8 +284,6 @@ net gear-sel1 => mux16.spindle-cmd.sel1
 net gear-sel1 => mux16.gear-factor.sel1
 net gear-sel2 => mux16.spindle-cmd.sel2
 net gear-sel2 => mux16.gear-factor.sel2
-net gear-sel3 => mux16.spindle-cmd.sel3
-net gear-sel3 => mux16.gear-factor.sel3
 
 # Caminho do comando: cmd_chuck -> limit2.gNN (clampa por marcha) -> mux16 -> pid.s.command
 net spindle-vel-cmd-rpm => limit2.g01.in
@@ -349,32 +292,12 @@ net spindle-vel-cmd-rpm => limit2.g03.in
 net spindle-vel-cmd-rpm => limit2.g04.in
 net spindle-vel-cmd-rpm => limit2.g05.in
 net spindle-vel-cmd-rpm => limit2.g06.in
-net spindle-vel-cmd-rpm => limit2.g07.in
-net spindle-vel-cmd-rpm => limit2.g08.in
-net spindle-vel-cmd-rpm => limit2.g09.in
-net spindle-vel-cmd-rpm => limit2.g10.in
-net spindle-vel-cmd-rpm => limit2.g11.in
-net spindle-vel-cmd-rpm => limit2.g12.in
-net spindle-vel-cmd-rpm => limit2.g13.in
-net spindle-vel-cmd-rpm => limit2.g14.in
-net spindle-vel-cmd-rpm => limit2.g15.in
-net spindle-vel-cmd-rpm => limit2.g16.in
 net spindle-cmd-g01 <= limit2.g01.out => mux16.spindle-cmd.in00
 net spindle-cmd-g02 <= limit2.g02.out => mux16.spindle-cmd.in01
 net spindle-cmd-g03 <= limit2.g03.out => mux16.spindle-cmd.in02
 net spindle-cmd-g04 <= limit2.g04.out => mux16.spindle-cmd.in03
 net spindle-cmd-g05 <= limit2.g05.out => mux16.spindle-cmd.in04
 net spindle-cmd-g06 <= limit2.g06.out => mux16.spindle-cmd.in05
-net spindle-cmd-g07 <= limit2.g07.out => mux16.spindle-cmd.in06
-net spindle-cmd-g08 <= limit2.g08.out => mux16.spindle-cmd.in07
-net spindle-cmd-g09 <= limit2.g09.out => mux16.spindle-cmd.in08
-net spindle-cmd-g10 <= limit2.g10.out => mux16.spindle-cmd.in09
-net spindle-cmd-g11 <= limit2.g11.out => mux16.spindle-cmd.in10
-net spindle-cmd-g12 <= limit2.g12.out => mux16.spindle-cmd.in11
-net spindle-cmd-g13 <= limit2.g13.out => mux16.spindle-cmd.in12
-net spindle-cmd-g14 <= limit2.g14.out => mux16.spindle-cmd.in13
-net spindle-cmd-g15 <= limit2.g15.out => mux16.spindle-cmd.in14
-net spindle-cmd-g16 <= limit2.g16.out => mux16.spindle-cmd.in15
 net spindle-cmd-clamped <= mux16.spindle-cmd.out-f => pid.s.command
 
 #*******************************************

@@ -19783,7 +19783,7 @@ border-radius: 4px;
 }</string>
                               </property>
                               <property name="text">
-                               <string>PCS</string>
+                               <string>Peças</string>
                               </property>
                               <property name="alignment">
                                <set>Qt::AlignCenter</set>
@@ -19815,6 +19815,62 @@ border-radius: 4px;
                               </property>
                               <property name="pinType" stdset="0">
                                <enum>HalLabel::s32</enum>
+                              </property>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QWidget" name="widget_gear_dro" native="true">
+                           <property name="maximumSize">
+                            <size>
+                             <width>220</width>
+                             <height>16777215</height>
+                            </size>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">padding-left: 10px;</string>
+                           </property>
+                           <layout class="QHBoxLayout" name="horizontalLayout_gear_dro">
+                            <item>
+                             <widget class="QLabel" name="gear_label_dro">
+                              <property name="styleSheet">
+                               <string notr="true">QLabel {
+    border: none;
+    color: white;
+    background: transparent;
+    font: 18pt &quot;Bebas Kai&quot;;
+}</string>
+                              </property>
+                              <property name="text">
+                               <string>Marcha</string>
+                              </property>
+                              <property name="alignment">
+                               <set>Qt::AlignCenter</set>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="GearLabel" name="gear_current_dro">
+                              <property name="styleSheet">
+                               <string notr="true">GearLabel {
+    border: none;
+    color: rgb(94, 115, 255);
+    background: transparent;
+    font: 18pt &quot;Bebas Kai&quot;;
+    padding-right: 10px;
+}</string>
+                              </property>
+                              <property name="text">
+                               <string>M01
+2360 RPM</string>
+                              </property>
+                              <property name="alignment">
+                               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                              </property>
+                              <property name="pinBaseName" stdset="0">
+                               <string>gear-current-dro</string>
                               </property>
                              </widget>
                             </item>
@@ -24463,6 +24519,11 @@ font: 11pt bebas kai;
   <customwidget>
    <class>GearButton</class>
    <extends>QPushButton</extends>
+   <header>mpg_button</header>
+  </customwidget>
+  <customwidget>
+   <class>GearLabel</class>
+   <extends>QLabel</extends>
    <header>mpg_button</header>
   </customwidget>
  </customwidgets>
