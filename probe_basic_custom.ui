@@ -19823,24 +19823,38 @@ border-radius: 4px;
                          </item>
                          <item>
                           <widget class="QWidget" name="widget_gear_dro" native="true">
-                           <property name="maximumSize">
+                           <property name="minimumSize">
                             <size>
-                             <width>260</width>
-                             <height>16777215</height>
+                             <width>360</width>
+                             <height>0</height>
                             </size>
                            </property>
                            <property name="styleSheet">
-                            <string notr="true">padding-left: 10px;</string>
+                            <string notr="true"/>
                            </property>
                            <layout class="QHBoxLayout" name="horizontalLayout_gear_dro">
+                            <property name="leftMargin">
+                             <number>10</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>10</number>
+                            </property>
                             <item>
                              <widget class="GearLabel" name="gear_current_dro">
+                              <property name="minimumSize">
+                               <size>
+                                <width>340</width>
+                                <height>0</height>
+                               </size>
+                              </property>
                               <property name="styleSheet">
                                <string notr="true">GearLabel {
     border: none;
     color: rgb(94, 115, 255);
     background: transparent;
     font: 28pt &quot;Bebas Kai&quot;;
+    padding-left: 8px;
+    padding-right: 8px;
 }</string>
                               </property>
                               <property name="text">
