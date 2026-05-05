@@ -19837,7 +19837,7 @@ border-radius: 4px;
                              <widget class="GearLabel" name="gear_current_dro">
                               <property name="minimumSize">
                                <size>
-                                <width>320</width>
+                                <width>240</width>
                                 <height>0</height>
                                </size>
                               </property>
@@ -19852,7 +19852,7 @@ border-radius: 4px;
 }</string>
                               </property>
                               <property name="text">
-                               <string>RPM MAX 2360</string>
+                               <string>RPM 2360</string>
                               </property>
                               <property name="alignment">
                                <set>Qt::AlignCenter</set>
