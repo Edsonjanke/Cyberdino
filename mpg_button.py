@@ -283,8 +283,8 @@ class GearLabel(QLabel, HALWidget, VCPWidget):
     def _update_text(self):
         idx = self._idx
         if 0 <= idx < len(self.GEARS):
-            name, rpm = self.GEARS[idx]
-            self.setText("{}\n{} RPM".format(name, rpm))
+            _name, rpm = self.GEARS[idx]
+            self.setText("RPM MAX {}".format(rpm))
         else:
             self.setText("--")
 
