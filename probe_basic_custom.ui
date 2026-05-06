@@ -19844,9 +19844,12 @@ border-radius: 4px;
                               <property name="orientation">
                                <enum>Qt::Horizontal</enum>
                               </property>
+                              <property name="sizeType">
+                               <enum>QSizePolicy::Expanding</enum>
+                              </property>
                               <property name="sizeHint" stdset="0">
                                <size>
-                                <width>0</width>
+                                <width>40</width>
                                 <height>0</height>
                                </size>
                               </property>
@@ -19854,6 +19857,12 @@ border-radius: 4px;
                             </item>
                             <item>
                              <widget class="GearLabel" name="gear_current_dro">
+                              <property name="sizePolicy">
+                               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                               </sizepolicy>
+                              </property>
                               <property name="minimumSize">
                                <size>
                                 <width>240</width>
@@ -19886,9 +19895,12 @@ border-radius: 4px;
                               <property name="orientation">
                                <enum>Qt::Horizontal</enum>
                               </property>
+                              <property name="sizeType">
+                               <enum>QSizePolicy::Expanding</enum>
+                              </property>
                               <property name="sizeHint" stdset="0">
                                <size>
-                                <width>0</width>
+                                <width>40</width>
                                 <height>0</height>
                                </size>
                               </property>
