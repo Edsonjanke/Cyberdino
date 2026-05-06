@@ -19822,94 +19822,6 @@ border-radius: 4px;
                           </widget>
                          </item>
                          <item>
-                          <widget class="QWidget" name="widget_gear_dro" native="true">
-                           <property name="sizePolicy">
-                            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                             <horstretch>0</horstretch>
-                             <verstretch>0</verstretch>
-                            </sizepolicy>
-                           </property>
-                           <property name="styleSheet">
-                            <string notr="true"/>
-                           </property>
-                           <layout class="QHBoxLayout" name="horizontalLayout_gear_dro">
-                            <property name="leftMargin">
-                             <number>0</number>
-                            </property>
-                            <property name="rightMargin">
-                             <number>0</number>
-                            </property>
-                            <item>
-                             <spacer name="gear_dro_left_spacer">
-                              <property name="orientation">
-                               <enum>Qt::Horizontal</enum>
-                              </property>
-                              <property name="sizeType">
-                               <enum>QSizePolicy::Expanding</enum>
-                              </property>
-                              <property name="sizeHint" stdset="0">
-                               <size>
-                                <width>40</width>
-                                <height>0</height>
-                               </size>
-                              </property>
-                             </spacer>
-                            </item>
-                            <item>
-                             <widget class="GearLabel" name="gear_current_dro">
-                              <property name="sizePolicy">
-                               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                                <horstretch>0</horstretch>
-                                <verstretch>0</verstretch>
-                               </sizepolicy>
-                              </property>
-                              <property name="minimumSize">
-                               <size>
-                                <width>240</width>
-                                <height>0</height>
-                               </size>
-                              </property>
-                              <property name="styleSheet">
-                               <string notr="true">GearLabel {
-    border: none;
-    color: rgb(94, 115, 255);
-    background: transparent;
-    font: 28pt &quot;Bebas Kai&quot;;
-    padding-left: 8px;
-    padding-right: 8px;
-}</string>
-                              </property>
-                              <property name="text">
-                               <string>RPM 2360</string>
-                              </property>
-                              <property name="alignment">
-                               <set>Qt::AlignCenter</set>
-                              </property>
-                              <property name="pinBaseName" stdset="0">
-                               <string>gear-current-dro</string>
-                              </property>
-                             </widget>
-                            </item>
-                            <item>
-                             <spacer name="gear_dro_right_spacer">
-                              <property name="orientation">
-                               <enum>Qt::Horizontal</enum>
-                              </property>
-                              <property name="sizeType">
-                               <enum>QSizePolicy::Expanding</enum>
-                              </property>
-                              <property name="sizeHint" stdset="0">
-                               <size>
-                                <width>40</width>
-                                <height>0</height>
-                               </size>
-                              </property>
-                             </spacer>
-                            </item>
-                           </layout>
-                          </widget>
-                         </item>
-                         <item>
                           <widget class="QWidget" name="widget" native="true">
                            <property name="sizePolicy">
                             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -24551,11 +24463,6 @@ font: 11pt bebas kai;
   <customwidget>
    <class>GearButton</class>
    <extends>QPushButton</extends>
-   <header>mpg_button</header>
-  </customwidget>
-  <customwidget>
-   <class>GearLabel</class>
-   <extends>QLabel</extends>
    <header>mpg_button</header>
   </customwidget>
  </customwidgets>
