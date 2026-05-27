@@ -181,6 +181,23 @@ class WearToolModel(ToolModel):
         self.endResetModel()
         return True
 
+    def clearWearAxisForTool(self, tnum, axis):
+        # axis = 'x' ou 'z'. Mantem o outro eixo intacto. Persiste imediatamente.
+        tnum = int(tnum)
+        if tnum in self._wear and abs(self._wear[tnum].get(axis, 0.0)) > 1e-9:
+            tbl_key = 'X' if axis == 'x' else 'Z'
+            old = self._wear[tnum].get(axis, 0.0)
+            if tnum in self._tool_table:
+                self._tool_table[tnum][tbl_key] -= old
+            self._wear[tnum][axis] = 0.0
+            if abs(self._wear[tnum].get('x', 0.0)) < 1e-9 and \
+               abs(self._wear[tnum].get('z', 0.0)) < 1e-9:
+                del self._wear[tnum]
+        self._save_wear()
+        self.beginResetModel()
+        self.endResetModel()
+        return True
+
 
 class WearItemDelegate(ItemDelegate):
 
@@ -247,3 +264,17 @@ class WearToolTable(ToolTable):
         except (KeyError, IndexError):
             return
         self.tool_model.clearWearForTool(tnum)
+
+    @Slot(str)
+    def clearWearAxisCurrentTool(self, axis):
+        # Zera o desgaste do eixo `axis` ('x' ou 'z') para a ferramenta atualmente
+        # carregada. Usado pelos touch_off para alinhar com comportamento Fanuc.
+        from qtpyvcp.plugins import getPlugin
+        STATUS = getPlugin('status')
+        try:
+            tnum = int(STATUS.tool_in_spindle.value or 0)
+        except (AttributeError, ValueError, TypeError):
+            return
+        if tnum <= 0:
+            return
+        self.tool_model.clearWearAxisForTool(tnum, axis)
