@@ -30,7 +30,7 @@ G90 ; Absolute Distance
 #<starting_X> = #<_x> (starting X)
 #<starting_Z> = #<_z> (starting Z)
 
-G96 D#<radius_maxrpm> S#<radius_ss> ; Constant Surface Speed Mode
+o<g96> call [#<radius_maxrpm>] [#<radius_ss>] ; Constant Surface Speed Mode (grava D em #5403)
 M3            ; Start Spindle
 G95 F#<radius_feed>      ; Feed-Per-Rev Mode
 G4P1          ; Wait to reach speed

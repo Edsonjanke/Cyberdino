@@ -18,8 +18,8 @@
 
 # --- Componentes ---
 loadrt encoder num_chan=2
-loadrt not names=not.0,not.axis-sel,not.mode-auto,not.mode-mdi,not.interlock
-loadrt and2 names=and2.jog-x,and2.jog-z,and2.mode-jog,and2.interlock,and2.cycle-start,and2.cycle-run,and2.cycle-resume,and2.cycle-blocked,and2.estop
+loadrt not names=not.0,not.axis-sel,not.mode-auto,not.mode-mdi,not.interlock,not.paused
+loadrt and2 names=and2.jog-x,and2.jog-z,and2.mode-jog,and2.interlock,and2.interlock-paused,and2.mode-mdi-paused,and2.mode-manual-paused,and2.cycle-start,and2.cycle-run,and2.cycle-resume,and2.cycle-blocked,and2.estop
 
 addf encoder.update-counters servo-thread
 addf encoder.capture-position servo-thread
@@ -28,7 +28,11 @@ addf not.axis-sel servo-thread
 addf not.mode-auto servo-thread
 addf not.mode-mdi servo-thread
 addf not.interlock servo-thread
+addf not.paused servo-thread
 addf and2.interlock servo-thread
+addf and2.interlock-paused servo-thread
+addf and2.mode-mdi-paused servo-thread
+addf and2.mode-manual-paused servo-thread
 addf and2.jog-x servo-thread
 addf and2.jog-z servo-thread
 addf and2.mode-jog servo-thread
@@ -51,7 +55,10 @@ net estop-all-ok      <= and2.estop.out
 net estop-all-ok      => iocontrol.0.emc-enable-in
 
 # --- Software encoder MPG ---
-setp encoder.0.x4-mode 1
+# x4-mode 0: 1 count por clique (detente) do volante, em vez de 4.
+# Assim 1 clique = exatamente o incremento escolhido no JogIncrement
+# (0.01/0.1/1 mm) -> avanco por volta ~4x menor (mais fino).
+setp encoder.0.x4-mode 0
 setp encoder.0.counter-mode 0
 
 net mpg-a encoder.0.phase-A <= hm2_7i92.0.gpio.030.in
@@ -61,11 +68,10 @@ net mpg-b encoder.0.phase-B <= hm2_7i92.0.gpio.031.in
 net mpg-counts encoder.0.counts => joint.0.jog-counts joint.1.jog-counts
 net mpg-counts                  => axis.x.jog-counts  axis.z.jog-counts
 
-# Escala: 0.01mm por click
-setp joint.0.jog-scale 0.01
-setp joint.1.jog-scale 0.01
-setp axis.x.jog-scale  0.01
-setp axis.z.jog-scale  0.01
+# Escala (mm por click): dinamica, vinda do widget JogIncrement (aba CUSTOMS).
+# Os 4 pins jog-scale sao dirigidos por qtpyvcp.jog-increment.scale no postgui
+# (ver probe_basic_postgui_fix.hal). NAO usar setp aqui: conflitaria com o net.
+# Default (0.01mm) e o estado inicial publicado pelo widget ao subir a GUI.
 
 # --- Chave Enable: ON (GND) = MPG ativo ---
 net mpg-enabled <= hm2_7i92.0.gpio.027.in_not
@@ -96,15 +102,26 @@ net axis-select-z => joint.1.jog-enable axis.z.jog-enable
 #   GPIO.023 -> GND = MDI
 #   Ambos soltos    = JOG (manual)
 
+# halui.mode.mdi e halui.mode.manual gated por NOT prog-paused: mover a chave
+# durante pause nao tenta trocar modo (LinuxCNC retorna erro "impossivel mudar
+# modo enquanto AUTO e interp nao IDLE"). halui.mode.auto fica direto: voltar
+# pra AUTO durante pause e no-op (ja esta em AUTO). MPG jog ainda funciona
+# em AUTO paused pois joint.N.jog-enable nao depende do modo halui.
 net mode-auto   halui.mode.auto   <= hm2_7i92.0.gpio.024.in_not
-net mode-mdi    halui.mode.mdi    <= hm2_7i92.0.gpio.023.in_not
+net mode-mdi    <= hm2_7i92.0.gpio.023.in_not
+net mode-mdi    => and2.mode-mdi-paused.in0
+net not-paused  => and2.mode-mdi-paused.in1
+net mode-mdi-gated halui.mode.mdi <= and2.mode-mdi-paused.out
 
 # JOG = nenhum dos dois ativo (ambos soltos)
 net mode-auto  => not.mode-auto.in
 net mode-mdi   => not.mode-mdi.in
 net not-auto   <= not.mode-auto.out => and2.mode-jog.in0
 net not-mdi    <= not.mode-mdi.out  => and2.mode-jog.in1
-net mode-manual halui.mode.manual   <= and2.mode-jog.out
+net mode-manual <= and2.mode-jog.out
+net mode-manual => and2.mode-manual-paused.in0
+net not-paused  => and2.mode-manual-paused.in1
+net mode-manual-gated halui.mode.manual <= and2.mode-manual-paused.out
 
 # =============================================
 #  INTERLOCK: Cycle Start so funciona em AUTO
@@ -112,10 +129,15 @@ net mode-manual halui.mode.manual   <= and2.mode-jog.out
 # Se programa AUTO rodar e chave sair de AUTO -> para imediatamente
 # Usa halui.mode.is-auto (modo atual) em vez de halui.program.is-running
 # (que tambem fica TRUE durante MDI e mataria comandos do painel)
+# Gated por NOT prog-paused: chave pode ir pra JOG durante pause sem matar
+# o programa, permitindo jog manual no MPG enquanto pausado.
 net mode-auto  => not.interlock.in
 net not-auto-sw   not.interlock.out   => and2.interlock.in0
 net mode-is-auto     => and2.interlock.in1
-net force-stop    and2.interlock.out  => halui.program.stop
+net interlock-raw and2.interlock.out  => and2.interlock-paused.in1
+net prog-paused      => not.paused.in
+net not-paused    not.paused.out      => and2.interlock-paused.in0
+net force-stop    and2.interlock-paused.out => halui.program.stop
 
 # =============================================
 #  BOTOES FISICOS: CYCLE START, PAUSE/RESUME, RESET
@@ -176,15 +198,15 @@ setp halui.feed-override.scale 0.01
 setp halui.feed-override.count-enable 1
 
 # =============================================
-#  SPINDLE OVERRIDE via MPG em modo AUTO
+#  RAPID OVERRIDE via MPG em modo AUTO
 # =============================================
-# Em AUTO: MPG roda -> ajusta spindle override (chave MPG ignorada)
+# Em AUTO: MPG roda -> ajusta rapid override (chave MPG ignorada)
 # Em JOG/MDI: MPG faz jog normalmente (override count-enable = FALSE)
 # Escala 0.01 = 1% por click
 
-net mpg-counts       => halui.spindle.0.override.counts
-setp halui.spindle.0.override.scale 0.01
-net mode-is-auto     halui.mode.is-auto => halui.spindle.0.override.count-enable
+net mpg-counts       => halui.rapid-override.counts
+setp halui.rapid-override.scale 0.01
+net mode-is-auto     halui.mode.is-auto => halui.rapid-override.count-enable
 
 # =============================================
 #  FIM DE CURSO - Chave compartilhada X e Z

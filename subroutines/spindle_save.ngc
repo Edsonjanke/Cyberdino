@@ -1,0 +1,17 @@
+; o<spindle_save> call
+; Salva estado do spindle (G96/G97 mode, S word, D) em params persistentes:
+;   #5400 = 1 se G96 ativo (CSS)
+;   #5401 = 1 se G97 ativo (RPM)
+;   #5402 = S word atual
+;   #5403 = D corrente do G96 (atualizado por o<g96> a cada chamada)
+;
+; LinuxCNC nao expoe D do G50 via named param; por isso a unica forma
+; de ter o D salvo aqui eh os G96 do projeto usarem o wrapper o<g96>.
+;
+; Restaurar depois com: o<spindle_restore> call
+o<spindle_save> sub
+  #5400 = #<_spindle_css_mode>
+  #5401 = #<_spindle_rpm_mode>
+  #5402 = #<_spindle>
+o<spindle_save> endsub
+M2

@@ -23,6 +23,7 @@ Retrofit de torno convencional "Dino Evo" para CNC.
 - [[13 - Painel Secundario Pi 3B+]]
 - [[14 - Caixa de Marchas e Aba CUSTOMS]]
 - [[15 - Tool Wear Table e Touch Off]]
+- [[16 - Interface v2 Fanuc e Atalhos]]
 
 ### Referencia
 - [[20 - Parametros VFD 9600]] (atual)
@@ -32,5 +33,5 @@ Retrofit de torno convencional "Dino Evo" para CNC.
 - [[23 - Erros e Solucoes]]
 
 ---
-**Status:** Em operacao desde marco 2026. VFD 9600 instalado 2026-04-23. Caixa de marchas + aba CUSTOMS adicionadas 2026-04-29.
-**Ultima atualizacao:** 2026-05-27
+**Status:** Em operacao desde marco 2026. VFD 9600 instalado 2026-04-23. Caixa de marchas + aba CUSTOMS adicionadas 2026-04-29. Interface v2 (tema Fanuc, PT-BR, aba EDIT, atalhos de desgaste) 2026-07-05.
+**Ultima atualizacao:** 2026-07-05

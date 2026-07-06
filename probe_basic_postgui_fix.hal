@@ -27,6 +27,25 @@ net mpg-enabled => qtpyvcp.mpg-indicator.in
 # --- Aviso botao fisico: cycle-start fora de AUTO mostra mensagem na tela ---
 net cycle-blocked => qtpyvcp.cycle-start-button.blocked
 
+# --- Botoes Spindle na aba CUSTOMS (HalButton pulseOnPress 200ms) ---
+# PARA SPINDLE: drive halui.spindle.0.stop (via spindle-manual-stop, Dino_Evo.hal:355)
+#               + dispara save no dino_spindle (snapshot RPM atual)
+# LIGA M3/M4:   roteia pro dino_spindle.restore-cw/ccw que envia cmd.spindle(dir, rpm)
+#               direto via Python na ultima RPM salva. NAO usa halui.spindle.0.forward
+#               (que usaria S literal como RPM, errado em G96/CSS).
+net spindle-manual-stop <= qtpyvcp.spindle-off.out
+net spindle-manual-stop => dino_spindle.save
+net spindle-restore-cw  <= qtpyvcp.spindle-on-cw.out  => dino_spindle.restore-cw
+net spindle-restore-ccw <= qtpyvcp.spindle-on-ccw.out => dino_spindle.restore-ccw
+
+# Wire RPM atual (calculada pelo interp ja considerando G96/CSS) pro componente.
+# Sinal spindle-vel-cmd-rpm ja sourceia spindle.0.speed-out em Dino_Evo.hal:179.
+net spindle-vel-cmd-rpm => dino_spindle.speed-in
+
+# D do G96 (max RPM CSS): o<g96> faz M68 E5 Q<D> -> motion.analog-out-05.
+# customs.py le esse pin pra atualizar o label MAX RPM em tempo real.
+net dino-css-d <= motion.analog-out-05 => dino_spindle.css-d
+
 # --- Caixa de marchas: GearSelector da UI (6 marchas) controla gear-sel{0..2} ---
 # qtpyvcp.gear-selector.sel{0,1,2} (out): indice da marcha em binario (0..5)
 # qtpyvcp.gear-selector.spinning   (in): desabilita widget quando spindle gira
@@ -35,6 +54,21 @@ net gear-sel0 <= qtpyvcp.gear-selector.sel0
 net gear-sel1 <= qtpyvcp.gear-selector.sel1
 net gear-sel2 <= qtpyvcp.gear-selector.sel2
 net spindle-enable => qtpyvcp.gear-selector.spinning
+
+# GearLabel no DRO: mostra a marcha atual (M0X - RPM). Le os mesmos 3 bits
+# que o GearSelector publica (so adiciona consumidores aos sinais existentes).
+net gear-sel0 => qtpyvcp.gear-current-dro.sel0
+net gear-sel1 => qtpyvcp.gear-current-dro.sel1
+net gear-sel2 => qtpyvcp.gear-current-dro.sel2
+
+# --- Incremento do MPG: JogIncrement da UI (0.01/0.1/1 mm) controla jog-scale ---
+# qtpyvcp.jog-increment.scale (float out): mm por count do volante.
+# Substitui os antigos setp jog-scale (removidos de custom.hal).
+net jog-increment-scale <= qtpyvcp.jog-increment.scale
+net jog-increment-scale => joint.0.jog-scale
+net jog-increment-scale => joint.1.jog-scale
+net jog-increment-scale => axis.x.jog-scale
+net jog-increment-scale => axis.z.jog-scale
 
 # ############################################################################
 # AMS32 - PLC Modbus ASCII via Python (coolant)
@@ -53,6 +87,13 @@ net parts-count-reset <= qtpyvcp.parts-reset.out => partcounter.reset
 net parts-preset-val  <= qtpyvcp.parts-preset.out => partcounter.preset
 net parts-preset-load <= qtpyvcp.parts-load.out   => partcounter.load
 # partcounter.trigger fica solto: M101 pulsa via halcmd setp
+
+# ---angulo da placa (0-360 graus, relativo ao startup)---
+# chuck_angle.py le spindle-revs (revolucoes do encoder.01) e calcula
+# (revs % 1.0)*360. Mostrado no DRO custom (HalLabel chuck_angle_dro).
+loadusr -Wn chuckangle python3 chuck_angle.py
+net spindle-revs  => chuckangle.revs
+net chuck-angle   <= chuckangle.angle => qtpyvcp.chuck-angle.in
 
 # Coolant M8/M9 -> PLC M100 -> Y0 (bomba)
 net coolant-flood    => ams32.cmd.00

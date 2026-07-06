@@ -1,0 +1,10 @@
+; o<g96> call [D_max_rpm] [S_surface]
+; Wrapper de G96: grava D em #5403 (persistente) e executa G96 D S.
+; Necessario porque LinuxCNC nao expoe o D do G50 via named param,
+; e precisamos lembrar do D pro label MAX RPM e pro o<spindle_restore>.
+o<g96> sub
+  #5403 = #1
+  M68 E5 Q#1     ; espelha D em motion.analog-out-05 (lido pelo label MAX RPM)
+  G96 D[#1] S[#2]
+o<g96> endsub
+M2

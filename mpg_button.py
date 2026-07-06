@@ -10,7 +10,7 @@ GearLabel        - rotulo que mostra a marcha atual lendo 3 bits sel0/sel1/sel2
 import linuxcnc
 from qtpy.QtCore import Qt, Property, QSettings
 from qtpy.QtWidgets import (QPushButton, QMessageBox, QWidget, QGridLayout,
-                            QButtonGroup, QLabel)
+                            QButtonGroup, QLabel, QComboBox, QVBoxLayout)
 from qtpyvcp import hal
 from qtpyvcp.widgets import HALWidget, VCPWidget
 from qtpyvcp.actions import bindWidget, InvalidAction
@@ -195,32 +195,21 @@ class GearSelector(QWidget, HALWidget, VCPWidget):
         if saved_idx < 0 or saved_idx >= len(self.GEARS):
             saved_idx = 0
 
-        self._group = QButtonGroup(self)
-        self._group.setExclusive(True)
-
-        layout = QGridLayout(self)
+        layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setHorizontalSpacing(6)
-        layout.setVerticalSpacing(6)
 
-        self._buttons = []
-        for i, (label, _rpm) in enumerate(self.GEARS):
-            btn = QPushButton(label, self)
-            btn.setCheckable(True)
-            btn.setFocusPolicy(Qt.NoFocus)
-            btn.setMinimumHeight(50)
-            self._group.addButton(btn, i)
-            row = i // 3
-            col = i % 3
-            layout.addWidget(btn, row, col)
-            self._buttons.append(btn)
+        self._combo = QComboBox(self)
+        self._combo.setFocusPolicy(Qt.NoFocus)
+        for label, rpm in self.GEARS:
+            # label = "M0X 9999" -> mostra "M0X — 9999 RPM"
+            self._combo.addItem(u"{} — {} RPM".format(label.split()[0], rpm))
+        layout.addWidget(self._combo)
 
-        self._buttons[saved_idx].setChecked(True)
-        self._group.idToggled.connect(self._on_id_toggled)
+        # Define indice salvo ANTES de conectar o sinal, pra nao gerar save espurio.
+        self._combo.setCurrentIndex(saved_idx)
+        self._combo.currentIndexChanged.connect(self._on_index_changed)
 
-    def _on_id_toggled(self, idx, checked):
-        if not checked:
-            return
+    def _on_index_changed(self, idx):
         self._settings.setValue("gear_idx", idx)
         self._settings.sync()
         self._publish(idx)
@@ -244,6 +233,74 @@ class GearSelector(QWidget, HALWidget, VCPWidget):
         self._sel2_pin = comp.addPin(obj_name + ".sel2", "bit", "out")
         self._spinning_pin = comp.addPin(obj_name + ".spinning", "bit", "in")
         self._spinning_pin.valueChanged.connect(self._on_spinning_changed)
+        # Publica estado inicial
+        self._publish(self._combo.currentIndex())
+
+
+class JogIncrement(QWidget, HALWidget, VCPWidget):
+    """Seletor de incremento do MPG (jog-scale) com saida float.
+
+    3 botoes mutuamente exclusivos: 0.01, 0.1 e 1 mm por clique do volante.
+    O valor dirige joint.N.jog-scale e axis.<a>.jog-scale (mm por count).
+
+    HAL pin:
+      .scale  (float out) - mm por count -> jog-scale dos joints/axes
+    Estado salvo entre sessoes em QSettings(DinoEvo/JogIncrement).
+    """
+
+    INCREMENTS = [
+        ("0.005", 0.005),
+        ("0.01",  0.01),
+        ("0.05",  0.05),
+        ("0.1",   0.1),
+    ]
+
+    def __init__(self, parent=None):
+        super(JogIncrement, self).__init__(parent)
+        self.setFocusPolicy(Qt.NoFocus)
+
+        self._scale_pin = None
+
+        self._settings = QSettings("DinoEvo", "JogIncrement")
+        saved_idx = int(self._settings.value("inc_idx", 0))
+        if saved_idx < 0 or saved_idx >= len(self.INCREMENTS):
+            saved_idx = 0
+
+        self._group = QButtonGroup(self)
+        self._group.setExclusive(True)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(6)
+
+        self._buttons = []
+        for i, (label, _val) in enumerate(self.INCREMENTS):
+            btn = QPushButton(label + " mm", self)
+            btn.setCheckable(True)
+            btn.setFocusPolicy(Qt.NoFocus)
+            btn.setMinimumHeight(50)
+            self._group.addButton(btn, i)
+            layout.addWidget(btn)
+            self._buttons.append(btn)
+
+        self._buttons[saved_idx].setChecked(True)
+        self._group.idToggled.connect(self._on_id_toggled)
+
+    def _on_id_toggled(self, idx, checked):
+        if not checked:
+            return
+        self._settings.setValue("inc_idx", idx)
+        self._settings.sync()
+        self._publish(idx)
+
+    def _publish(self, idx):
+        if self._scale_pin is not None:
+            self._scale_pin.value = self.INCREMENTS[idx][1]
+
+    def initialize(self):
+        comp = hal.getComponent()
+        obj_name = self.getPinBaseName()
+        self._scale_pin = comp.addPin(obj_name + ".scale", "float", "out")
         # Publica estado inicial
         self._publish(self._group.checkedId())
 
@@ -283,8 +340,8 @@ class GearLabel(QLabel, HALWidget, VCPWidget):
     def _update_text(self):
         idx = self._idx
         if 0 <= idx < len(self.GEARS):
-            _name, rpm = self.GEARS[idx]
-            self.setText("RPM {}".format(rpm))
+            name, rpm = self.GEARS[idx]
+            self.setText("{} - {} RPM".format(name, rpm))
         else:
             self.setText("--")
 

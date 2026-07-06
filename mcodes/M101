@@ -1,0 +1,22 @@
+#!/bin/bash
+# M101 - Incrementa o contador de pecas (componente HAL 'partcounter').
+#
+# Uso no G-code: chamar M101 ao final de cada peca (ex: antes do M30).
+# O partcounter.py detecta BORDA DE SUBIDA no pin 'trigger' e soma 1.
+# Loop do partcounter roda a 10 Hz (100ms); seguramos o pulso ~250ms para
+# garantir que pelo menos um ciclo de poll veja o trigger em TRUE e depois
+# em FALSE (gera uma borda limpa). Sem o "setp 0" final o pin ficaria preso
+# em TRUE e nenhuma peca seguinte seria contada.
+#
+# Este arquivo e VERSIONADO na config (mcodes/) e referenciado por
+# [RS274NGC]USER_M_PATH = mcodes no Dino_Evo.ini, entao o git o protege.
+# (Havia uma copia em ~/linuxcnc/nc_files/M101 que sumia por nao ser
+# rastreada pelo git; esta e a fonte oficial.)
+#
+# LinuxCNC espera o script terminar antes de seguir o programa; exit 0 evita
+# erro do interpretador.
+
+halcmd setp partcounter.trigger 1
+sleep 0.25
+halcmd setp partcounter.trigger 0
+exit 0

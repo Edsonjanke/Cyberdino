@@ -1,0 +1,13 @@
+; o<spindle_restore> call
+; Restaura estado do spindle salvo previamente por o<spindle_save>.
+; Le #5400/#5401/#5402/#5403 (ver header de spindle_save.ngc).
+o<spindle_restore> sub
+  o10 if [#5400 GT 0.5]
+    ; estava em G96 (CSS): restaura D e S
+    G96 D[#5403] S[#5402]
+  o10 elseif [#5401 GT 0.5]
+    ; estava em G97 (RPM fixo): restaura S
+    G97 S[#5402]
+  o10 endif
+o<spindle_restore> endsub
+M2

@@ -17,6 +17,7 @@ from qtpy.QtGui import QBrush, QColor
 from qtpy.QtWidgets import QTableView, QDoubleSpinBox, QHeaderView
 
 from qtpyvcp.utilities.logger import getLogger
+from qtpyvcp.actions.machine_actions import issue_mdi
 from qtpyvcp.widgets.input_widgets.offset_table import (
     OffsetTable, OffsetModel, ItemDelegate,
 )
@@ -24,7 +25,7 @@ from qtpyvcp.widgets.input_widgets.offset_table import (
 LOG = getLogger(__name__)
 
 WEAR_FILE_NAME = 'offset_wear.json'
-EXTRA_LABELS = {'XW': 'X Desg', 'ZW': 'Z Desg'}
+EXTRA_LABELS = {'XW': 'X Offset', 'ZW': 'Z Offset'}
 WEAR_COLOR = QColor('#FFD000')  # amarelo
 
 
@@ -170,19 +171,6 @@ class WearOffsetModel(OffsetModel):
         except (TypeError, ValueError):
             return False
 
-        # DEBUG (bug Z->X em G54): logar contexto antes/depois de mutar.
-        # TODO: remover apos identificar a causa raiz.
-        try:
-            row_before = list(self._offset_table[row])
-        except (KeyError, IndexError, TypeError):
-            row_before = '<n/a>'
-        LOG.info(
-            "WearOffset setData: row=%s label=%s key=%s value=%s "
-            "_plugin_columns=%s _columns=%s row_before=%s",
-            row, label, key, value, self._plugin_columns,
-            self._columns, row_before,
-        )
-
         if key in ('XW', 'ZW'):
             axis = 'x' if key == 'XW' else 'z'
             tbl_key = 'X' if axis == 'x' else 'Z'
@@ -199,8 +187,6 @@ class WearOffsetModel(OffsetModel):
             self.dataChanged.emit(index, index)
             geom_idx = self.index(row, self._columns.index(tbl_key))
             self.dataChanged.emit(geom_idx, geom_idx)
-            LOG.info("  after  XW/ZW: row_after=%s",
-                     list(self._offset_table[row]))
             return True
 
         if key in ('X', 'Z'):
@@ -211,8 +197,6 @@ class WearOffsetModel(OffsetModel):
             new_geom = value
             self._offset_table[row][col] = new_geom + self._wear_value(label, axis)
             self.dataChanged.emit(index, index)
-            LOG.info("  after  X/Z geom: col=%s row_after=%s",
-                     col, list(self._offset_table[row]))
             return True
 
         col = self._plugin_col_for(key)
@@ -220,8 +204,6 @@ class WearOffsetModel(OffsetModel):
             return False
         self._offset_table[row][col] = value
         self.dataChanged.emit(index, index)
-        LOG.info("  after  other: col=%s row_after=%s",
-                 col, list(self._offset_table[row]))
         return True
 
     def clearRow(self, row):
@@ -241,8 +223,30 @@ class WearOffsetModel(OffsetModel):
 
     def saveOffsetTable(self):
         self._save_wear()
-        # Pass only the real plugin columns to the plugin — XW/ZW are virtual.
-        self.ot.saveOffsetTable(self._offset_table, columns=self._plugin_columns)
+        # BUG FIX (X drift em G7): o plugin do qtpyvcp emite "G10 L2 P# X<v>"
+        # sem forcar modo raio. Como a maquina roda sempre em G7 (diametro),
+        # o interpretador le o X do G10 L2 como DIAMETRO e grava METADE no
+        # parametro (que e raio) -> o X encolhe pela metade a cada SAVE.
+        # (Z nao e eixo de diametro, por isso so o X driftava.)
+        #
+        # Solucao: espelhar o que o touch_off_x.ngc ja faz (linha 16) -> M70
+        # salva os modos, G8 forca raio, grava os G10 L2, M72 restaura os modos.
+        # Tudo numa unica transacao MDI (issue_mdi aceita comandos separados por
+        # ';' e os executa em sequencia), entao nao ha race com o reload do
+        # QFileSystemWatcher. Funciona identico em G7 e G8.
+        cols = self._plugin_columns
+        cmds = ["M70", "G8"]
+        for index in range(len(self.ot.rows)):
+            parts = ["G10 L2", "P{}".format(index + 1)]
+            for char in cols:
+                col = self.ot.columns.index(char)
+                parts.append("{}{}".format(char, self._offset_table[index][col]))
+            cmds.append(" ".join(parts))
+        cmds.append("M72")
+        # Mantem o plugin em sincronia com a tabela em memoria (ele faz isso no
+        # seu proprio saveOffsetTable; aqui replicamos sem o G10 cru sem-guarda).
+        self.ot.g5x_offset_table = self._offset_table
+        issue_mdi(";".join(cmds))
         return True
 
     def clearWearForRow(self, row):

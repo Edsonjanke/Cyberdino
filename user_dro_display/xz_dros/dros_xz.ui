@@ -407,11 +407,11 @@
            <property name="styleSheet">
             <string notr="true">DROLineEdit{
     border-style: transparant;
-    border-color: rgb(235, 235, 235);
+    border-color: #3A3F43;
     border-width: 1px;
     border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
+    color: #00E676;
+    background: #0D0F0E;
     padding-right: 2px;
     font: 17pt &quot;Bebas Kai&quot;;
 }</string>
@@ -456,11 +456,11 @@
            <property name="styleSheet">
             <string notr="true">QLabel{
     border-style: transparent;
-    border-color: rgb(235, 235, 235);
+    border-color: #3A3F43;
     border-width: 1px;
     border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
+    color: #00E676;
+    background: #0D0F0E;
 	font: 17pt;
     padding-right: 2px;
     font: 17pt &quot;Bebas Kai&quot;;
@@ -471,7 +471,7 @@ QLabel[style=&quot;unhomed&quot;]{
 }
 
 QLabel[style=&quot;homing&quot;]{
-   color: rgb(196, 160, 0);
+   color: #00E676;
 }</string>
            </property>
            <property name="alignment">
@@ -514,11 +514,11 @@ QLabel[style=&quot;homing&quot;]{
            <property name="styleSheet">
             <string notr="true">DROLabel{
     border-style: transparent;
-    border-color: rgb(235, 235, 235);
+    border-color: #3A3F43;
     border-width: 1px;
     border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
+    color: #00E676;
+    background: #0D0F0E;
 	font: 17pt;
     padding-right: 2px;
     font: 17pt &quot;Bebas Kai&quot;;
@@ -529,7 +529,7 @@ DROLabel[style=&quot;unhomed&quot;]{
 }
 
 DROLabel[style=&quot;homing&quot;]{
-   color: rgb(196, 160, 0);
+   color: #00E676;
 }</string>
            </property>
            <property name="alignment">
@@ -706,11 +706,11 @@ DROLabel[style=&quot;homing&quot;]{
            <property name="styleSheet">
             <string notr="true">DROLineEdit{
     border-style: transparant;
-    border-color: rgb(235, 235, 235);
+    border-color: #3A3F43;
     border-width: 1px;
     border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
+    color: #00E676;
+    background: #0D0F0E;
     padding-right: 2px;
     font: 17pt &quot;Bebas Kai&quot;;
 }</string>
@@ -755,11 +755,11 @@ DROLabel[style=&quot;homing&quot;]{
            <property name="styleSheet">
             <string notr="true">QLabel{
     border-style: transparent;
-    border-color: rgb(235, 235, 235);
+    border-color: #3A3F43;
     border-width: 1px;
     border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
+    color: #00E676;
+    background: #0D0F0E;
 	font: 17pt;
     padding-right: 2px;
     font: 17pt &quot;Bebas Kai&quot;;
@@ -770,7 +770,7 @@ QLabel[style=&quot;unhomed&quot;]{
 }
 
 QLabel[style=&quot;homing&quot;]{
-   color: rgb(196, 160, 0);
+   color: #00E676;
 }</string>
            </property>
            <property name="alignment">
@@ -813,11 +813,11 @@ QLabel[style=&quot;homing&quot;]{
            <property name="styleSheet">
             <string notr="true">DROLabel{
     border-style: transparent;
-    border-color: rgb(235, 235, 235);
+    border-color: #3A3F43;
     border-width: 1px;
     border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
+    color: #00E676;
+    background: #0D0F0E;
 	font: 17pt;
     padding-right: 2px;
     font: 17pt &quot;Bebas Kai&quot;;
@@ -828,7 +828,7 @@ DROLabel[style=&quot;unhomed&quot;]{
 }
 
 DROLabel[style=&quot;homing&quot;]{
-   color: rgb(196, 160, 0);
+   color: #00E676;
 }</string>
            </property>
            <property name="alignment">
@@ -889,6 +889,207 @@ DROLabel[style=&quot;homing&quot;]{
             <string>machine.home.axis:z</string>
            </property>
           </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item>
+       <widget class="QWidget" name="widget_big_dro" native="true">
+        <layout class="QVBoxLayout" name="big_dro_layout">
+         <property name="spacing">
+          <number>8</number>
+         </property>
+         <property name="leftMargin">
+          <number>4</number>
+         </property>
+         <property name="topMargin">
+          <number>8</number>
+         </property>
+         <property name="rightMargin">
+          <number>4</number>
+         </property>
+         <property name="bottomMargin">
+          <number>4</number>
+         </property>
+         <item>
+          <layout class="QHBoxLayout" name="big_x_row">
+           <property name="spacing">
+            <number>8</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="big_x_caption">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>52</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QLabel {
+    font: 30pt &quot;Bebas Kai&quot;;
+    color: white;
+}</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="text">
+              <string>X</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="DROLabel" name="big_dro_x">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+               <horstretch>1</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>72</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">DROLabel {
+    border: 1px solid #3A3F43;
+    border-radius: 6px;
+    color: #00E676;
+    background: #0D0F0E;
+    padding-right: 10px;
+    font: 44pt &quot;Bebas Kai&quot;;
+}
+
+DROLabel[style=&quot;unhomed&quot;] {
+    color: red;
+}
+
+DROLabel[style=&quot;homing&quot;] {
+    color: rgb(196, 160, 0);
+}</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+             <property name="referenceType" stdset="0">
+              <number>1</number>
+             </property>
+             <property name="axisNumber" stdset="0">
+              <number>0</number>
+             </property>
+             <property name="inchFormat" stdset="0">
+              <string>%9.4f</string>
+             </property>
+             <property name="millimeterFormat" stdset="0">
+              <string>%10.3f</string>
+             </property>
+             <property name="degreeFormat" stdset="0">
+              <string>%10.2f</string>
+             </property>
+             <property name="latheMode" stdset="0">
+              <number>0</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <layout class="QHBoxLayout" name="big_z_row">
+           <property name="spacing">
+            <number>8</number>
+           </property>
+           <item>
+            <widget class="QLabel" name="big_z_caption">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>52</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">QLabel {
+    font: 30pt &quot;Bebas Kai&quot;;
+    color: white;
+}</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+             <property name="text">
+              <string>Z</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="DROLabel" name="big_dro_z">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+               <horstretch>1</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>72</height>
+              </size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">DROLabel {
+    border: 1px solid #3A3F43;
+    border-radius: 6px;
+    color: #00E676;
+    background: #0D0F0E;
+    padding-right: 10px;
+    font: 44pt &quot;Bebas Kai&quot;;
+}
+
+DROLabel[style=&quot;unhomed&quot;] {
+    color: red;
+}
+
+DROLabel[style=&quot;homing&quot;] {
+    color: rgb(196, 160, 0);
+}</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             </property>
+             <property name="referenceType" stdset="0">
+              <number>1</number>
+             </property>
+             <property name="axisNumber" stdset="0">
+              <number>2</number>
+             </property>
+             <property name="inchFormat" stdset="0">
+              <string>%9.4f</string>
+             </property>
+             <property name="millimeterFormat" stdset="0">
+              <string>%10.3f</string>
+             </property>
+             <property name="degreeFormat" stdset="0">
+              <string>%10.2f</string>
+             </property>
+             <property name="latheMode" stdset="0">
+              <number>0</number>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </widget>
@@ -1086,6 +1287,16 @@ DROLabel[style=&quot;homing&quot;]{
    <class>DROLineEdit</class>
    <extends>QLineEdit</extends>
    <header>qtpyvcp.widgets.input_widgets.dro_line_edit</header>
+  </customwidget>
+  <customwidget>
+   <class>HalLabel</class>
+   <extends>QLabel</extends>
+   <header>qtpyvcp.widgets.hal_widgets.hal_label</header>
+  </customwidget>
+  <customwidget>
+   <class>GearLabel</class>
+   <extends>QLabel</extends>
+   <header>mpg_button</header>
   </customwidget>
  </customwidgets>
  <resources>

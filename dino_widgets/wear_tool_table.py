@@ -11,7 +11,7 @@ import os
 
 from qtpy.QtCore import Qt, Slot, QLocale, QSortFilterProxyModel
 from qtpy.QtGui import QBrush, QColor
-from qtpy.QtWidgets import QTableView, QDoubleSpinBox
+from qtpy.QtWidgets import QTableView, QDoubleSpinBox, QAbstractItemView
 
 from qtpyvcp.utilities.logger import getLogger
 from qtpyvcp.widgets.input_widgets.tool_table import (
@@ -97,6 +97,16 @@ class WearToolModel(ToolModel):
             self._wear[tnum] = {'x': 0.0, 'z': 0.0}
         self._wear[tnum][axis] = float(value)
 
+    def _x_wear_factor(self):
+        # Coluna XW (desgaste de X) fala DIAMETRO na UI; internamente o wear e
+        # raio. Fator 2.0 em modo diametro (G7), 1.0 em raio (G8). Usa o estado
+        # modal AO VIVO (self.stat.gcodes traz G-code*10: G7=70, G8=80), nao
+        # "e torno" estatico. Default 2.0 (a maquina roda sempre em G7).
+        try:
+            return 1.0 if 80 in self.stat.gcodes else 2.0
+        except Exception:
+            return 2.0
+
     def _row_to_tnum(self, row):
         try:
             return sorted(self._tool_table)[row + self.row_offset]
@@ -111,7 +121,8 @@ class WearToolModel(ToolModel):
                 if tnum is None:
                     return None
                 if key == 'XW':
-                    return self._wear_value(tnum, 'x')
+                    # Exibe em diametro (raio * 2 em G7).
+                    return self._wear_value(tnum, 'x') * self._x_wear_factor()
                 if key == 'ZW':
                     return self._wear_value(tnum, 'z')
                 if key == 'X':
@@ -134,7 +145,14 @@ class WearToolModel(ToolModel):
             axis = 'x' if key == 'XW' else 'z'
             tbl_key = 'X' if axis == 'x' else 'Z'
             old_wear = self._wear_value(tnum, axis)
-            new_wear = float(value)
+            # Comportamento INCREMENTAL (estilo Fanuc): o valor digitado SOMA ao
+            # desgaste existente, nao substitui. Ex: wear 0.15, digita 0.05 -> 0.20.
+            # Para zerar, usar o botao ZERAR WEAR. delta de X vem em diametro ->
+            # converte pra raio antes de somar (wear guardado em raio).
+            delta = float(value)
+            if key == 'XW':
+                delta = delta / self._x_wear_factor()
+            new_wear = old_wear + delta
             self._set_wear_value(tnum, axis, new_wear)
             # Keep displayed geom constant: total += (new_wear - old_wear)
             self._tool_table[tnum][tbl_key] = \
@@ -142,6 +160,7 @@ class WearToolModel(ToolModel):
             self.dataChanged.emit(index, index)
             geom_idx = self.index(index.row(), self._columns.index(tbl_key))
             self.dataChanged.emit(geom_idx, geom_idx)
+            self._autosave()
             return True
 
         if key in ('X', 'Z'):
@@ -149,12 +168,25 @@ class WearToolModel(ToolModel):
             axis = 'x' if key == 'X' else 'z'
             self._tool_table[tnum][key] = new_geom + self._wear_value(tnum, axis)
             self.dataChanged.emit(index, index)
+            self._autosave()
             return True
 
         # All other columns: default behaviour
         self._tool_table[tnum][key] = value
         self.dataChanged.emit(index, index)
+        self._autosave()
         return True
+
+    def _autosave(self):
+        """Salva a tabela inteira assim que uma celula e confirmada (Enter):
+        o wear no JSON e a geometria/angulos/remark no tool.tbl (via plugin).
+        Sem popup (confirmAction esta desligado). Protegido contra erros pra
+        nao derrubar a edicao se o LinuxCNC nao estiver pronto pra gravar."""
+        try:
+            self._save_wear()
+            super().saveToolTable()
+        except Exception as e:
+            LOG.warning("Auto-save da tool table falhou: %s", e)
 
     def saveToolTable(self):
         # Persist wear sidecar; tool.tbl writing is handled by the plugin
@@ -196,6 +228,27 @@ class WearToolModel(ToolModel):
         self._save_wear()
         self.beginResetModel()
         self.endResetModel()
+        return True
+
+    def adjustWearAxisForTool(self, tnum, axis, delta):
+        """SOMA `delta` ao desgaste do eixo (atalho DESG X/Z do painel).
+
+        Mesma semantica incremental do setData da coluna XW/ZW: delta de X
+        chega em DIAMETRO e e convertido pra raio; Z e direto. Mantem o offset
+        total coerente (total += delta_r) e persiste na hora (_autosave)."""
+        tnum = int(tnum)
+        if tnum not in self._tool_table:
+            return False
+        delta_r = float(delta)
+        if axis == 'x':
+            delta_r = delta_r / self._x_wear_factor()
+        tbl_key = 'X' if axis == 'x' else 'Z'
+        old = self._wear_value(tnum, axis)
+        self._set_wear_value(tnum, axis, old + delta_r)
+        self._tool_table[tnum][tbl_key] += delta_r
+        self.beginResetModel()
+        self.endResetModel()
+        self._autosave()
         return True
 
 
@@ -253,6 +306,13 @@ class WearToolTable(ToolTable):
         self.setSelectionMode(QTableView.SingleSelection)
         self.horizontalHeader().setStretchLastSection(True)
         self.horizontalHeader().setSortIndicator(0, Qt.AscendingOrder)
+        # Edicao com UM clique (tela touch): abre o editor da celula ao selecionar,
+        # em vez do double-click padrao do QTableView.
+        self.setEditTriggers(
+            QAbstractItemView.CurrentChanged
+            | QAbstractItemView.SelectedClicked
+            | QAbstractItemView.EditKeyPressed
+            | QAbstractItemView.AnyKeyPressed)
 
     @Slot()
     def clearWear(self):
@@ -278,3 +338,17 @@ class WearToolTable(ToolTable):
         if tnum <= 0:
             return
         self.tool_model.clearWearAxisForTool(tnum, axis)
+
+    @Slot(str, float)
+    def adjustWearAxisCurrentTool(self, axis, delta):
+        """SOMA `delta` ao desgaste do eixo da ferramenta ATIVA (atalho do
+        painel DESG X/Z). Retorna False se nao ha ferramenta carregada."""
+        from qtpyvcp.plugins import getPlugin
+        STATUS = getPlugin('status')
+        try:
+            tnum = int(STATUS.tool_in_spindle.value or 0)
+        except (AttributeError, ValueError, TypeError):
+            return False
+        if tnum <= 0:
+            return False
+        return self.tool_model.adjustWearAxisForTool(tnum, axis, delta)

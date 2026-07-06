@@ -4,7 +4,7 @@
 # overwritten when you run PNCconf again
 
 loadrt [KINS]KINEMATICS
-loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS
+loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS num_aio=8
 loadrt hostmot2
 loadrt hm2_eth board_ip="10.10.10.10" config="num_encoders=2 num_pwmgens=1 num_stepgens=4"
 setp    hm2_7i92.0.pwmgen.pwm_frequency 500
@@ -257,13 +257,14 @@ setp limit2.g05.max   375
 setp limit2.g05.min  -375
 setp limit2.g06.max   236
 setp limit2.g06.min  -236
-# maxv = max rate de mudanca (RPM/s). Alto para nao limitar (queremos clamp puro de valor)
-setp limit2.g01.maxv 1e9
-setp limit2.g02.maxv 1e9
-setp limit2.g03.maxv 1e9
-setp limit2.g04.maxv 1e9
-setp limit2.g05.maxv 1e9
-setp limit2.g06.maxv 1e9
+# maxv = max rate de mudanca (RPM/s). Rampa de aceleracao: 4s para ir de 0 ate RPM max
+# da marcha (proporcional). Suaviza arrancada/parada e evita disputa com VFD CFW-07.
+setp limit2.g01.maxv 590     # 2360 / 4s
+setp limit2.g02.maxv 375     # 1500 / 4s
+setp limit2.g03.maxv 237.5   #  950 / 4s
+setp limit2.g04.maxv 150     #  600 / 4s
+setp limit2.g05.maxv 93.75   #  375 / 4s
+setp limit2.g06.maxv 59      #  236 / 4s
 
 setp mux16.gear-factor.in00  1.0000     # M01: 2360 RPM
 setp mux16.gear-factor.in01  1.5733     # M02: 1500 RPM

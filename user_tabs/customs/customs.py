@@ -1,5 +1,6 @@
 import os
 import re
+import json
 import bisect
 import atexit
 
@@ -7,10 +8,12 @@ import hal as _hal
 import linuxcnc
 
 from qtpy import uic
-from qtpy.QtCore import QTimer
+from qtpy.QtCore import QTimer, QEvent, QSettings, QObject
+from qtpy.QtGui import QKeyEvent
 from qtpy.QtWidgets import QWidget, QPushButton, QApplication, QLabel
 
 from qtpyvcp.plugins import getPlugin
+from qtpyvcp.actions import program_actions
 from qtpyvcp.widgets.input_widgets.gcode_text_edit import GcodeTextEdit
 from qtpyvcp.widgets.display_widgets.vtk_backplot.vtk_backplot import VTKBackPlot
 
@@ -27,6 +30,68 @@ def _patched_gcode_setPlainText(self, p_str):
 
 
 GcodeTextEdit.setPlainText = _patched_gcode_setPlainText
+
+
+# Forcar MAIUSCULAS ao digitar/editar G-code. O interpretador aceita minusculas,
+# mas o padrao de oficina e maiuscula (X, Z, G, M...). Interceptamos o texto do
+# QKeyEvent e, se tiver letra minuscula, repassamos um evento equivalente com o
+# texto ja em uppercase. Setas, backspace, atalhos (Ctrl+C/V), Enter etc. passam
+# intactos porque so mexemos quando event.text() tem conteudo alfabetico.
+_original_gcode_keyPressEvent = GcodeTextEdit.keyPressEvent
+
+
+def _patched_gcode_keyPressEvent(self, event):
+    txt = event.text()
+    if txt and txt != txt.upper():
+        event = QKeyEvent(
+            QEvent.KeyPress, event.key(), event.modifiers(), txt.upper())
+    _original_gcode_keyPressEvent(self, event)
+
+
+GcodeTextEdit.keyPressEvent = _patched_gcode_keyPressEvent
+
+
+# Find/Replace tambem deve inserir em MAIUSCULA. O replaceText/replaceAllText
+# do qtpyvcp fazem cursor.insertText(replace) direto no documento, escapando do
+# patch de keyPressEvent. Envolvemos os dois pra forcar o replace em uppercase.
+_original_replaceText = GcodeTextEdit.replaceText
+_original_replaceAllText = GcodeTextEdit.replaceAllText
+
+
+def _patched_replaceText(self, search, replace):
+    _original_replaceText(self, search, (replace or "").upper())
+
+
+def _patched_replaceAllText(self, search, replace):
+    _original_replaceAllText(self, search, (replace or "").upper())
+
+
+GcodeTextEdit.replaceText = _patched_replaceText
+GcodeTextEdit.replaceAllText = _patched_replaceAllText
+
+
+# O teclado virtual aparece ABAIXO do campo focado. Como o FindReplaceDialog
+# abre centralizado (400x200), o teclado cobre os botoes Find/Replace/Close.
+# Reposicionamos o dialog no TOPO da tela ao abrir, deixando a metade de baixo
+# livre pro teclado.
+_original_findDialog = GcodeTextEdit.findDialog
+
+
+def _patched_findDialog(self, *args, **kwargs):
+    _original_findDialog(self, *args, **kwargs)
+    try:
+        dlg = self.dialog
+        screen = QApplication.primaryScreen().availableGeometry()
+        # centraliza horizontalmente, cola no topo (com uma folga)
+        x = screen.x() + (screen.width() - dlg.width()) // 2
+        y = screen.y() + 20
+        dlg.move(x, y)
+        dlg.raise_()
+    except Exception:
+        pass
+
+
+GcodeTextEdit.findDialog = _patched_findDialog
 
 
 # =============================================================================
@@ -153,35 +218,275 @@ def _wire_touch_off_wear_clear():
         btn_z.clicked.connect(lambda _=False: slot('z'))
 
 
+def _run_from_line_armed(editor, set_line_n=None):
+    """RUN FROM LINE: arma o programa na linha PAUSADO.
+
+    Fonte da linha:
+      - se o SET LINE N estiver aceso e tiver uma linha salva -> usa a salva;
+      - senao -> usa a linha do cursor no editor.
+
+    Em vez de rodar direto, posiciona o interp na linha e pausa. So usina quando
+    o operador apertar Cycle Start/Resume. So atua se o programa estiver IDLE
+    (nao reinicia no meio de um corte em andamento)."""
+    STATUS = getPlugin('status')
+    try:
+        interp = STATUS.interp_state.value
+    except Exception:
+        interp = None
+    if interp != linuxcnc.INTERP_IDLE:
+        return
+
+    line = None
+    if set_line_n is not None:
+        line = set_line_n.active_line()   # None se botao apagado / sem linha salva
+    if line is None:
+        line = editor.getCurrentLine()
+
+    program_actions.run(line)     # AUTO_RUN a partir da linha (seta modo AUTO internamente)
+    program_actions.pause()       # AUTO_PAUSE imediato -> arma pausado, antes de qualquer movimento
+
+    # Backstop: reassere o pause apos o task controller transicionar pra RUNNING,
+    # cobrindo a corrida AUTO_RUN/AUTO_PAUSE (pausar ja-pausado e no-op).
+    def _ensure_paused():
+        try:
+            if STATUS.interp_state.value != linuxcnc.INTERP_PAUSED:
+                program_actions.pause()
+        except Exception:
+            pass
+    QTimer.singleShot(120, _ensure_paused)
+
+    # Aviso na tela (plugin notifications vem habilitado no ProbeBasic).
+    # Some sozinho quando o operador aperta CYCLE START (interp sai de PAUSED).
+    try:
+        notif = getPlugin('notifications')
+        notif.captureMessage(
+            'info',
+            u"Programa armado na linha {}. Aperte CYCLE START para iniciar.".format(line))
+        _dismiss_armed_notice_on_resume(notif)
+    except Exception:
+        pass
+
+
+def _dismiss_armed_notice_on_resume(notif):
+    """Fecha o aviso de 'programa armado' assim que o programa sai do PAUSED
+    (operador apertou CYCLE START/Resume). Captura o widget recem-criado e o
+    remove via o mesmo caminho do botao X (NativeNotification.onClicked)."""
+    disp = getattr(notif, 'notification_dispatcher', None)
+    msgs = getattr(disp, 'activeMessages', None) if disp is not None else None
+    if not msgs:
+        return
+    widget = msgs[-1]  # a notificacao que acabamos de inserir
+
+    STATUS = getPlugin('status')
+    state = {'done': False}
+    # Conecta direto no sinal (qtpyvcp DataChannel.notify nao tem 'remove');
+    # guardamos o signal pra desconectar depois.
+    signal = STATUS.interp_state.signal
+
+    def _close(*_a, **_k):
+        if state['done']:
+            return
+        state['done'] = True
+        try:
+            signal.disconnect(_on_interp)
+        except (TypeError, RuntimeError):
+            pass
+        # Fecha do mesmo jeito que o botao X faria, se ainda estiver na tela.
+        try:
+            if widget in disp.activeMessages:
+                disp.mainLayout.removeWidget(widget)
+                disp.activeMessages.remove(widget)
+                widget.deleteLater()
+                disp.nMessages -= 1
+                if disp.nMessages <= 0:
+                    disp.hide()
+        except Exception:
+            pass
+
+    def _on_interp(*_a, **_k):
+        # PAUSED -> qualquer outro estado = resume/stop: dispensa o aviso.
+        try:
+            if STATUS.interp_state.value != linuxcnc.INTERP_PAUSED:
+                _close()
+        except Exception:
+            _close()
+
+    signal.connect(_on_interp)
+    # Backstop: se nada acontecer, o aviso some em 60s pra nao ficar preso.
+    QTimer.singleShot(60000, _close)
+
+
+class _SetLineN:
+    """Gerencia o botao 'SET LINE N' (checkable) do editor.
+
+    - Aceso: memoriza a linha do cursor no momento do clique e o RUN FROM LINE
+      passa a usar essa linha fixa (ignora o cursor). O botao mostra 'LINE N XX'.
+    - Apagado: RUN FROM LINE volta a usar o cursor. Texto volta a 'SET LINE N'.
+    - Persiste por PROGRAMA: a linha e salva em QSettings chaveada pelo caminho do
+      NGC carregado (STATUS.file), entao cada arquivo lembra a propria linha entre
+      sessoes. Ao trocar de arquivo, recarrega o estado salvo daquele arquivo.
+    """
+
+    def __init__(self, btn, editor):
+        self._btn = btn
+        self._editor = editor
+        self._settings = QSettings("DinoEvo", "RunFromLineN")
+        self._cur_file = None
+        btn.setCheckable(True)
+        btn.toggled.connect(self._on_toggled)
+        STATUS = getPlugin('status')
+        STATUS.file.notify(self._on_file_change)
+        self._on_file_change(STATUS.file.value)
+
+    def _key(self, path):
+        # chave por arquivo; '' se nenhum arquivo carregado
+        return "line/{}".format(path or "")
+
+    def _on_file_change(self, path, *_a, **_k):
+        self._cur_file = path
+        saved = self._settings.value(self._key(path), None)
+        try:
+            saved = int(saved) if saved is not None else None
+        except (TypeError, ValueError):
+            saved = None
+        # Ajusta o botao ao estado salvo do arquivo, sem disparar save de volta.
+        self._btn.blockSignals(True)
+        self._btn.setChecked(saved is not None)
+        self._btn.blockSignals(False)
+        self._refresh_text(saved)
+
+    def _on_toggled(self, checked):
+        if checked:
+            line = self._editor.getCurrentLine()
+            self._settings.setValue(self._key(self._cur_file), int(line))
+            self._settings.sync()
+            self._refresh_text(line)
+        else:
+            self._settings.remove(self._key(self._cur_file))
+            self._settings.sync()
+            self._refresh_text(None)
+
+    def _refresh_text(self, line):
+        if line is not None:
+            self._btn.setText("LINE N {}".format(line))
+        else:
+            self._btn.setText("SET LINE N")
+
+    def active_line(self):
+        """Linha salva se o botao estiver aceso; senao None (usa cursor)."""
+        if not self._btn.isChecked():
+            return None
+        saved = self._settings.value(self._key(self._cur_file), None)
+        try:
+            return int(saved) if saved is not None else None
+        except (TypeError, ValueError):
+            return None
+
+
 def _wire_gcode_top_buttons():
-    """Conecta os botoes 'RUN FROM LINE' e 'SAVE' do topo aos metodos do editor de G-code,
-    e habilita edicao do editor (setReadOnly(False))."""
+    """Conecta os botoes 'RUN FROM LINE' e 'SET LINE N' do topo aos metodos do
+    editor de G-code. O editor comeca READ-ONLY: so fica editavel no modo EDIT
+    (ver _wire_edit_mode). SAVE/FIND/COPY/PASTE agora moram na aba EDIT."""
     for top in QApplication.topLevelWidgets():
         run_btn = top.findChild(QPushButton, "run_from_here_top_btn")
-        save_btn = top.findChild(QPushButton, "save_gcode_top_btn")
+        set_n_btn = top.findChild(QPushButton, "set_line_n_top_btn")
+        # Botao 'RUN FROM LINE' do painel inferior (era o MIST). Mesma logica.
+        run_btn_bottom = top.findChild(QPushButton, "run_from_line_bottom_btn")
         editor = top.findChild(GcodeTextEdit, "gcodetextedit_2") \
             or top.findChild(GcodeTextEdit, "gcodetextedit")
         if editor is None:
             continue
 
-        editor.setReadOnly(False)
-        editor.readonly = False
+        # Comeca travado; o modo EDIT destrava (evita edicao acidental).
+        editor.EditorReadOnly(True)
 
-        if run_btn is not None:
-            try:
-                run_btn.clicked.disconnect()
-            except (TypeError, RuntimeError):
-                pass
-            run_btn.clicked.connect(editor.runFromHere)
+        set_line_n = None
+        if set_n_btn is not None:
+            set_line_n = _SetLineN(set_n_btn, editor)
+            # guarda a ref no widget pra nao ser coletada pelo GC
+            set_n_btn._dino_set_line_n = set_line_n
 
-        if save_btn is not None:
-            try:
-                save_btn.clicked.disconnect()
-            except (TypeError, RuntimeError):
-                pass
-            save_btn.clicked.connect(lambda _=False, ed=editor: ed.saveFile())
+        for rb in (run_btn, run_btn_bottom):
+            if rb is not None:
+                try:
+                    rb.clicked.disconnect()
+                except (TypeError, RuntimeError):
+                    pass
+                rb.clicked.connect(
+                    lambda _=False, ed=editor, sln=set_line_n: _run_from_line_armed(ed, sln))
 
         return
+
+
+class _EditShortcutBlocker(QObject):
+    """Event filter: enquanto o editor estiver EDITAVEL (modo EDIT), impede que
+    atalhos globais do LinuxCNC (jog por teclado, F-keys de spindle/coolant,
+    home, etc.) disparem enquanto se digita o G-code.
+
+    Mecanismo canonico do Qt: quando uma tecla casa com um shortcut, o Qt manda
+    um evento ShortcutOverride ao widget focado ANTES de acionar o atalho. Se
+    aceitarmos esse evento, a tecla e entregue como digitacao normal ao editor
+    em vez de acionar o atalho -> nenhum eixo se move / nada liga por engano.
+
+    Fora do modo EDIT o editor e read-only, entao o filtro fica inerte."""
+
+    def __init__(self, editor):
+        super(_EditShortcutBlocker, self).__init__(editor)
+        self._editor = editor
+
+    def eventFilter(self, obj, event):
+        try:
+            if event.type() == QEvent.ShortcutOverride and not self._editor.isReadOnly():
+                # Aceita -> Qt entrega como KeyPress normal ao editor,
+                # nao dispara o shortcut global.
+                event.accept()
+                return True
+        except Exception:
+            pass
+        return False
+
+
+def _wire_edit_mode():
+    """Modo EDIT (aba do painel direito): destrava o editor SO quando a aba EDIT
+    esta selecionada; senao mantem read-only. Tambem bloqueia atalhos de teclado
+    enquanto edita (seguranca: nao mover eixos / ligar spindle sem querer).
+    Wira os botoes da aba EDIT (FIND/REPL, SAVE, COPIAR, COLAR)."""
+    editor = edit_tab = None
+    find_b = save_b = copy_b = paste_b = None
+    for top in QApplication.topLevelWidgets():
+        editor = editor or top.findChild(GcodeTextEdit, "gcodetextedit_2") \
+            or top.findChild(GcodeTextEdit, "gcodetextedit")
+        edit_tab = edit_tab or top.findChild(QPushButton, "edit_tab")
+        find_b = find_b or top.findChild(QPushButton, "edit_find_btn")
+        save_b = save_b or top.findChild(QPushButton, "edit_save_btn")
+        copy_b = copy_b or top.findChild(QPushButton, "edit_copy_btn")
+        paste_b = paste_b or top.findChild(QPushButton, "edit_paste_btn")
+    if editor is None:
+        return
+
+    # Bloqueador de atalhos: instala um event filter no editor. So atua quando
+    # o editor esta editavel (modo EDIT). Guarda ref pra nao ser coletado.
+    blocker = _EditShortcutBlocker(editor)
+    editor.installEventFilter(blocker)
+    editor._dino_shortcut_blocker = blocker
+
+    # Gate: aba EDIT aceso -> destrava; apagado -> trava.
+    if edit_tab is not None:
+        def _on_edit_toggled(checked, ed=editor):
+            ed.EditorReadOnly(not checked)
+        edit_tab.toggled.connect(_on_edit_toggled)
+        # estado inicial coerente (aba comeca desmarcada -> read-only)
+        editor.EditorReadOnly(not edit_tab.isChecked())
+
+    # Botoes da aba EDIT
+    if find_b is not None:
+        find_b.clicked.connect(lambda _=False, ed=editor: ed.findDialog())
+    if save_b is not None:
+        save_b.clicked.connect(lambda _=False, ed=editor: ed.saveFile())
+    if copy_b is not None:
+        copy_b.clicked.connect(lambda _=False, ed=editor: ed.copy())
+    if paste_b is not None:
+        paste_b.clicked.connect(lambda _=False, ed=editor: ed.paste())
 
 
 def _wire_auto_clear_backplot():
@@ -196,6 +501,64 @@ def _wire_auto_clear_backplot():
             break
     if backplot is None:
         return
+
+    # Logo EVO como marca d'agua no canto inferior direito do backplot.
+    # vtkLogoRepresentation SEM widget precisa de SetRenderer() +
+    # BuildRepresentation() explicitos (sem isso a geometria nao e construida
+    # e nada aparece). Adiada 3s pro render window GL ja estar inicializado.
+    def _add_backplot_logo(bp=backplot):
+        try:
+            import vtk
+            logo_path = os.path.join(
+                os.environ.get('CONFIG_DIR') or os.path.dirname(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+                'pbsplash.png')
+            if not os.path.exists(logo_path):
+                print("[customs.py] logo nao encontrada: %s" % logo_path)
+                return
+            reader = vtk.vtkPNGReader()
+            reader.SetFileName(logo_path)
+            reader.Update()
+            logo_rep = vtk.vtkLogoRepresentation()
+            logo_rep.SetImage(reader.GetOutput())
+            logo_rep.SetRenderer(bp.renderer)     # <- essencial sem widget
+            logo_rep.SetPosition(0.80, 0.02)      # canto inferior direito
+            logo_rep.SetPosition2(0.18, 0.18)     # ~18% da viewport
+            logo_rep.GetImageProperty().SetOpacity(0.35)
+            logo_rep.BuildRepresentation()        # <- constroi a geometria
+            bp.renderer.AddViewProp(logo_rep)
+            # ref pra nao ser coletado + refresh
+            bp._dino_logo = (reader, logo_rep)
+            try:
+                bp.renderer.GetRenderWindow().Render()
+            except Exception:
+                pass
+        except Exception as e:
+            print("[customs.py] logo no backplot falhou: {}".format(e))
+    # DESATIVADA por ora (usuario vai melhorar a arte antes). Pra reativar,
+    # troque False -> True. O arquivo usado e o pbsplash.png do config.
+    _LOGO_BACKPLOT_ATIVA = False
+    if _LOGO_BACKPLOT_ATIVA:
+        QTimer.singleShot(3000, _add_backplot_logo)
+
+    # PAN sempre ativo: o botao mouse do backplot faz pan por padrao (sem
+    # precisar apertar PAN toda vez). Deixa o pan_button 'checked' pra refletir.
+    try:
+        backplot.enable_panning(True)
+        for top in QApplication.topLevelWidgets():
+            pan_btn = top.findChild(QPushButton, "pan_button")
+            if pan_btn is not None:
+                pan_btn.setChecked(True)
+                break
+    except Exception:
+        pass
+
+    # Auto-enquadrar nos PROGRAM EXTENTS toda vez que um programa e carregado
+    # (equivale a apertar PGM EXT automaticamente). Slot nativo do VTKBackPlot.
+    try:
+        backplot.setProgramViewWhenLoadingProgram(True)
+    except Exception:
+        pass
 
     STATUS = getPlugin('status')
 
@@ -318,6 +681,232 @@ def _wire_speed_readouts():
     refresh()
 
 
+def _wire_cycle_start_pulse():
+    """Faz o CYCLE START PULSAR (verde claro/escuro) enquanto o programa roda.
+
+    O QSS define SafeCycleStart:disabled[pulse="on"/"off"]; aqui um timer de
+    600ms alterna a property 'pulse' (com unpolish/polish pra reavaliar o
+    estilo). Roda = interp ocupado E nao pausado. Parado/pausado -> sem pulso."""
+    btn = None
+    for top in QApplication.topLevelWidgets():
+        btn = top.findChild(QPushButton, "cycle_start_button")
+        if btn is not None:
+            break
+    if btn is None:
+        return
+
+    STATUS = getPlugin('status')
+    state = {'on': False}
+
+    def _set_pulse(value):
+        btn.setProperty('pulse', value)
+        st = btn.style()
+        st.unpolish(btn)
+        st.polish(btn)
+
+    def _tick():
+        state['on'] = not state['on']
+        _set_pulse('on' if state['on'] else 'off')
+
+    timer = QTimer()
+    timer.timeout.connect(_tick)
+
+    def _update(*_a, **_k):
+        try:
+            running = (STATUS.interp_state.value != linuxcnc.INTERP_IDLE
+                       and not bool(STATUS.paused.value))
+        except Exception:
+            running = False
+        if running and not timer.isActive():
+            timer.start(600)
+        elif not running and timer.isActive():
+            timer.stop()
+            _set_pulse('')   # volta ao estilo base
+
+    STATUS.interp_state.notify(_update)
+    STATUS.paused.notify(_update)
+    _wire_cycle_start_pulse._timer = timer
+    _update()
+
+
+class _WearAdjustDialog(object):
+    """Dialogo NAO-modal pra somar ajuste de desgaste (atalho DESG X/Z).
+
+    Precisa ser nao-modal: QInputDialog e modal de aplicacao e BLOQUEIA os
+    cliques no teclado virtual (que e outra janela top-level). Nao-modal +
+    posicionado no topo = teclado abre embaixo e funciona (mesmo padrao do
+    FindReplaceDialog). Spinbox com locale C: o teclado virtual envia '.' e
+    o locale pt_BR rejeitaria (mesma correcao do delegate da tabela)."""
+
+    def __init__(self, parent):
+        from qtpy.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout,
+                                    QDoubleSpinBox, QPushButton, QLabel)
+        from qtpy.QtCore import Qt, QLocale
+        self._cb = None
+        self._axis = None
+        d = QDialog(parent)
+        d.setWindowTitle(u"Ajuste de desgaste")
+        d.setWindowFlags(d.windowFlags() | Qt.WindowStaysOnTopHint)
+        d.setModal(False)                       # <- essencial pro teclado virtual
+        d.setMinimumWidth(420)
+        lay = QVBoxLayout(d)
+        self._label = QLabel(d)
+        self._label.setWordWrap(True)
+        lay.addWidget(self._label)
+        self._spin = QDoubleSpinBox(d)
+        self._spin.setDecimals(4)
+        self._spin.setRange(-10.0, 10.0)
+        self._spin.setValue(0.0)
+        self._spin.setLocale(QLocale(QLocale.C))  # aceita '.' do teclado virtual
+        self._spin.setMinimumHeight(48)
+        self._spin.setAlignment(Qt.AlignCenter)
+        lay.addWidget(self._spin)
+        row = QHBoxLayout()
+        cancel = QPushButton(u"CANCELAR", d)
+        ok = QPushButton(u"APLICAR", d)
+        for b in (cancel, ok):
+            b.setMinimumHeight(48)
+            b.setFocusPolicy(Qt.NoFocus)
+        row.addWidget(cancel)
+        row.addWidget(ok)
+        lay.addLayout(row)
+        cancel.clicked.connect(d.hide)
+        ok.clicked.connect(self._apply)
+        # Enter (fisico ou do teclado virtual) = APLICAR direto.
+        self._spin.lineEdit().returnPressed.connect(self._apply)
+        self._dlg = d
+
+    def _apply(self):
+        # Commita o texto digitado ANTES de ler: os botoes tem NoFocus, entao
+        # clicar neles nao gera focus-out e o QDoubleSpinBox ainda nao teria
+        # interpretado o texto (value() devolveria o valor antigo/0.0).
+        self._spin.interpretText()
+        val = float(self._spin.value())
+        self._dlg.hide()
+        if self._cb is not None and abs(val) > 1e-9:
+            self._cb(self._axis, val)
+
+    def open_for(self, axis, tnum, callback):
+        from qtpy.QtWidgets import QApplication
+        self._axis = axis
+        self._cb = callback
+        unidade = u" (em DIAMETRO)" if axis == 'x' else u""
+        self._label.setText(
+            u"T{} - valor a SOMAR ao desgaste {}{}.\nNegativo subtrai.".format(
+                tnum, axis.upper(), unidade))
+        self._spin.setValue(0.0)
+        # topo-centro da tela: teclado virtual abre embaixo sem cobrir
+        d = self._dlg
+        d.show()
+        try:
+            screen = QApplication.primaryScreen().availableGeometry()
+            d.move(screen.x() + (screen.width() - d.width()) // 2,
+                   screen.y() + 20)
+            d.raise_()
+        except Exception:
+            pass
+        self._spin.setFocus()      # foco -> teclado numerico virtual aparece
+        self._spin.selectAll()
+
+
+def _wire_tool_wear_info():
+    """Botoes 'DESG X n' / 'DESG Z n' (embaixo do campo T): mostram o desgaste
+    da ferramenta ATIVA e, ao clicar, abrem um dialogo pra SOMAR um ajuste ao
+    desgaste (atalho, sem ir na aba FERRAMENTAS). Mesma semantica incremental
+    da tabela: X digitado em DIAMETRO (convertido pra raio no model); Z direto.
+    Leitura do tool_wear.json (wear em RAIO; X exibido x2 em G7)."""
+    btn_x = btn_z = tool_tbl = None
+    for top in QApplication.topLevelWidgets():
+        btn_x = btn_x or top.findChild(QPushButton, "desg_x_btn")
+        btn_z = btn_z or top.findChild(QPushButton, "desg_z_btn")
+        tool_tbl = tool_tbl or top.findChild(QWidget, "tooltable")
+    if btn_x is None and btn_z is None:
+        return
+
+    wear_path = os.path.join(os.environ.get('CONFIG_DIR') or '.', 'tool_wear.json')
+    STATUS = getPlugin('status')
+
+    def _load_wear():
+        try:
+            with open(wear_path, 'r') as fh:
+                return json.load(fh)
+        except (OSError, ValueError):
+            return {}
+
+    def _cur_tool():
+        try:
+            return int(STATUS.tool_in_spindle.value or 0)
+        except Exception:
+            return 0
+
+    def refresh(*_a, **_k):
+        tnum = _cur_tool()
+        w = _load_wear().get(str(tnum), {}) if tnum else {}
+        xr = float(w.get('x', 0.0))
+        zr = float(w.get('z', 0.0))
+        # X em diametro (x2) exceto se estiver em modo raio (G8).
+        gcodes = STATUS.gcodes.value or ()
+        xw = xr if "G8" in gcodes else xr * 2.0
+        if btn_x is not None:
+            btn_x.setText("DESG X {:.4f}".format(xw))
+        if btn_z is not None:
+            btn_z.setText("DESG Z {:.4f}".format(zr))
+
+    # Dialogo unico, reutilizado (nao-modal -> teclado virtual funciona).
+    dialog = _WearAdjustDialog(btn_x or btn_z)
+
+    def _apply_adjust(axis, val):
+        # Lookup tardio caso a tooltable nao existisse no momento do wiring.
+        tbl = tool_tbl
+        if tbl is None or not hasattr(tbl, "adjustWearAxisCurrentTool"):
+            tbl = None
+            for top in QApplication.topLevelWidgets():
+                tbl = top.findChild(QWidget, "tooltable")
+                if tbl is not None:
+                    break
+        adjust = getattr(tbl, "adjustWearAxisCurrentTool", None) if tbl else None
+        if adjust is None:
+            try:
+                getPlugin('notifications').captureMessage(
+                    'warn', u"Nao achei a tabela de ferramentas - ajuste nao aplicado.")
+            except Exception:
+                pass
+            return
+        ok = adjust(axis, float(val))
+        if ok is False:
+            try:
+                getPlugin('notifications').captureMessage(
+                    'warn', u"Ajuste de desgaste nao aplicado (ferramenta invalida?).")
+            except Exception:
+                pass
+        refresh()
+
+    def _adjust(axis):
+        tnum = _cur_tool()
+        if tnum <= 0:
+            try:
+                getPlugin('notifications').captureMessage(
+                    'warn', u"Nenhuma ferramenta ativa - carregue uma ferramenta (M6) antes.")
+            except Exception:
+                pass
+            return
+        dialog.open_for(axis, tnum, _apply_adjust)
+
+    if btn_x is not None:
+        btn_x.clicked.connect(lambda _=False: _adjust('x'))
+    if btn_z is not None:
+        btn_z.clicked.connect(lambda _=False: _adjust('z'))
+
+    STATUS.tool_in_spindle.notify(refresh)
+    STATUS.gcodes.notify(refresh)
+    # Re-le o JSON periodicamente (auto-save altera o arquivo; sem sinal Qt).
+    timer = QTimer()
+    timer.timeout.connect(refresh)
+    timer.start(1000)
+    _wire_tool_wear_info._timer = timer
+    refresh()
+
+
 class UserTab(QWidget):
     def __init__(self, parent=None):
         super(UserTab, self).__init__(parent)
@@ -325,7 +914,10 @@ class UserTab(QWidget):
         uic.loadUi(os.path.join(os.path.dirname(__file__), ui_file), self)
         # Wirear depois do event loop comecar (main window ja estara montada)
         QTimer.singleShot(0, _wire_gcode_top_buttons)
+        QTimer.singleShot(0, _wire_edit_mode)
         QTimer.singleShot(0, _wire_auto_clear_backplot)
         QTimer.singleShot(0, _wire_speed_readouts)
         QTimer.singleShot(0, _start_spindle_controller)
         QTimer.singleShot(0, _wire_touch_off_wear_clear)
+        QTimer.singleShot(0, _wire_tool_wear_info)
+        QTimer.singleShot(0, _wire_cycle_start_pulse)
