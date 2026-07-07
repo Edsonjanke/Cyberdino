@@ -190,32 +190,54 @@ def _start_spindle_controller():
         _spindle_controller = SpindleSaveRestore()
 
 
+def _find_tooltable():
+    """Acha o widget WearToolTable de forma robusta.
+
+    findChild(QWidget, "tooltable") a partir de topLevelWidgets falhava em
+    runtime (aviso 'Nao achei a tabela'); allWidgets() enumera TODO widget
+    vivo independente da arvore de janelas, e casamos por objectName OU
+    isinstance da classe real (mesma instancia de modulo: o .ui promove via
+    header dino_widgets.wear_tool_table -> mesmo sys.modules)."""
+    try:
+        from dino_widgets.wear_tool_table import WearToolTable
+    except Exception:
+        WearToolTable = None
+    for w in QApplication.allWidgets():
+        try:
+            if w.objectName() == "tooltable" or \
+               (WearToolTable is not None and isinstance(w, WearToolTable)):
+                if hasattr(w, "clearWearAxisCurrentTool"):
+                    return w
+        except RuntimeError:
+            continue  # widget C++ ja destruido
+    return None
+
+
 def _wire_touch_off_wear_clear():
     # Apos touch_off_x/z, zera o desgaste correspondente da ferramenta atual
     # (comportamento Fanuc: touch redefine o offset total e o wear daquele eixo
     # volta a zero).
     from qtpy.QtWidgets import QAbstractButton
-    tool_tbl = None
     btn_x = None
     btn_z = None
     for top in QApplication.topLevelWidgets():
-        if tool_tbl is None:
-            tool_tbl = top.findChild(QWidget, "tooltable")
         if btn_x is None:
             btn_x = top.findChild(QAbstractButton, "touch_off_x")
         if btn_z is None:
             btn_z = top.findChild(QAbstractButton, "touch_off_z")
-        if tool_tbl is not None and btn_x is not None and btn_z is not None:
+        if btn_x is not None and btn_z is not None:
             break
-    if tool_tbl is None:
-        return
-    slot = getattr(tool_tbl, "clearWearAxisCurrentTool", None)
-    if slot is None:
-        return
+
+    def _clear(axis):
+        tbl = _find_tooltable()
+        slot = getattr(tbl, "clearWearAxisCurrentTool", None) if tbl else None
+        if slot is not None:
+            slot(axis)
+
     if btn_x is not None:
-        btn_x.clicked.connect(lambda _=False: slot('x'))
+        btn_x.clicked.connect(lambda _=False: _clear('x'))
     if btn_z is not None:
-        btn_z.clicked.connect(lambda _=False: slot('z'))
+        btn_z.clicked.connect(lambda _=False: _clear('z'))
 
 
 def _run_from_line_armed(editor, set_line_n=None):
@@ -815,11 +837,10 @@ def _wire_tool_wear_info():
     desgaste (atalho, sem ir na aba FERRAMENTAS). Mesma semantica incremental
     da tabela: X digitado em DIAMETRO (convertido pra raio no model); Z direto.
     Leitura do tool_wear.json (wear em RAIO; X exibido x2 em G7)."""
-    btn_x = btn_z = tool_tbl = None
+    btn_x = btn_z = None
     for top in QApplication.topLevelWidgets():
         btn_x = btn_x or top.findChild(QPushButton, "desg_x_btn")
         btn_z = btn_z or top.findChild(QPushButton, "desg_z_btn")
-        tool_tbl = tool_tbl or top.findChild(QWidget, "tooltable")
     if btn_x is None and btn_z is None:
         return
 
@@ -856,14 +877,9 @@ def _wire_tool_wear_info():
     dialog = _WearAdjustDialog(btn_x or btn_z)
 
     def _apply_adjust(axis, val):
-        # Lookup tardio caso a tooltable nao existisse no momento do wiring.
-        tbl = tool_tbl
-        if tbl is None or not hasattr(tbl, "adjustWearAxisCurrentTool"):
-            tbl = None
-            for top in QApplication.topLevelWidgets():
-                tbl = top.findChild(QWidget, "tooltable")
-                if tbl is not None:
-                    break
+        # Lookup no momento do clique via _find_tooltable (allWidgets +
+        # isinstance) - o findChild por topLevelWidgets falhava em runtime.
+        tbl = _find_tooltable()
         adjust = getattr(tbl, "adjustWearAxisCurrentTool", None) if tbl else None
         if adjust is None:
             try:
