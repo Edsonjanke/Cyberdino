@@ -111,6 +111,19 @@ class WearOffsetModel(OffsetModel):
         except ValueError:
             return None
 
+    def _x_wear_factor(self):
+        # Coluna XW fala DIAMETRO na UI (mesma semantica da tool table);
+        # internamente o wear e raio. Fator 2.0 em modo diametro (G7), 1.0 em
+        # raio (G8), pelo estado modal AO VIVO (stat.gcodes traz G-code*10:
+        # G7=70, G8=80). Default 2.0 (a maquina roda sempre em G7).
+        try:
+            from qtpyvcp.plugins import getPlugin
+            if 80 in getPlugin('status').stat.gcodes:
+                return 1.0
+        except Exception:
+            pass
+        return 2.0
+
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if role == Qt.DisplayRole and orientation == Qt.Horizontal:
             key = self._columns[section]
@@ -125,7 +138,8 @@ class WearOffsetModel(OffsetModel):
             if label is None:
                 return None
             if key == 'XW':
-                return self._wear_value(label, 'x')
+                # Exibe em diametro (raio * 2 em G7), igual a tool table.
+                return self._wear_value(label, 'x') * self._x_wear_factor()
             if key == 'ZW':
                 return self._wear_value(label, 'z')
             if key == 'X':
@@ -177,8 +191,14 @@ class WearOffsetModel(OffsetModel):
             col = self._plugin_col_for(tbl_key)
             if col is None:
                 return False
+            # Comportamento INCREMENTAL (igual a tool table): o valor digitado
+            # SOMA ao desgaste existente, nao substitui. delta de X vem em
+            # diametro -> converte pra raio antes de somar (wear em raio).
+            delta = value
+            if key == 'XW':
+                delta = delta / self._x_wear_factor()
             old_wear = self._wear_value(label, axis)
-            new_wear = value
+            new_wear = old_wear + delta
             self._set_wear_value(label, axis, new_wear)
             # Keep geom constant: total += (new_wear - old_wear)
             self._offset_table[row][col] = (
@@ -187,6 +207,7 @@ class WearOffsetModel(OffsetModel):
             self.dataChanged.emit(index, index)
             geom_idx = self.index(row, self._columns.index(tbl_key))
             self.dataChanged.emit(geom_idx, geom_idx)
+            self._autosave()
             return True
 
         if key in ('X', 'Z'):
@@ -197,6 +218,7 @@ class WearOffsetModel(OffsetModel):
             new_geom = value
             self._offset_table[row][col] = new_geom + self._wear_value(label, axis)
             self.dataChanged.emit(index, index)
+            self._autosave()
             return True
 
         col = self._plugin_col_for(key)
@@ -204,7 +226,19 @@ class WearOffsetModel(OffsetModel):
             return False
         self._offset_table[row][col] = value
         self.dataChanged.emit(index, index)
+        self._autosave()
         return True
+
+    def _autosave(self):
+        """Salva assim que a celula e confirmada (Enter), igual a tool table:
+        wear no JSON + parametros via saveOffsetTable (que ja envolve os
+        G10 L2 em M70/G8/M72). Protegido: se o LinuxCNC nao aceitar MDI agora
+        (ex.: programa rodando), so loga — o valor fica na tabela e o SAVE
+        manual grava depois."""
+        try:
+            self.saveOffsetTable()
+        except Exception as e:
+            LOG.warning("Auto-save da tabela de offsets falhou: %s", e)
 
     def clearRow(self, row):
         label = self._row_label(row)
@@ -258,6 +292,24 @@ class WearOffsetModel(OffsetModel):
             col = self._plugin_col_for(tbl_key)
             if col is not None:
                 self._offset_table[row][col] -= old.get(axis, 0.0)
+        self.beginResetModel()
+        self.endResetModel()
+        return True
+
+    def clearWearAxisForRow(self, row, axis):
+        """Zera SO o sidecar de wear do eixo, sem mexer no total.
+
+        Usado quando um botao ZERO X/Z reescreve o offset via G10 L20: o total
+        novo chega pelo reload do plugin (offset_table_changed); um wear
+        residual viraria 'geometria fantasma' na tabela (geom = total - wear).
+        Mesmo comportamento do touch-off com o wear da ferramenta."""
+        label = self._row_label(row)
+        if not label:
+            return False
+        if abs(self._wear_value(label, axis)) < 1e-9:
+            return False  # nada a zerar; evita reset/save a toa
+        self._set_wear_value(label, axis, 0.0)
+        self._save_wear()
         self.beginResetModel()
         self.endResetModel()
         return True
@@ -327,3 +379,17 @@ class WearOffsetTable(OffsetTable):
         if row < 0:
             return
         self.offset_model.clearWearForRow(row)
+
+    @Slot(str)
+    def clearWearAxisActive(self, axis):
+        """Zera o wear do eixo ('x'/'z') do zero-peca ATIVO (G54..G59.3).
+
+        Chamado pelos botoes ZERO X / ZERO Z / ZERO ALL (wiring em
+        customs._wire_offset_zero_wear_clear)."""
+        try:
+            row = int(self.offset_model.ot.current_index) - 1
+        except (TypeError, ValueError, AttributeError):
+            return False
+        if row < 0:
+            return False
+        return self.offset_model.clearWearAxisForRow(row, axis)

@@ -16,27 +16,21 @@ TOOL_TABLE = getPlugin('tooltable')
 INI_FILE = linuxcnc.ini(os.getenv('INI_FILE_NAME'))
 
 # Estilo dos DROs grandes: fonte parametrizada pelo modo (44pt junto da
-# tabela; 64pt quando em tela cheia do painel).
-_BIG_DRO_SS = """DROLabel {{
+# tabela; 64pt quando em tela cheia do painel). DROLineEdit = mesmo widget
+# da coluna G54 WORK da tabela (valor identico + editavel clicando).
+_BIG_DRO_SS = """DROLineEdit {{
     border: 1px solid #3A3F43;
     border-radius: 6px;
     color: #00E676;
     background: #0D0F0E;
     padding-right: 10px;
     font: {size} "Bebas Kai";
-}}
-
-DROLabel[style="unhomed"] {{
-    color: red;
-}}
-
-DROLabel[style="homing"] {{
-    color: rgb(196, 160, 0);
 }}"""
 
-_CAPTION_SS = """QLabel {{
+# Botoes X DIA / ZERO Z do modo ampliado (MDIButton, zeram o eixo): so a
+# fonte e inline — cores/bordas vem do tema global (qss).
+_CAPTION_SS = """MDIButton {{
     font: {size} "Bebas Kai";
-    color: white;
 }}"""
 
 
@@ -86,6 +80,6 @@ class UserDRO(QWidget):
         cap = '44pt' if big else '30pt'
         for lbl in (self.big_dro_x, self.big_dro_z):
             lbl.setStyleSheet(_BIG_DRO_SS.format(size=size))
-        for lbl in (self.big_x_caption, self.big_z_caption):
-            lbl.setStyleSheet(_CAPTION_SS.format(size=cap))
+        for btn in (self.big_zero_x_button, self.big_zero_z_button):
+            btn.setStyleSheet(_CAPTION_SS.format(size=cap))
         self._toggle_btn.setText(u"TABELA" if big else u"AMPLIAR")

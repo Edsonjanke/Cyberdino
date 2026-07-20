@@ -42,7 +42,7 @@
     <number>8</number>
    </property>
    <item row="2" column="2">
-    <widget class="ActionButton" name="block_delete_button">
+    <widget class="QPushButton" name="set_line_n_top_btn">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
        <horstretch>0</horstretch>
@@ -70,13 +70,13 @@
 }</string>
      </property>
      <property name="text">
-      <string>BLOCK DELETE</string>
+      <string>SET LINE N</string>
      </property>
      <property name="checkable">
       <bool>true</bool>
      </property>
-     <property name="actionName" stdset="0">
-      <string>program.block-delete.toggle</string>
+     <property name="toolTip">
+      <string>Salva a linha do cursor como ponto de partida fixo. Aceso: RUN FROM LINE sempre arma dessa linha (memoriza por programa, persiste entre sessoes). Aperte de novo para voltar a usar o cursor.</string>
      </property>
     </widget>
    </item>
@@ -194,24 +194,24 @@
      </property>
     </widget>
    </item>
-   <item row="0" column="0">
+   <item row="0" column="0" rowspan="2" colspan="1">
     <widget class="QPushButton" name="run_from_line_bottom_btn">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>1</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="minimumSize">
       <size>
-       <width>135</width>
-       <height>42</height>
+       <width>160</width>
+       <height>63</height>
       </size>
      </property>
      <property name="maximumSize">
       <size>
        <width>16777215</width>
-       <height>42</height>
+       <height>16777215</height>
       </size>
      </property>
      <property name="focusPolicy">
@@ -219,7 +219,7 @@
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-   	font: 13pt &quot;Bebas Kai&quot;;
+   	font: 15pt &quot;Bebas Kai&quot;;
 }</string>
      </property>
      <property name="text">
@@ -308,48 +308,6 @@
      </property>
      <property name="actionName" stdset="0">
       <string>program.clear</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="ActionButton" name="reload_program_button">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>135</width>
-       <height>42</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>42</height>
-      </size>
-     </property>
-     <property name="focusPolicy">
-      <enum>Qt::NoFocus</enum>
-     </property>
-     <property name="layoutDirection">
-      <enum>Qt::LeftToRight</enum>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">QPushButton {
-   	font: 15pt &quot;Bebas Kai&quot;;
-}</string>
-     </property>
-     <property name="text">
-      <string>RELOAD PGM</string>
-     </property>
-     <property name="checkable">
-      <bool>false</bool>
-     </property>
-     <property name="actionName" stdset="0">
-      <string>program.reload</string>
      </property>
     </widget>
    </item>

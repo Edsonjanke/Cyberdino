@@ -912,40 +912,73 @@ DROLabel[style=&quot;homing&quot;]{
           <number>4</number>
          </property>
          <item>
+          <widget class="StatusLabel" name="big_wcs_header">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QLabel {
+    color: #26C6DA;
+    font: 22pt &quot;Bebas Kai&quot;;
+}</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <property name="text">
+            <string>G54 WORK</string>
+           </property>
+           <property name="rules" stdset="0">
+            <string>[{&quot;channels&quot;: [{&quot;url&quot;: &quot;status:g5x_index?text&quot;, &quot;trigger&quot;: true}], &quot;property&quot;: &quot;Text&quot;, &quot;expression&quot;: &quot;ch[0] + ' WORK'\n&quot;, &quot;name&quot;: &quot;WCS Header&quot;}]</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <layout class="QHBoxLayout" name="big_x_row">
            <property name="spacing">
             <number>8</number>
            </property>
            <item>
-            <widget class="QLabel" name="big_x_caption">
+            <widget class="MDIButton" name="big_zero_x_button">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
              <property name="minimumSize">
               <size>
-               <width>52</width>
+               <width>130</width>
                <height>0</height>
               </size>
              </property>
-             <property name="styleSheet">
-              <string notr="true">QLabel {
-    font: 30pt &quot;Bebas Kai&quot;;
-    color: white;
-}</string>
+             <property name="focusPolicy">
+              <enum>Qt::NoFocus</enum>
              </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
+             <property name="styleSheet">
+              <string notr="true">MDIButton {
+    font: 30pt &quot;Bebas Kai&quot;;
+}</string>
              </property>
              <property name="text">
               <string>X</string>
              </property>
+             <property name="rules" stdset="0">
+              <string>[{&quot;channels&quot;: [{&quot;url&quot;: &quot;status:g5x_index&quot;, &quot;trigger&quot;: true, &quot;type&quot;: &quot;int&quot;}], &quot;property&quot;: &quot;None&quot;, &quot;expression&quot;: &quot;&quot;, &quot;name&quot;: &quot;G5x Index&quot;}]</string>
+             </property>
+             <property name="MDICommand" stdset="0">
+              <string>G10 L20 P{ch[0]} X0.0</string>
+             </property>
             </widget>
            </item>
            <item>
-            <widget class="DROLabel" name="big_dro_x">
+            <widget class="DROLineEdit" name="big_dro_x">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                <horstretch>1</horstretch>
@@ -958,22 +991,17 @@ DROLabel[style=&quot;homing&quot;]{
                <height>72</height>
               </size>
              </property>
+             <property name="focusPolicy">
+              <enum>Qt::ClickFocus</enum>
+             </property>
              <property name="styleSheet">
-              <string notr="true">DROLabel {
+              <string notr="true">DROLineEdit {
     border: 1px solid #3A3F43;
     border-radius: 6px;
     color: #00E676;
     background: #0D0F0E;
     padding-right: 10px;
     font: 44pt &quot;Bebas Kai&quot;;
-}
-
-DROLabel[style=&quot;unhomed&quot;] {
-    color: red;
-}
-
-DROLabel[style=&quot;homing&quot;] {
-    color: rgb(196, 160, 0);
 }</string>
              </property>
              <property name="alignment">
@@ -1007,35 +1035,43 @@ DROLabel[style=&quot;homing&quot;] {
             <number>8</number>
            </property>
            <item>
-            <widget class="QLabel" name="big_z_caption">
+            <widget class="MDIButton" name="big_zero_z_button">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
              <property name="minimumSize">
               <size>
-               <width>52</width>
+               <width>130</width>
                <height>0</height>
               </size>
              </property>
-             <property name="styleSheet">
-              <string notr="true">QLabel {
-    font: 30pt &quot;Bebas Kai&quot;;
-    color: white;
-}</string>
+             <property name="focusPolicy">
+              <enum>Qt::NoFocus</enum>
              </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
+             <property name="styleSheet">
+              <string notr="true">MDIButton {
+    font: 30pt &quot;Bebas Kai&quot;;
+}</string>
              </property>
              <property name="text">
               <string>Z</string>
              </property>
+             <property name="rules" stdset="0">
+              <string>[{&quot;channels&quot;: [{&quot;url&quot;: &quot;status:g5x_index&quot;, &quot;trigger&quot;: true, &quot;type&quot;: &quot;int&quot;}], &quot;property&quot;: &quot;None&quot;, &quot;expression&quot;: &quot;&quot;, &quot;name&quot;: &quot;G5x Index&quot;}]</string>
+             </property>
+             <property name="MDICommand" stdset="0">
+              <string>G10 L20 P{ch[0]} Z0.0</string>
+             </property>
             </widget>
            </item>
            <item>
-            <widget class="DROLabel" name="big_dro_z">
+            <widget class="DROLineEdit" name="big_dro_z">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                <horstretch>1</horstretch>
@@ -1048,22 +1084,17 @@ DROLabel[style=&quot;homing&quot;] {
                <height>72</height>
               </size>
              </property>
+             <property name="focusPolicy">
+              <enum>Qt::ClickFocus</enum>
+             </property>
              <property name="styleSheet">
-              <string notr="true">DROLabel {
+              <string notr="true">DROLineEdit {
     border: 1px solid #3A3F43;
     border-radius: 6px;
     color: #00E676;
     background: #0D0F0E;
     padding-right: 10px;
     font: 44pt &quot;Bebas Kai&quot;;
-}
-
-DROLabel[style=&quot;unhomed&quot;] {
-    color: red;
-}
-
-DROLabel[style=&quot;homing&quot;] {
-    color: rgb(196, 160, 0);
 }</string>
              </property>
              <property name="alignment">

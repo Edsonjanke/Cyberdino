@@ -4057,64 +4057,6 @@ QPushButton:checked {
                        </attribute>
                       </widget>
                      </item>
-                     <item>
-                      <widget class="QPushButton" name="set_line_n_top_btn">
-                       <property name="sizePolicy">
-                        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                         <horstretch>0</horstretch>
-                         <verstretch>0</verstretch>
-                        </sizepolicy>
-                       </property>
-                       <property name="minimumSize">
-                        <size>
-                         <width>150</width>
-                         <height>42</height>
-                        </size>
-                       </property>
-                       <property name="maximumSize">
-                        <size>
-                         <width>150</width>
-                         <height>42</height>
-                        </size>
-                       </property>
-                       <property name="focusPolicy">
-                        <enum>Qt::NoFocus</enum>
-                       </property>
-                       <property name="styleSheet">
-                        <string notr="true">QPushButton {
-    margin-top: 2px;
-    margin-bottom: 2px;
-    margin-left: 8px;
-    color: white;
-    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                stop: 0 #33383B, stop: 1.0 #2C3033);
-    border: 2px solid black;
-    padding: 2px;
-    border-radius: 4px;
-    font: 13pt &quot;Bebas Kai&quot;;
-}
-
-QPushButton:hover {
-    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                stop: 0 #3E4448, stop: 1.0 #33383B);
-}
-
-QPushButton:checked {
-    background: #00838F;
-    color: black;
-}</string>
-                       </property>
-                       <property name="text">
-                        <string>DEF LINHA N</string>
-                       </property>
-                       <property name="checkable">
-                        <bool>true</bool>
-                       </property>
-                       <property name="toolTip">
-                        <string>Salva a linha do cursor como ponto de partida fixo. Aceso: RUN FROM LINE sempre arma dessa linha (memoriza por programa, persiste entre sessoes). Aperte de novo para voltar a usar o cursor.</string>
-                       </property>
-                      </widget>
-                     </item>
                     </layout>
                    </widget>
                   </item>
@@ -5142,13 +5084,13 @@ QComboBox {
                      </property>
                      <property name="minimumSize">
                       <size>
-                       <width>100</width>
+                       <width>170</width>
                        <height>35</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>100</width>
+                       <width>170</width>
                        <height>35</height>
                       </size>
                      </property>
@@ -5640,7 +5582,7 @@ color: white;</string>
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>100</width>
+                       <width>140</width>
                        <height>35</height>
                       </size>
                      </property>
@@ -5676,7 +5618,7 @@ color: white;</string>
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>100</width>
+                       <width>145</width>
                        <height>35</height>
                       </size>
                      </property>
@@ -6110,7 +6052,7 @@ color: white;</string>
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>150</width>
+                       <width>190</width>
                        <height>36</height>
                       </size>
                      </property>
@@ -11894,13 +11836,13 @@ background-color: transparent;
                      </property>
                      <property name="minimumSize">
                       <size>
-                       <width>140</width>
+                       <width>175</width>
                        <height>33</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>140</width>
+                       <width>175</width>
                        <height>33</height>
                       </size>
                      </property>
@@ -15021,7 +14963,7 @@ color: white;
                     </property>
                     <property name="maximumSize">
                      <size>
-                      <width>120</width>
+                      <width>170</width>
                       <height>27</height>
                      </size>
                     </property>
@@ -15083,7 +15025,7 @@ color: white;
                     </property>
                     <property name="maximumSize">
                      <size>
-                      <width>110</width>
+                      <width>140</width>
                       <height>27</height>
                      </size>
                     </property>
@@ -15145,7 +15087,7 @@ color: white;
                     </property>
                     <property name="maximumSize">
                      <size>
-                      <width>110</width>
+                      <width>140</width>
                       <height>27</height>
                      </size>
                     </property>
@@ -21476,7 +21418,7 @@ QPushButton[style='active']{
                <enum>Qt::NoFocus</enum>
               </property>
               <property name="styleSheet">
-               <string notr="true">background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(226, 64, 64, 255), stop:0.446154 rgba(204, 0, 0, 255), stop:0.764103 rgba(225, 67, 67, 255), stop:1 rgba(249, 142, 142, 255))</string>
+               <string notr="true">background: #C62828</string>
               </property>
               <property name="text">
                <string>E-STOP</string>
@@ -21485,7 +21427,7 @@ QPushButton[style='active']{
                <bool>true</bool>
               </property>
               <property name="rules" stdset="0">
-               <string>[{&quot;name&quot;: &quot;estop_button_color&quot;, &quot;property&quot;: &quot;Style Sheet&quot;, &quot;expression&quot;: &quot;\&quot;background: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(66, 71, 75, 255), stop:0.169312 rgba(52, 57, 60, 255), stop:0.328042 rgba(50, 55, 58, 255), stop:0.492063 rgba(52, 57, 60, 255), stop:0.703704 rgba(50, 55, 58, 255), stop:0.86 rgba(52, 57, 60, 255), stop:1 rgba(66, 71, 75, 255))\&quot; if ch[0] else \&quot;background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(226, 64, 64, 255), stop:0.446154 rgba(204, 0, 0, 255), stop:0.764103 rgba(225, 67, 67, 255), stop:1 rgba(249, 142, 142, 255))\&quot;&quot;, &quot;channels&quot;: [{&quot;url&quot;: &quot;status:estop&quot;, &quot;trigger&quot;: true}]}]</string>
+               <string>[{&quot;name&quot;: &quot;estop_button_color&quot;, &quot;property&quot;: &quot;Style Sheet&quot;, &quot;expression&quot;: &quot;\&quot;background: #3A3F43\&quot; if ch[0] else \&quot;background: #C62828\&quot;&quot;, &quot;channels&quot;: [{&quot;url&quot;: &quot;status:estop&quot;, &quot;trigger&quot;: true}]}]</string>
               </property>
               <property name="actionName" stdset="0">
                <string>machine.estop.toggle</string>

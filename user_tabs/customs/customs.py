@@ -14,8 +14,11 @@ from qtpy.QtWidgets import QWidget, QPushButton, QApplication, QLabel
 
 from qtpyvcp.plugins import getPlugin
 from qtpyvcp.actions import program_actions
+from qtpyvcp.utilities.logger import getLogger
 from qtpyvcp.widgets.input_widgets.gcode_text_edit import GcodeTextEdit
 from qtpyvcp.widgets.display_widgets.vtk_backplot.vtk_backplot import VTKBackPlot
+
+LOG = getLogger(__name__)
 
 
 # setPlainText cria um novo QTextDocument cada vez que um NGC e carregado,
@@ -240,6 +243,68 @@ def _wire_touch_off_wear_clear():
         btn_z.clicked.connect(lambda _=False: _clear('z'))
 
 
+def _find_offsettable():
+    """Acha o widget WearOffsetTable (tabela ZERO PECA) — mesmo esquema
+    robusto do _find_tooltable (allWidgets + objectName OU isinstance)."""
+    try:
+        from dino_widgets.wear_offset_table import WearOffsetTable
+    except Exception:
+        WearOffsetTable = None
+    for w in QApplication.allWidgets():
+        try:
+            if w.objectName() == "offset_table" or \
+               (WearOffsetTable is not None and isinstance(w, WearOffsetTable)):
+                if hasattr(w, "clearWearAxisActive"):
+                    return w
+        except RuntimeError:
+            continue  # widget C++ ja destruido
+    return None
+
+
+def _wire_offset_zero_wear_clear():
+    """ZERO X / ZERO Z / ZERO ALL tambem zeram o WEAR daquele eixo do
+    zero-peca ATIVO (igual o touch-off zera o wear da ferramenta): o botao
+    reescreve o offset total via G10 L20, entao um desgaste residual viraria
+    'geometria fantasma' na tabela ZERO PECA (geom = total - wear).
+
+    Em vez de amarrar em objectNames, varre TODOS os MDIButtons cujo comando
+    zera eixo via G10 L20 (contem X0/Z0 literal) — pega o painel do offset
+    DRO (zero_x/z_button_offset), o DRO principal (zero_x/z/all_button) e
+    qualquer botao futuro com o mesmo padrao."""
+    from qtpy.QtWidgets import QAbstractButton
+
+    def _clear(axes):
+        tbl = _find_offsettable()
+        if tbl is None:
+            LOG.warning("Zero-peca: tabela de offsets nao achada p/ zerar wear")
+            return
+        for ax in axes:
+            try:
+                tbl.clearWearAxisActive(ax)
+            except Exception as e:
+                LOG.warning("Zero-peca: falha zerando wear %s: %s", ax, e)
+
+    wired = 0
+    for w in QApplication.allWidgets():
+        try:
+            if not isinstance(w, QAbstractButton):
+                continue
+            cmd = w.property('MDICommand')
+        except RuntimeError:
+            continue
+        if not cmd:
+            continue
+        cmd = str(cmd).upper()
+        if 'G10 L20' not in cmd:
+            continue
+        axes = tuple(ax for ax, tag in (('x', 'X0'), ('z', 'Z0')) if tag in cmd)
+        if not axes:
+            continue
+        w.clicked.connect(lambda _=False, a=axes: _clear(a))
+        wired += 1
+    LOG.info("Zero-peca: %d botoes ZERO ligados ao auto-zero do wear", wired)
+
+
 def _run_from_line_armed(editor, set_line_n=None):
     """RUN FROM LINE: arma o programa na linha PAUSADO.
 
@@ -405,39 +470,59 @@ class _SetLineN:
             return None
 
 
+def _find_button(name):
+    """Acha um botao por objectName de forma robusta (allWidgets), igual
+    _find_tooltable. findChild a partir de topLevelWidgets e fragil pra botoes
+    que vivem em sub-widgets carregados a parte (ex.: user_buttons via
+    uic.loadUi) — o mesmo motivo do bug da tooltable (commit e45d73f)."""
+    for w in QApplication.allWidgets():
+        try:
+            if isinstance(w, QPushButton) and w.objectName() == name:
+                return w
+        except RuntimeError:
+            continue  # widget C++ ja destruido
+    return None
+
+
 def _wire_gcode_top_buttons():
-    """Conecta os botoes 'RUN FROM LINE' e 'SET LINE N' do topo aos metodos do
-    editor de G-code. O editor comeca READ-ONLY: so fica editavel no modo EDIT
-    (ver _wire_edit_mode). SAVE/FIND/COPY/PASTE agora moram na aba EDIT."""
+    """Conecta os botoes 'RUN FROM LINE' e 'SET LINE N' aos metodos do editor
+    de G-code. O editor comeca READ-ONLY: so fica editavel no modo EDIT
+    (ver _wire_edit_mode). SAVE/FIND/COPY/PASTE agora moram na aba EDIT.
+
+    SET LINE N e RUN FROM LINE (de baixo) moram nos user_buttons (widget
+    carregado por uic.loadUi), entao sao achados por _find_button/allWidgets,
+    nao por findChild (que falha pra sub-widgets — ver tooltable, e45d73f)."""
+    editor = None
     for top in QApplication.topLevelWidgets():
-        run_btn = top.findChild(QPushButton, "run_from_here_top_btn")
-        set_n_btn = top.findChild(QPushButton, "set_line_n_top_btn")
-        # Botao 'RUN FROM LINE' do painel inferior (era o MIST). Mesma logica.
-        run_btn_bottom = top.findChild(QPushButton, "run_from_line_bottom_btn")
         editor = top.findChild(GcodeTextEdit, "gcodetextedit_2") \
             or top.findChild(GcodeTextEdit, "gcodetextedit")
-        if editor is None:
-            continue
-
-        # Comeca travado; o modo EDIT destrava (evita edicao acidental).
-        editor.EditorReadOnly(True)
-
-        set_line_n = None
-        if set_n_btn is not None:
-            set_line_n = _SetLineN(set_n_btn, editor)
-            # guarda a ref no widget pra nao ser coletada pelo GC
-            set_n_btn._dino_set_line_n = set_line_n
-
-        for rb in (run_btn, run_btn_bottom):
-            if rb is not None:
-                try:
-                    rb.clicked.disconnect()
-                except (TypeError, RuntimeError):
-                    pass
-                rb.clicked.connect(
-                    lambda _=False, ed=editor, sln=set_line_n: _run_from_line_armed(ed, sln))
-
+        if editor is not None:
+            break
+    if editor is None:
         return
+
+    # Comeca travado; o modo EDIT destrava (evita edicao acidental).
+    editor.EditorReadOnly(True)
+
+    run_btn = _find_button("run_from_here_top_btn")
+    set_n_btn = _find_button("set_line_n_top_btn")
+    # Botao 'RUN FROM LINE' do painel inferior (era o MIST). Mesma logica.
+    run_btn_bottom = _find_button("run_from_line_bottom_btn")
+
+    set_line_n = None
+    if set_n_btn is not None:
+        set_line_n = _SetLineN(set_n_btn, editor)
+        # guarda a ref no widget pra nao ser coletada pelo GC
+        set_n_btn._dino_set_line_n = set_line_n
+
+    for rb in (run_btn, run_btn_bottom):
+        if rb is not None:
+            try:
+                rb.clicked.disconnect()
+            except (TypeError, RuntimeError):
+                pass
+            rb.clicked.connect(
+                lambda _=False, ed=editor, sln=set_line_n: _run_from_line_armed(ed, sln))
 
 
 class _EditShortcutBlocker(QObject):
@@ -923,6 +1008,30 @@ def _wire_tool_wear_info():
     refresh()
 
 
+def _hide_probe_tab():
+    """Oculta a aba APALPADOR (probing_tab) da barra de abas principal.
+
+    Usa removeTab, NAO delete: a pagina e todos os widgets de probe continuam
+    vivos (so saem da barra), entao as referencias do probe_basic.py
+    (self.probe_tab_widget, self.probe_help_widget, etc.) seguem validas e o
+    boot nao quebra. Acha o QTabWidget que contem a pagina 'probing_tab' via
+    allWidgets (robusto). Reversivel: basta nao agendar a chamada.
+    (setTabVisible exigiria Qt>=5.15; removeTab funciona em qualquer versao.)"""
+    from qtpy.QtWidgets import QTabWidget
+    for tw in QApplication.allWidgets():
+        try:
+            if not isinstance(tw, QTabWidget):
+                continue
+            for i in range(tw.count()):
+                page = tw.widget(i)
+                if page is not None and page.objectName() == "probing_tab":
+                    tw.removeTab(i)
+                    LOG.info("Aba APALPADOR (probing_tab) ocultada via removeTab")
+                    return
+        except RuntimeError:
+            continue  # widget C++ ja destruido
+
+
 class UserTab(QWidget):
     def __init__(self, parent=None):
         super(UserTab, self).__init__(parent)
@@ -935,5 +1044,7 @@ class UserTab(QWidget):
         QTimer.singleShot(0, _wire_speed_readouts)
         QTimer.singleShot(0, _start_spindle_controller)
         QTimer.singleShot(0, _wire_touch_off_wear_clear)
+        QTimer.singleShot(0, _wire_offset_zero_wear_clear)
         QTimer.singleShot(0, _wire_tool_wear_info)
         QTimer.singleShot(0, _wire_cycle_start_pulse)
+        QTimer.singleShot(0, _hide_probe_tab)
