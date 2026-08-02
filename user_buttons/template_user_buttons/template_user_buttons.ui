@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <ui version="4.0">
  <class>USER_BUTTONS</class>
  <widget class="QWidget" name="USER_BUTTONS">
@@ -66,17 +66,17 @@
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-   	font: 15pt &quot;Bebas Kai&quot;;
+   	font: 15pt "Bebas Kai";
 }</string>
      </property>
      <property name="text">
-      <string>SET LINE N</string>
+      <string>DEF. LINHA N</string>
      </property>
      <property name="checkable">
       <bool>true</bool>
      </property>
      <property name="toolTip">
-      <string>Salva a linha do cursor como ponto de partida fixo. Aceso: RUN FROM LINE sempre arma dessa linha (memoriza por programa, persiste entre sessoes). Aperte de novo para voltar a usar o cursor.</string>
+      <string>Salva a linha do cursor como ponto de partida fixo. Aceso: EXEC. DA LINHA sempre arma dessa linha (memoriza por programa, persiste entre sessoes). Aperte de novo para voltar a usar o cursor.</string>
      </property>
     </widget>
    </item>
@@ -105,11 +105,11 @@
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-   	font: 15pt &quot;Bebas Kai&quot;;
+   	font: 15pt "Bebas Kai";
 }</string>
      </property>
      <property name="text">
-      <string>M01 BREAK</string>
+      <string>PARADA M01</string>
      </property>
      <property name="checkable">
       <bool>true</bool>
@@ -144,11 +144,11 @@
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-   	font: 15pt &quot;Bebas Kai&quot;;
+   	font: 15pt "Bebas Kai";
 }</string>
      </property>
      <property name="text">
-      <string>Flood</string>
+      <string>FLUIDO</string>
      </property>
      <property name="checkable">
       <bool>true</bool>
@@ -183,11 +183,11 @@
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-   	font: 15pt &quot;Bebas Kai&quot;;
+   	font: 15pt "Bebas Kai";
 }</string>
      </property>
      <property name="text">
-      <string>SINGLE BLOCK</string>
+      <string>BLOCO A BLOCO</string>
      </property>
      <property name="actionName" stdset="0">
       <string>program.step</string>
@@ -219,14 +219,14 @@
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-   	font: 15pt &quot;Bebas Kai&quot;;
+   	font: 15pt "Bebas Kai";
 }</string>
      </property>
      <property name="text">
-      <string>RUN FROM LINE</string>
+      <string>EXEC. DA LINHA</string>
      </property>
      <property name="toolTip">
-      <string>Arma o programa na linha (cursor ou linha salva no SET LINE N) e deixa PAUSADO. Aperte CYCLE START para iniciar.</string>
+      <string>Arma o programa na linha (cursor ou linha salva no DEF. LINHA N) e deixa PAUSADO. Aperte INICIAR para iniciar.</string>
      </property>
     </widget>
    </item>
@@ -255,17 +255,17 @@
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-   	font: 15pt &quot;Bebas Kai&quot;;
+   	font: 15pt "Bebas Kai";
 }</string>
      </property>
      <property name="text">
-      <string>FEED HOLD</string>
+      <string>PAUSA</string>
      </property>
      <property name="checkable">
       <bool>true</bool>
      </property>
      <property name="rules" stdset="0">
-      <string>[{&quot;channels&quot;: [{&quot;url&quot;: &quot;status:interp_state?text&quot;, &quot;trigger&quot;: true}], &quot;property&quot;: &quot;Checked&quot;, &quot;expression&quot;: &quot;ch[0] == 'Paused'&quot;, &quot;name&quot;: &quot;check when paused&quot;}]</string>
+      <string>[{"channels": [{"url": "status:interp_state?text", "trigger": true}], "property": "Checked", "expression": "ch[0] == 'Paused'", "name": "check when paused"}]</string>
      </property>
      <property name="actionName" stdset="0">
       <string>program.pause</string>
@@ -297,11 +297,11 @@
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-   	font: 15pt &quot;Bebas Kai&quot;;
+   	font: 15pt "Bebas Kai";
 }</string>
      </property>
      <property name="text">
-      <string>CLEAR PGM</string>
+      <string>LIMPAR PGM</string>
      </property>
      <property name="checkable">
       <bool>false</bool>
@@ -360,6 +360,6 @@
    <header>qtpyvcp.widgets.button_widgets.action_button</header>
   </customwidget>
  </customwidgets>
- <resources/>
- <connections/>
+ <resources />
+ <connections />
 </ui>

@@ -455,9 +455,9 @@ class _SetLineN:
 
     def _refresh_text(self, line):
         if line is not None:
-            self._btn.setText("LINE N {}".format(line))
+            self._btn.setText("LINHA N {}".format(line))
         else:
-            self._btn.setText("SET LINE N")
+            self._btn.setText("DEF. LINHA N")
 
     def active_line(self):
         """Linha salva se o botao estiver aceso; senao None (usa cursor)."""

@@ -5243,7 +5243,7 @@ QPushButton:checked {
                       <bool>true</bool>
                      </property>
                      <property name="rules" stdset="0">
-                      <string>[{"name": "usb_hide_show", "property": "Text", "expression": "'SHOW USB' if ch[0] else 'HIDE USB'", "channels": [{"url": "settings:startup-settings.usb-hide-show", "trigger": true}]}]</string>
+                      <string>[{"name": "usb_hide_show", "property": "Text", "expression": "'MOSTRAR USB' if ch[0] else 'OCULTAR USB'", "channels": [{"url": "settings:startup-settings.usb-hide-show", "trigger": true}]}]</string>
                      </property>
                      <property name="settingName" stdset="0">
                       <string>startup-settings.usb-hide-show</string>
@@ -9345,7 +9345,7 @@ padding-right: 10px;
                             <string>TOCAR X RAIO</string>
                            </property>
                            <property name="rules" stdset="0">
-                            <string>[{"name": "New Rule", "property": "Text", "expression": "'TOUCH X DIAM' if \"G7\" in ch[0] else 'TOUCH X RAD'", "channels": [{"url": "status:gcodes", "trigger": true}]}]</string>
+                            <string>[{"name": "New Rule", "property": "Text", "expression": "'TOCAR X DIAM' if \"G7\" in ch[0] else 'TOCAR X RAIO'", "channels": [{"url": "status:gcodes", "trigger": true}]}]</string>
                            </property>
                            <property name="filename" stdset="0">
                             <string>touch_off_x.ngc</string>
@@ -10542,7 +10542,7 @@ padding-right: 10px;
                             <string>TOCAR X RAIO</string>
                            </property>
                            <property name="rules" stdset="0">
-                            <string>[{"name": "g7_g8_display_mode", "property": "Text", "expression": "'TOUCH X DIAM' if \"G7\" in ch[0] else 'TOUCH X RAD'", "channels": [{"url": "status:gcodes", "trigger": true}]}]</string>
+                            <string>[{"name": "g7_g8_display_mode", "property": "Text", "expression": "'TOCAR X DIAM' if \"G7\" in ch[0] else 'TOCAR X RAIO'", "channels": [{"url": "status:gcodes", "trigger": true}]}]</string>
                            </property>
                            <property name="filename" stdset="0">
                             <string>touch_off_x_mt.ngc</string>
@@ -19622,7 +19622,7 @@ border-radius: 4px;
                             <set>Qt::AlignCenter</set>
                            </property>
                            <property name="rules" stdset="0">
-                            <string>[{"channels": [{"url": "status:gcodes", "trigger": true}], "property": "Text", "expression": "'G7 DIAMETER MODE' if 'G7' in ch[0] else 'G8 RADIUS MODE'", "name": "diam_rad_mode_display"}]</string>
+                            <string>[{"channels": [{"url": "status:gcodes", "trigger": true}], "property": "Text", "expression": "'G7 MODO DIAMETRO' if 'G7' in ch[0] else 'G8 MODO RAIO'", "name": "diam_rad_mode_display"}]</string>
                            </property>
                           </widget>
                          </item>
@@ -20895,7 +20895,7 @@ QPushButton[style='active']{
               <string>INICIAR</string>
              </property>
              <property name="rules" stdset="0">
-              <string>[{"name": "probe_safety_lockout", "property": "Enable", "expression": "False if ch[0]['T'] == 99 else True", "channels": [{"url": "tooltable:current_tool", "trigger": true}]}, {"name": "resume_program", "property": "Text", "expression": "'RESUME FEED' if ch[0] else 'CYCLE START'", "channels": [{"url": "status:paused", "trigger": true}]}, {"name": "resume_program_style", "property": "Style Class", "expression": "\"active\" if ch[0] else \"inactive\"", "channels": [{"url": "status:paused", "trigger": true}]}]</string>
+              <string>[{"name": "probe_safety_lockout", "property": "Enable", "expression": "False if ch[0]['T'] == 99 else True", "channels": [{"url": "tooltable:current_tool", "trigger": true}]}, {"name": "resume_program", "property": "Text", "expression": "'RETOMAR' if ch[0] else 'INICIAR'", "channels": [{"url": "status:paused", "trigger": true}]}, {"name": "resume_program_style", "property": "Style Class", "expression": "\"active\" if ch[0] else \"inactive\"", "channels": [{"url": "status:paused", "trigger": true}]}]</string>
              </property>
              <property name="actionName" stdset="0">
               <string>program.run</string>
