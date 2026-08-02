@@ -609,7 +609,8 @@ def _wire_auto_clear_backplot():
     if backplot is None:
         return
 
-    # Logo EVO como marca d'agua no canto inferior direito do backplot.
+    # Logo EVO (completa, mono branco) como marca d'agua no canto inferior
+    # direito do backplot.
     # vtkLogoRepresentation SEM widget precisa de SetRenderer() +
     # BuildRepresentation() explicitos (sem isso a geometria nao e construida
     # e nada aparece). Adiada 3s pro render window GL ja estar inicializado.
@@ -622,7 +623,7 @@ def _wire_auto_clear_backplot():
             logo_path = os.path.join(
                 os.environ.get('CONFIG_DIR') or os.path.dirname(
                     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-                'logo', 'evo-simbolo-branco.png')
+                'logo', 'evo-horizontal-branco.png')
             if not os.path.exists(logo_path):
                 print("[customs.py] logo nao encontrada: %s" % logo_path)
                 return
@@ -632,8 +633,11 @@ def _wire_auto_clear_backplot():
             logo_rep = vtk.vtkLogoRepresentation()
             logo_rep.SetImage(reader.GetOutput())
             logo_rep.SetRenderer(bp.renderer)     # <- essencial sem widget
-            logo_rep.SetPosition(0.80, 0.02)      # canto inferior direito
-            logo_rep.SetPosition2(0.18, 0.18)     # ~18% da viewport
+            # A logo completa e' larga (829x256 = 3.24:1). Sem
+            # ProportionalResizeOn ela sairia esmagada dentro de um quadrado.
+            logo_rep.ProportionalResizeOn()
+            logo_rep.SetPosition(0.72, 0.02)      # canto inferior direito
+            logo_rep.SetPosition2(0.25, 0.13)     # 25% da largura, altura pela proporcao
             # 0.35 era calibrado para o splash colorido; com o simbolo BRANCO
             # puro ficava quase invisivel. 0.50 aparece sem competir com as
             # linhas do percurso.

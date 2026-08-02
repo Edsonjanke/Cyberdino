@@ -150,6 +150,21 @@ class UserTab(QWidget):
             self._op_group.addButton(btn, i)
             col1.addWidget(btn)
         col1.addStretch(1)
+        # Logo EVO no rodape da coluna (mono branco: a colorida some no fundo
+        # escuro — o texto dela tem contraste 1.22 contra #242729).
+        self._logo = QLabel()
+        self._logo.setAlignment(Qt.AlignCenter)
+        try:
+            from qtpy.QtGui import QPixmap
+            _cam = os.path.join(_CONFIG_ROOT, "logo", "evo-horizontal-branco.png")
+            _pix = QPixmap(_cam)
+            if not _pix.isNull():
+                self._logo.setPixmap(_pix.scaledToWidth(
+                    150, Qt.SmoothTransformation))
+                self._logo.setStyleSheet("QLabel { padding: 10px 0px; }")
+        except Exception:
+            pass
+        col1.addWidget(self._logo)
         c1 = QWidget()
         c1.setLayout(col1)
         c1.setFixedWidth(190)

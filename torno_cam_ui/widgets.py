@@ -120,9 +120,17 @@ class _DelegadoCorItem(QStyledItemDelegate):
     item — as cores simplesmente nao apareciam. Desenhando o texto aqui, a
     folha de estilo nao tem como sobrepor."""
 
-    def __init__(self, cores, parent=None):
+    def __init__(self, cores, parent=None, altura=52):
         super(_DelegadoCorItem, self).__init__(parent)
         self._cores = list(cores)
+        self._altura = altura
+
+    def sizeHint(self, option, index):
+        # linha alta o bastante para o dedo: a lista tem 97 roscas e no touch
+        # a altura padrao (~25px) faz errar a escolha
+        s = super(_DelegadoCorItem, self).sizeHint(option, index)
+        s.setHeight(max(s.height(), self._altura))
+        return s
 
     def paint(self, painter, option, index):
         from qtpy.QtWidgets import QStyleOptionViewItem, QStyle, QApplication
@@ -166,11 +174,15 @@ class ComboRoscas(QComboBox):
         self._pintar_fechado(self.currentIndex())
 
     def _pintar_fechado(self, indice):
-        """A caixa fechada tambem mostra a cor da rosca escolhida."""
+        """A caixa fechada mostra a cor da rosca escolhida. A fonte e' maior
+        que a dos outros campos: a lista tem 97 roscas e e' escolhida no toque."""
         cor = "#E6E6E6"
         if 0 <= indice < len(self._itens):
             cor = self._itens[indice].get("cor", cor)
-        self.setStyleSheet(_SPIN_QSS + "\nQComboBox { color: %s; }" % cor)
+        self.setStyleSheet(
+            _SPIN_QSS
+            + "\nQComboBox { color: %s; font: 20pt \"Bebas Kai\"; min-height: 46px; }"
+              "\nQComboBox QAbstractItemView { font: 20pt \"Bebas Kai\"; }" % cor)
 
     def committed_value(self):
         i = self.currentIndex()
