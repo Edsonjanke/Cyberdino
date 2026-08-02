@@ -24,6 +24,13 @@ python3 torno_cam_ui/tools/detecta_caixas.py <imagem-bg.png>
 Ele acha os retangulos brancos e imprime a tabela `FIELDS` pronta.
 Procedimento completo e armadilhas: `torno_cam_ui/README-novo-painel.md`.
 
+**Desenhos em PT-BR:** a rosca EXTERNA ja esta traduzida (1819x865, retangulos
+remedidos em 2026-08-02). A INTERNA continua em ingles — a versao traduzida que
+chegou tinha o campo do X de cima marcado como "INICIO X" quando ali e' o FIM X,
+e ainda ganhou uma caixa a mais embaixo ("X START" + "FIM X" empilhados, onde o
+desenho so tem um). Digitar no campo errado da a rosca com profundidade errada,
+entao ela nao foi instalada.
+
 **Modo imersivo:** ao entrar na aba, a faixa inferior e o painel lateral
 somem (`showEvent`/`hideEvent` em `tab.py`) — o desenho ocupa a tela quase
 toda, pra acertar os campos com o dedo. Precisa levantar o teto de 680px do
