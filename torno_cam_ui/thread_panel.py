@@ -163,7 +163,6 @@ class ThreadForm(QWidget):
             ("workOffset",    u"Zero peca",     "combo", WCS),
             ("spindleDir",    u"Fuso",          "combo", DIRS),
             ("coolant",       u"Refrigeracao",  "combo", COOL),
-            ("maxSpindleRPM", u"RPM max",       "int",   dict(suffix="rpm", step=50)),
             ("roughingFPR",   u"Avanco",        "num",   dict(decimals=3, suffix="mm/v", step=0.01)),
         ]
         for i, spec in enumerate(specs):
