@@ -170,3 +170,33 @@ def _gera_bruto(p):
     return assemble_program(
         ProgramConfig(title="t", unitSystem="metric", feedMode="REV"),
         [entry_from_nodes("t", nos)], LinuxCNCDinoPost())
+
+
+# ── Furacao: quem manda no ciclo e' o PASSO (Q) digitado ────────────────────
+def _gera_furo(**extra):
+    p = default_params("DRILL")
+    p.update(dict(useCannedCycle=True, forcePeckCycle=True,
+                  drillDiameter=10.0, zStart=2.0, zEnd=-60.0))
+    p.update(extra)
+    return _gera_bruto(p)
+
+
+def test_passo_zero_fura_direto_sem_bicar():
+    """Furo de 62 mm com broca de 10 (6x o diametro): a regra do app mandaria
+    G83 de qualquer jeito. Se o operador digitou PASSO 0, ele quer o furo
+    direto — e' ele que sabe se a broca sai cavaco sozinha."""
+    g = _gera_furo(peckDepth=0.0)
+    assert "G81" in g and "G83" not in g, g
+
+
+def test_passo_menor_que_o_furo_bica_no_passo_digitado():
+    g = _gera_furo(peckDepth=8.0)
+    linha = [l for l in g.splitlines() if l.startswith("G83")]
+    assert linha, g
+    assert "Q8" in linha[0], linha[0]
+
+
+def test_passo_maior_que_o_furo_nao_faz_sentido_bicar():
+    """Bicada de 100 num furo de 62: a primeira bicada ja passa do fundo."""
+    g = _gera_furo(peckDepth=100.0)
+    assert "G81" in g and "G83" not in g, g

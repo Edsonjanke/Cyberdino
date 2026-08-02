@@ -13,17 +13,23 @@ def _auto_cycle_code(depth, diameter):
 def _cycle_code(p, total_depth):
     """Escolhe G81 (direto) ou G83 (bicada).
 
-    Regra do app: G83 so acima de 3x o diametro. Isso IGNORA o campo PECK
-    DEPTH em furos rasos — o operador digita bicada e a maquina fura de uma
-    vez so. Com `forcePeckCycle` (a UI liga) a bicada digitada vale: se o
-    operador pediu bicada menor que o furo, sai G83.
+    Regra do app: G83 so acima de 3x o diametro. Isso IGNORA o campo PASSO
+    (Q) nos dois sentidos — em furo raso o operador digita bicada e a maquina
+    fura de uma vez so; em furo fundo ele digita ZERO e a maquina bica assim
+    mesmo, com o passo igual ao diametro.
+
+    Com `forcePeckCycle` (a UI liga) quem manda e' o que esta digitado:
+      Q = 0            -> G81, fura direto (pedido do operador)
+      0 < Q < profund. -> G83, bica no passo digitado
+      Q >= profundidade -> G81, uma bicada so' ja passa do fundo
 
     O flag e opcional de proposito: os goldens gerados pelo engine TS nao o
     tem, entao a paridade byte-a-byte continua valendo."""
     if getattr(p, "forcePeckCycle", False):
         peck = getattr(p, "peckDepth", 0) or 0
-        if peck > 0 and peck < abs(total_depth):
-            return "G83"
+        if peck <= 0:
+            return "G81"
+        return "G83" if peck < abs(total_depth) else "G81"
     return _auto_cycle_code(total_depth, p.drillDiameter)
 
 
