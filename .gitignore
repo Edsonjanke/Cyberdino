@@ -59,3 +59,6 @@ Arquivo morto desenvolvimento/
 
 # Diagnostico de tamanho da aba GERAR PGM (temporario)
 torno_cam_diag.log
+
+# Backups locais antes de mudancas grandes
+*.before-*

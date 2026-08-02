@@ -73,7 +73,7 @@ QPushButton:pressed { background: #3E4448; }
 
 _PRIMARY_QSS = """
 QPushButton {
-    background: #1B9E3E; color: white; border: 1px solid #0f6f29;
+    background: #157A30; color: white; border: 1px solid #0c5c22;
     border-radius: 4px; padding: 8px; font: 15pt "Bebas Kai"; min-height: 52px;
 }
 QPushButton:pressed { background: #157a30; }

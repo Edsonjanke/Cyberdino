@@ -4,12 +4,12 @@
    ambar=hold/funcao ativa) + acento ciano p/ selecao + DRO verde-sobre-preto.
    Paleta:
      fundo janela  #242729   paineis  #2E3234   borda painel #4A5055
-     botao corpo   #3A3F43   hover    #474D52   borda botao  #141617
+     botao corpo   #5A6268   hover    #474D52   borda botao  #141617
      acento ciano  #00838F   (hover-checked #0097A7, foco input #00ACC1)
-     verde START   #1B9E3E   (pressed #23C24E)
+     verde START   #157A30   (pressed #23C24E)
      vermelho STOP #C62828   (pressed #E53935)
      ambar HOLD    #FFB300   (texto preto)
-     DRO           fundo #0D0F0E, digitos #00E676, borda #3A3F43
+     DRO           fundo #0D0F0E, digitos #00E676, borda #5A6268
    ========================================================================== */
 
 QMainWindow {
@@ -34,7 +34,7 @@ QComboBox[editable="true"]::drop-down {
     border-style: solid;
     border-radius: 5px;
     border-width: 2px;
-    background: #3A3F43;
+    background: #5A6268;
 }
 
 QComboBox QAbstractItemView {
@@ -72,7 +72,7 @@ QPushButton:checked {
 
 /* LIGAR (power): verde quando ligado */
 QPushButton[actionName="machine.power.toggle"]:checked {
-    background: #1B9E3E;
+    background: #157A30;
     color: white;
 }
 
@@ -82,7 +82,7 @@ QPushButton[actionName="machine.power.toggle"]:pressed {
 
 /* INICIAR (cycle start): verde sempre */
 SafeCycleStart {
-    background: #1B9E3E;
+    background: #157A30;
     color: white;
 }
 
@@ -174,7 +174,7 @@ QLineEdit:focus {
 
 DROWidget {
     color: #00E676;
-    border-color: #3A3F43;
+    border-color: #5A6268;
     border-style: solid;
     border-width: 1px;
     border-radius: 4px;
@@ -432,7 +432,7 @@ QDialog QLabel {
 
 QMenu {
     border: 0px solid #454545;
-    background-color: #3A3F43;
+    background-color: #5A6268;
     color: white;
     margin: 0px;
     font-family: "Bebas Kai";
@@ -475,7 +475,7 @@ QMenu::indicator {
 
 QHeaderView {
     font: 14pt "Bebas Kai";
-    background-color: #3A3F43;
+    background-color: #5A6268;
     color: white;
     border: none;
 }
@@ -528,7 +528,7 @@ QFileDialog QComboBox {
     border-style: solid;
     border-radius: 5px;
     border-width: 2px;
-    background: #3A3F43;
+    background: #5A6268;
     padding: 0px;
     padding-right: 40px; /* Make room for drop-down button */
     padding-left: 10px;
@@ -542,7 +542,7 @@ QFileDialog QComboBox::drop-down {
     border-left: 2px solid #141617;
     border-top-right-radius: 3px;
     border-bottom-right-radius: 3px;
-    background: #3A3F43;
+    background: #5A6268;
 }
 
 QFileDialog QComboBox::drop-down:hover {
@@ -591,7 +591,7 @@ QFileDialog QWidget#buttonBox QPushButton {
     color: white !important;
     font-family: "Bebas Kai" !important;
     font-size: 15pt !important;
-    background: #3A3F43 !important;
+    background: #5A6268 !important;
     border: 2px solid #141617 !important;
     border-radius: 5px !important;
     margin: 8px !important;
@@ -690,7 +690,7 @@ QFileDialog .QFrame {
 
 /* Header styling - consistent with FileSystemTable */
 QFileDialog QHeaderView {
-    background-color: #3A3F43;
+    background-color: #5A6268;
     color: white;
     border: none;
     border-radius: none;
@@ -698,7 +698,7 @@ QFileDialog QHeaderView {
 }
 
 QFileDialog QHeaderView::section {
-    background-color: #3A3F43;
+    background-color: #5A6268;
     color: white;
     border: none;
     border-right: 1px solid #4A5055;

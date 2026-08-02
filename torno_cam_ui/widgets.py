@@ -14,7 +14,7 @@ QAbstractSpinBox, QComboBox, QLineEdit {
     border: 1px solid #3A3F43;
     border-radius: 4px;
     padding: 4px 8px;
-    min-height: 36px;
+    min-height: 40px;   /* com o padding da 48px de alvo de toque */
     font: 15pt "Bebas Kai";
 }
 QComboBox::drop-down { width: 26px; }

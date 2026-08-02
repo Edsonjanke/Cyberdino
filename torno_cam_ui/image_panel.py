@@ -153,6 +153,9 @@ class OverlayToggle(QCheckBox):
         super(OverlayToggle, self).__init__(text, parent)
         self._color = color
         self.setCursor(Qt.PointingHandCursor)
+        # alvo de toque: 32px era um terco menor que os demais botoes e errava
+        # com luva. 48px e' a referencia para painel industrial.
+        self.setMinimumHeight(48)
         self.restyle(12)
 
     def restyle(self, font_px):
