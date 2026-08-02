@@ -47,6 +47,24 @@ Foi testada tambem na barra do MDI e **removida** (2026-08-02): poluia.
 - Combo de roscas: 20pt, linhas da lista de **52px**. Sao 97 roscas
   escolhidas com o dedo; a altura padrao (~25px) fazia errar o item.
 
+## Gerenciador de arquivos (aba ARQUIVO)
+
+Tres defeitos so' visuais, medidos rodando o sim sob Xvfb:
+
+- **PASTA ACIMA** tinha largura travada em 110px (min = max) e o texto com o
+  icone pede 125px — a frase passava por cima da borda. Foi para 140px.
+- **MOSTRAR USB** era o unico botao que ainda tinha o estilo antigo do
+  ProbeBasic (gradiente escuro, borda preta, 16pt, 35px de altura) — destoava
+  de toda a fileira. Agora segue o tema, com 48px como os vizinhos. O
+  `:checked` foi fixado na cor normal: quem avisa o estado e' o texto
+  (MOSTRAR/OCULTAR), nao a cor.
+- Com o painel do USB aberto sobra so' 592px para SEIS botoes, e a soma a
+  14pt dava 576+espacos: NOVO ARQUIVO ficava cortado. A fileira foi para
+  13pt (soma 555) e as larguras minimas para 80px.
+
+Os botoes **funcionam** — foram testados com clique de mouse real e
+verificando que nada os cobre. O que estava errado era so o desenho.
+
 ## Armadilha que se repete: QSS vence setFont()
 
 A folha de estilo da aplicacao **sobrepoe** `setFont()` e tambem o
