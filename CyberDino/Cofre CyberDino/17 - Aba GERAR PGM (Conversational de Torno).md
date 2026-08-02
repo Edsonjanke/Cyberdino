@@ -24,12 +24,18 @@ python3 torno_cam_ui/tools/detecta_caixas.py <imagem-bg.png>
 Ele acha os retangulos brancos e imprime a tabela `FIELDS` pronta.
 Procedimento completo e armadilhas: `torno_cam_ui/README-novo-painel.md`.
 
-**Desenhos em PT-BR:** a rosca EXTERNA ja esta traduzida (1819x865, retangulos
-remedidos em 2026-08-02). A INTERNA continua em ingles — a versao traduzida que
-chegou tinha o campo do X de cima marcado como "INICIO X" quando ali e' o FIM X,
-e ainda ganhou uma caixa a mais embaixo ("X START" + "FIM X" empilhados, onde o
-desenho so tem um). Digitar no campo errado da a rosca com profundidade errada,
-entao ela nao foi instalada.
+**Desenhos em PT-BR** (2026-08-02): rosca externa e interna, furacao,
+chanfro externo, faceamento e raio interno. Faltam desbaste externo/interno,
+canal/corte, chanfro interno e raio externo.
+
+Na rosca INTERNA a arte veio com o X trocado (o campo de cima dizia "INICIO X"
+onde e' o FIM X) e com uma caixa a mais embaixo. Foi corrigida na propria
+imagem: os dois rotulos trocaram de lugar (reaproveitando os pixels, pra fonte
+e tamanho baterem) e a caixa sobrando saiu junto com o traco de chamada dela.
+
+**Cuidado com o rotulo do passo:** os desenhos de rosca dizem "PASSO (POL)",
+mas o campo recebe o passo em MILIMETROS (a UI trabalha em metrico). Vem do
+desenho original em ingles.
 
 **Modo imersivo:** ao entrar na aba, a faixa inferior e o painel lateral
 somem (`showEvent`/`hideEvent` em `tab.py`) — o desenho ocupa a tela quase
@@ -46,10 +52,22 @@ CANAL/CORTE, ROSCA.
 - **Furacao** (`torno_cam/engine/furacao.py`): brocas de 3 a 30 mm de 0,5 em
   0,5. ACO Vc25 / f=0.018·D / peck 3D; INOX Vc14 / 0.012 / 2D;
   ALUMINIO Vc70 / 0.025 / 4D. Teto de 2360 RPM (a caixa nao passa disso).
-- **Roscas** (`torno_cam/engine/roscas.py`): metricas M2 a M50, 97 no total.
-  Passo padrao em **verde**, passos finos em **amarelo**, com "Padrao"/"Fina"
-  escrito em cinza ao lado. Broca = D - passo (~77% de filete, regra de
-  oficina). Titulo do programa sai automatico: "Rosca M8 X 1.25 mm".
+- **Roscas** (`torno_cam/engine/roscas.py`): tres tabelas, escolhidas no
+  seletor "Tabela" da faixa.
+  - **Metrica** M2 a M50 (97): passo padrao **verde**, finos **amarelo**.
+  - **Polegada** #6 a 2" (38): UNC verde, UNF amarelo. O passo em mm sai de
+    25.4/fios e o engine roda com `threadType=imperial`.
+  - **NPT** 1/16" a 4" (13): **ciano**, conica 1:16. O diametro maior na
+    ponta sai de E0 + 0.8/fios (E0 e L2 da ASME B1.20.1).
+  Broca = D - passo (~77% de filete, regra de oficina). Titulo automatico.
+  A caixa "ANGULO DE SAIDA TAPER" do desenho virou o campo de conicidade
+  (angulo POR LADO), ligado ao FIM X nos dois sentidos.
+
+  **Duas travas que valem lembrar:** rosca conica nunca sai em ciclo (o G76
+  nao tem conicidade — sairia cilindrica e nao vedaria), e o cone e'
+  ancorado em (zStart,xStart)-(zEnd,xEnd) pela flag `taperTrueAngle`; sem
+  ela o app espalhava a conicidade tambem pela entrada e pela saida da
+  rosca e o cone saia 1:20 em vez de 1:16.
 
 ## Correcoes de usinagem feitas no porte
 
