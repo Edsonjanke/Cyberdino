@@ -19,18 +19,18 @@ from .panels import WCS, DIRS, COOL
 from torno_cam.engine import furacao
 
 # aspect ratio do container no app (igual ao da imagem: 1440x720)
-DRILL_AR = 1440.0 / 720.0
+DRILL_AR = 2560.0 / 1440.0
 
 # Retangulos MEDIDOS no proprio drill-bg.png (fracao da imagem: x, y, larg, alt).
 FIELDS = [
-    ("toolNumber",    (0.07361, 0.01806, 0.07917, 0.07778), 2, dict(integer=True, minimum=1)),
-    ("zStart",        (0.32153, 0.05833, 0.11875, 0.07778), 6, {}),
-    ("toolClearance", (0.46528, 0.15972, 0.11875, 0.07778), 5, dict(minimum=0.0)),
-    ("peckDepth",     (0.15208, 0.23472, 0.11875, 0.07639), 5, dict(minimum=0.0)),
-    ("drillDiameter", (0.51528, 0.52500, 0.10208, 0.09028), 5, dict(minimum=0.001)),
-    ("roughingSFM",   (0.87222, 0.27361, 0.10694, 0.07917), 4, dict(integer=True, minimum=1)),
-    ("dwellSeconds",  (0.87153, 0.54167, 0.10694, 0.07917), 4, dict(minimum=0.0)),
-    ("zEnd",          (0.20208, 0.85833, 0.12014, 0.08056), 7, {}),
+    ("toolNumber",    (0.13281, 0.01528, 0.08984, 0.07153), 2, dict(integer=True, minimum=1)),
+    ("zStart",        (0.35781, 0.05347, 0.11797, 0.07292), 6, {}),
+    ("toolClearance", (0.50000, 0.15069, 0.11914, 0.07222), 5, dict(minimum=0.0)),
+    ("peckDepth",     (0.16914, 0.21806, 0.11719, 0.07292), 5, dict(minimum=0.0)),
+    ("roughingSFM",   (0.88242, 0.25278, 0.10391, 0.07500), 4, dict(integer=True, minimum=1)),
+    ("drillDiameter", (0.54961, 0.48125, 0.10703, 0.08611), 5, dict(minimum=0.001)),
+    ("dwellSeconds",  (0.88203, 0.49444, 0.10430, 0.07431), 4, dict(minimum=0.0)),
+    ("zEnd",          (0.21719, 0.80000, 0.12695, 0.07500), 7, {}),
 ]
 
 TOGGLE = ("useCannedCycle", 8.0, 65.0, u"GERAR CICLO", "#4caf50")

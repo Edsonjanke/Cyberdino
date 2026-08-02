@@ -35,15 +35,16 @@ MAXC = {"toolNumber": 2, "chamferAngle": 3, "roughingDOC": 5,
 
 # variante -> (imagem, aspect do container, {campo: retangulo medido})
 VARIANTES = {
-    "CHAMFER_OD": ("chamfer-od-bg.png", 1456.0 / 735.0, {
-        "toolNumber":    (0.14492, 0.02585, 0.04739, 0.07891),
-        "zEnd":          (0.18407, 0.11973, 0.12157, 0.07891),
-        "zStart":        (0.31593, 0.11973, 0.12157, 0.07891),
-        "finishDOC":     (0.85027, 0.17823, 0.12225, 0.07891),
-        "roughingDOC":   (0.57005, 0.25034, 0.12157, 0.07755),
-        "chamferAngle":  (0.38736, 0.37551, 0.10852, 0.07891),
-        "x":             (0.04739, 0.46122, 0.12157, 0.08027),
-        "toolClearance": (0.57005, 0.48435, 0.12157, 0.07891),
+    # desenho em PT-BR (2560x1440), retangulos remedidos
+    "CHAMFER_OD": ("chamfer-od-bg.png", 2560.0 / 1440.0, {
+        "toolNumber":    (0.12578, 0.02569, 0.08906, 0.06944),
+        "zEnd":          (0.23203, 0.12292, 0.11094, 0.06597),
+        "zStart":        (0.35508, 0.12292, 0.11367, 0.06597),
+        "finishDOC":     (0.85469, 0.17014, 0.11836, 0.07083),
+        "roughingDOC":   (0.58555, 0.23264, 0.11758, 0.07222),
+        "chamferAngle":  (0.41484, 0.34861, 0.11250, 0.07083),
+        "x":             (0.04961, 0.43194, 0.12422, 0.07361),
+        "toolClearance": (0.58555, 0.45694, 0.11758, 0.07153),
     }),
     "CHAMFER_ID": ("chamfer-id-bg.png", 1445.0 / 720.0, {
         "toolNumber":    (0.14385, 0.00972, 0.06570, 0.08056),
