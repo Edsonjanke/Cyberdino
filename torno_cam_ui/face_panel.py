@@ -23,14 +23,14 @@ from .panels import WCS, DIRS, COOL
 # dentro da caixa — nada de posicao ajustada no olho.
 # (chave, retangulo, maior valor esperado em caracteres, opcoes do campo)
 FIELDS = [
-    ("toolNumber",    (0.06795, 0.00972, 0.08099, 0.08056), 2, dict(integer=True, minimum=1)),
-    ("zEnd",          (0.26012, 0.08889, 0.12148, 0.08333), 7, {}),
-    ("initialX",      (0.05148, 0.45556, 0.12148, 0.08194), 7, {}),
-    ("finalX",        (0.39945, 0.44861, 0.12217, 0.08333), 7, {}),
-    ("zStart",        (0.29032, 0.82222, 0.12148, 0.08056), 7, {}),
-    ("toolClearance", (0.63761, 0.03333, 0.12148, 0.08194), 5, dict(minimum=0.0)),
-    ("roughingDOC",   (0.63761, 0.14583, 0.12148, 0.08056), 5, dict(minimum=0.001)),
-    ("finishDOC",     (0.63761, 0.25556, 0.12148, 0.08056), 5, dict(minimum=0.0)),
+    ("toolNumber",    (0.12891, 0.01806, 0.07812, 0.06667), 2, dict(integer=True, minimum=1)),
+    ("toolClearance", (0.68164, 0.03819, 0.09297, 0.07083), 5, dict(minimum=0.0)),
+    ("zEnd",          (0.30391, 0.09097, 0.09375, 0.07083), 7, {}),
+    ("roughingDOC",   (0.68125, 0.13819, 0.09453, 0.07153), 5, dict(minimum=0.001)),
+    ("finishDOC",     (0.68125, 0.23681, 0.09453, 0.07222), 5, dict(minimum=0.0)),
+    ("initialX",      (0.01055, 0.44444, 0.14844, 0.07014), 7, {}),
+    ("finalX",        (0.45078, 0.47708, 0.12852, 0.07153), 7, {}),
+    ("zStart",        (0.32773, 0.77222, 0.09844, 0.07014), 7, {}),
 ]
 
 TOGGLES = [
