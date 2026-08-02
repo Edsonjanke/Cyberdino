@@ -912,7 +912,10 @@ DROLabel[style=&quot;homing&quot;]{
           <number>4</number>
          </property>
          <item>
-          <widget class="StatusLabel" name="big_wcs_header">
+          <layout class="QHBoxLayout" name="big_header_row">
+           <property name="spacing"><number>8</number></property>
+           <item>
+            <widget class="StatusLabel" name="big_wcs_header">
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -926,7 +929,7 @@ DROLabel[style=&quot;homing&quot;]{
 }</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignLeft|Qt::AlignVCenter</set>
            </property>
            <property name="text">
             <string>G54 WORK</string>
@@ -935,6 +938,53 @@ DROLabel[style=&quot;homing&quot;]{
             <string>[{&quot;channels&quot;: [{&quot;url&quot;: &quot;status:g5x_index?text&quot;, &quot;trigger&quot;: true}], &quot;property&quot;: &quot;Text&quot;, &quot;expression&quot;: &quot;ch[0] + ' WORK'\n&quot;, &quot;name&quot;: &quot;WCS Header&quot;}]</string>
            </property>
           </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="big_parts_caption">
+             <property name="styleSheet">
+              <string notr="true">QLabel {
+    color: #9BB0B5;
+    font: 14pt &quot;Bebas Kai&quot;;
+}</string>
+             </property>
+             <property name="text">
+              <string>PEÇAS</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignRight|Qt::AlignVCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="HalLabel" name="big_parts_count">
+             <property name="minimumSize">
+              <size><width>60</width><height>30</height></size>
+             </property>
+             <property name="styleSheet">
+              <string notr="true">HalLabel {
+    color: #26C6DA;
+    font: 22pt &quot;Bebas Kai&quot;;
+    padding-right: 6px;
+}</string>
+             </property>
+             <property name="text">
+              <string>0</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignLeft|Qt::AlignVCenter</set>
+             </property>
+             <property name="pinBaseName" stdset="0">
+              <string>parts-count-big</string>
+             </property>
+             <property name="textFormat" stdset="0">
+              <string>d</string>
+             </property>
+             <property name="pinType" stdset="0">
+              <enum>HalLabel::s32</enum>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
          <item>
           <layout class="QHBoxLayout" name="big_x_row">

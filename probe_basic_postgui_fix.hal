@@ -79,8 +79,8 @@ loadusr -Wn ams32 python3 ams32_hal.py
 # Contador de pecas - incrementa em M30/M2, persiste em parts_count.txt
 # ############################################################################
 loadusr -Wn partcounter python3 partcounter.py
-# Display do contador na aba CUSTOMS (HalLabel parts_count)
-net parts-count <= partcounter.count => qtpyvcp.parts-count.in => qtpyvcp.parts-count-dro.in
+# Display do contador: aba CUSTOMS, DRO da lateral e DRO grande da tela principal
+net parts-count <= partcounter.count => qtpyvcp.parts-count.in => qtpyvcp.parts-count-dro.in => qtpyvcp.parts-count-big.in
 # Reset do contador via botao na aba CUSTOMS (HalButton parts_reset, pulse 200ms)
 net parts-count-reset <= qtpyvcp.parts-reset.out => partcounter.reset
 # Preset digitado + botao SET (HalQSpinBox parts_preset, HalButton parts_load)

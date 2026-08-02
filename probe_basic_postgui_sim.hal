@@ -41,7 +41,7 @@ net spindle-enable => qtpyvcp.gear-selector.spinning
 
 # Parts counter (puro python, funciona sem hardware)
 loadusr -Wn partcounter python3 partcounter.py
-net parts-count <= partcounter.count => qtpyvcp.parts-count.in => qtpyvcp.parts-count-dro.in
+net parts-count <= partcounter.count => qtpyvcp.parts-count.in => qtpyvcp.parts-count-dro.in => qtpyvcp.parts-count-big.in
 net parts-count-reset <= qtpyvcp.parts-reset.out => partcounter.reset
 net parts-preset-val  <= qtpyvcp.parts-preset.out => partcounter.preset
 net parts-preset-load <= qtpyvcp.parts-load.out   => partcounter.load
