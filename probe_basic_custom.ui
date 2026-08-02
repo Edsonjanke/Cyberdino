@@ -4057,7 +4057,7 @@ QPushButton:checked {
                        </attribute>
                       </widget>
                      </item>
-                    <item><widget class="QLabel" name="evo_logo_topo"><property name="minimumSize"><size><width>0</width><height>42</height></size></property><property name="maximumSize"><size><width>16777215</width><height>42</height></size></property><property name="styleSheet"><string notr="true">QLabel { padding-right: 14px; }</string></property><property name="text"><string /></property><property name="pixmap"><pixmap>logo/evo-horizontal-branco.png</pixmap></property><property name="scaledContents"><bool>false</bool></property><property name="alignment"><set>Qt::AlignRight|Qt::AlignVCenter</set></property></widget></item></layout>
+                    </layout>
                    </widget>
                   </item>
                  </layout>
