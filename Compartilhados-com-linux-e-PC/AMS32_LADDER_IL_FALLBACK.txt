@@ -1,0 +1,35 @@
+// ============================================================
+// LADDER MINIMO - SO COOLANT E JOG
+// Sem alarmes, sem spindle, sem lube, sem falha geral
+// ============================================================
+
+// BLOCO 0: Inicializacao Modbus ASCII escravo COM1
+LD    M1002
+MOV   H87       D1036
+RST   M1139
+
+// BLOCO 1: COOLANT (M8/M9 -> Y0 bomba)
+LD    M100
+OUT   Y0
+
+// BLOCO 2: JOG X+ (X0 ou M300 -> M200)
+LD    X0
+OR    M300
+OUT   M200
+
+// BLOCO 3: JOG X-
+LD    X1
+OR    M301
+OUT   M201
+
+// BLOCO 4: JOG Z+
+LD    X2
+OR    M302
+OUT   M202
+
+// BLOCO 5: JOG Z-
+LD    X3
+OR    M303
+OUT   M203
+
+END

@@ -1,0 +1,11 @@
+# custom_sim.hal - Versao simulacao (sem Mesa GPIOs)
+# Bypassa MPG, chaves seletoras, botoes fisicos, fim de curso, estop hardware.
+# UI testa fluxos via teclado/mouse.
+
+# E-stop: loopback direto (sem hardware)
+net estop-loop  iocontrol.0.user-enable-out  =>  iocontrol.0.emc-enable-in
+
+# Sinais que o postgui_sim usa - cria aqui via halui pra existirem antes do postgui
+net prog-paused   halui.program.is-paused
+net prog-idle     halui.program.is-idle
+net mode-is-auto  halui.mode.is-auto

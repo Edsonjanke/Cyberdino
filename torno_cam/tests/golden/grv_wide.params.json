@@ -1,0 +1,45 @@
+{
+  "config": {
+    "programNumber": 1000,
+    "title": "TESTE",
+    "unitSystem": "metric",
+    "feedMode": "REV"
+  },
+  "ops": [
+    {
+      "label": "Canal",
+      "params": {
+        "operationType": "GROOVE",
+        "mode": "GROOVE",
+        "title": "Canal",
+        "material": "6061-T6 Aluminum",
+        "workOffset": "G54",
+        "unitSystem": "metric",
+        "roughingSFM": 80,
+        "finishingSFM": 100,
+        "maxSpindleRPM": 1800,
+        "roughingFPR": 0.08,
+        "finishingFPR": 0.04,
+        "speedMode": "RPM",
+        "spindleDir": "CW",
+        "coolant": "FLOOD",
+        "toolNumber": 4,
+        "toolOffset": 4,
+        "initialX": 50,
+        "finalX": 40,
+        "zStart": 0,
+        "zEnd": -12,
+        "grooveWidth": 3,
+        "toolWidth": 3,
+        "plungeFPR": 0.05,
+        "roughingDOC": 1,
+        "finishDOC": 0.15,
+        "toolClearance": 2.5,
+        "retract": 1,
+        "peck": 5,
+        "edgeBreak": 0.3,
+        "useCannedCycle": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "config": {
+    "programNumber": 1000,
+    "title": "TESTE",
+    "unitSystem": "metric",
+    "feedMode": "REV"
+  },
+  "ops": [
+    {
+      "label": "Rosca",
+      "params": {
+        "operationType": "THREAD_EXTERNAL",
+        "title": "Rosca",
+        "material": "Aco 1045",
+        "workOffset": "G54",
+        "unitSystem": "imperial",
+        "roughingSFM": 0,
+        "finishingSFM": 0,
+        "maxSpindleRPM": 1800,
+        "roughingFPR": 0,
+        "finishingFPR": 0,
+        "speedMode": "RPM",
+        "spindleDir": "CW",
+        "coolant": "FLOOD",
+        "toolNumber": 1,
+        "toolOffset": 1,
+        "side": "EXTERNAL",
+        "xStart": 1,
+        "xEnd": 1,
+        "zStart": 0.1,
+        "zEnd": -1,
+        "clearance": 0.1,
+        "threadType": "imperial",
+        "pitch": 0,
+        "tpi": 20,
+        "threadAngle": 60,
+        "minorDiameter": 0,
+        "passes": 0,
+        "springPasses": 2,
+        "depthOfCut": 0,
+        "spindleRPM": 800,
+        "leadInLength": 0,
+        "leadOutLength": 0,
+        "infeedAngle": 0,
+        "useCannedCycle": false
+      }
+    }
+  ]
+}

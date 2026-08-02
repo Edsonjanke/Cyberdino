@@ -1,0 +1,169 @@
+# Dino_Evo_sim.hal - Versao simulacao (sem Mesa 7i92)
+# Substitui Dino_Evo.hal para validar UI sem hardware conectado.
+# Stepgens: loopback motor-pos-cmd -> motor-pos-fb
+# Spindle: speed-out -> speed-in loopback, at-speed=TRUE
+# Gearbox (mux16/limit2) preservado para testar GearSelector na UI
+
+loadrt [KINS]KINEMATICS
+loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS num_aio=8
+
+loadrt near    names=near.spindle
+loadrt abs     names=abs.spindle,abs.spindle-rps
+loadrt lowpass names=lowpass.spindle,lowpass.spindle-rps
+loadrt scale   names=scale.spindle
+loadrt mult2   names=mult2.spindle-gear
+loadrt mux16   names=mux16.spindle-cmd,mux16.gear-factor
+loadrt limit2  names=limit2.g01,limit2.g02,limit2.g03,limit2.g04,limit2.g05,limit2.g06
+
+addf motion-command-handler   servo-thread
+addf motion-controller        servo-thread
+addf abs.spindle-rps          servo-thread
+addf near.spindle             servo-thread
+addf abs.spindle              servo-thread
+addf lowpass.spindle          servo-thread
+addf lowpass.spindle-rps      servo-thread
+addf scale.spindle            servo-thread
+addf limit2.g01               servo-thread
+addf limit2.g02               servo-thread
+addf limit2.g03               servo-thread
+addf limit2.g04               servo-thread
+addf limit2.g05               servo-thread
+addf limit2.g06               servo-thread
+addf mux16.spindle-cmd        servo-thread
+addf mux16.gear-factor        servo-thread
+addf mult2.spindle-gear       servo-thread
+
+#*******************
+#  X / Z - LOOPBACK SIM
+#*******************
+net x-pos-cmd <= joint.0.motor-pos-cmd
+net x-pos-cmd => joint.0.motor-pos-fb
+net x-enable  <= joint.0.amp-enable-out
+
+net z-pos-cmd <= joint.1.motor-pos-cmd
+net z-pos-cmd => joint.1.motor-pos-fb
+net z-enable  <= joint.1.amp-enable-out
+
+# NO_FORCE_HOMING=1 no INI: nao precisa de home switch
+
+#*******************
+#  SPINDLE - LOOPBACK SIM
+#*******************
+net spindle-vel-cmd-rps        <=  spindle.0.speed-out-rps
+net spindle-vel-cmd-rps-abs    <=  spindle.0.speed-out-rps-abs
+net spindle-vel-cmd-rpm        <=  spindle.0.speed-out
+net spindle-vel-cmd-rpm-abs    <=  spindle.0.speed-out-abs
+net spindle-enable             <=  spindle.0.on
+net spindle-cw                 <=  spindle.0.forward
+net spindle-ccw                <=  spindle.0.reverse
+net spindle-brake              <=  spindle.0.brake
+
+# Feedback = comando (loopback). Filtra com lowpass pra emular inercia.
+setp lowpass.spindle-rps.gain 0.05
+net spindle-vel-cmd-rps     => lowpass.spindle-rps.in
+net spindle-vel-fb-rps      <= lowpass.spindle-rps.out
+net spindle-vel-fb-rps      => spindle.0.speed-in
+
+# at-speed sempre TRUE: motion nao trava esperando spindle (UI testa fluxo)
+setp spindle.0.at-speed 1
+
+# Display RPM filtrado (replica caminho do real)
+setp scale.spindle.gain 60
+setp lowpass.spindle.gain 0.05
+net spindle-vel-fb-rps             =>  scale.spindle.in
+net spindle-fb-rpm                  scale.spindle.out  => abs.spindle.in
+net spindle-fb-rpm-abs              abs.spindle.out    => lowpass.spindle.in
+net spindle-fb-rpm-abs-filtered     lowpass.spindle.out
+
+#*******************************************
+# CAIXA DE MARCHAS - 6 marchas (preserva pra testar UI GearSelector)
+#*******************************************
+setp limit2.g01.max  2360
+setp limit2.g01.min -2360
+setp limit2.g02.max  1500
+setp limit2.g02.min -1500
+setp limit2.g03.max   950
+setp limit2.g03.min  -950
+setp limit2.g04.max   600
+setp limit2.g04.min  -600
+setp limit2.g05.max   375
+setp limit2.g05.min  -375
+setp limit2.g06.max   236
+setp limit2.g06.min  -236
+setp limit2.g01.maxv 590
+setp limit2.g02.maxv 375
+setp limit2.g03.maxv 237.5
+setp limit2.g04.maxv 150
+setp limit2.g05.maxv 93.75
+setp limit2.g06.maxv 59
+
+setp mux16.gear-factor.in00  1.0000
+setp mux16.gear-factor.in01  1.5733
+setp mux16.gear-factor.in02  2.4842
+setp mux16.gear-factor.in03  3.9333
+setp mux16.gear-factor.in04  6.2933
+setp mux16.gear-factor.in05 10.0000
+
+setp mux16.spindle-cmd.sel3  0
+setp mux16.gear-factor.sel3  0
+
+net gear-sel0 => mux16.spindle-cmd.sel0
+net gear-sel0 => mux16.gear-factor.sel0
+net gear-sel1 => mux16.spindle-cmd.sel1
+net gear-sel1 => mux16.gear-factor.sel1
+net gear-sel2 => mux16.spindle-cmd.sel2
+net gear-sel2 => mux16.gear-factor.sel2
+
+net spindle-vel-cmd-rpm => limit2.g01.in
+net spindle-vel-cmd-rpm => limit2.g02.in
+net spindle-vel-cmd-rpm => limit2.g03.in
+net spindle-vel-cmd-rpm => limit2.g04.in
+net spindle-vel-cmd-rpm => limit2.g05.in
+net spindle-vel-cmd-rpm => limit2.g06.in
+net spindle-cmd-g01 <= limit2.g01.out => mux16.spindle-cmd.in00
+net spindle-cmd-g02 <= limit2.g02.out => mux16.spindle-cmd.in01
+net spindle-cmd-g03 <= limit2.g03.out => mux16.spindle-cmd.in02
+net spindle-cmd-g04 <= limit2.g04.out => mux16.spindle-cmd.in03
+net spindle-cmd-g05 <= limit2.g05.out => mux16.spindle-cmd.in04
+net spindle-cmd-g06 <= limit2.g06.out => mux16.spindle-cmd.in05
+net spindle-cmd-clamped <= mux16.spindle-cmd.out-f
+
+# Gear factor sai do mux mas sem PWM no sim - usa mult2 so pra nao deixar pin solto
+net spindle-gear-factor <= mux16.gear-factor.out-f => mult2.spindle-gear.in1
+setp mult2.spindle-gear.in0 0
+
+#******************************
+# HALUI / motion
+#******************************
+net axis-select-x  halui.axis.x.select
+net jog-x-pos      halui.axis.x.plus
+net jog-x-neg      halui.axis.x.minus
+net jog-x-analog   halui.axis.x.analog
+net x-is-homed     halui.joint.0.is-homed
+net axis-select-z  halui.axis.z.select
+net jog-z-pos      halui.axis.z.plus
+net jog-z-neg      halui.axis.z.minus
+net jog-z-analog   halui.axis.z.analog
+net z-is-homed     halui.joint.1.is-homed
+net jog-selected-pos      halui.axis.selected.plus
+net jog-selected-neg      halui.axis.selected.minus
+net spindle-manual-cw     halui.spindle.0.forward
+net spindle-manual-ccw    halui.spindle.0.reverse
+net spindle-manual-stop   halui.spindle.0.stop
+net machine-is-on         halui.machine.is-on
+net jog-speed             halui.axis.jog-speed
+net MDI-mode              halui.mode.is-mdi
+
+setp halui.feed-override.direct-value false
+setp halui.feed-override.scale 0.01
+
+#  ---coolant signals---
+net coolant-mist      <=  iocontrol.0.coolant-mist
+net coolant-flood     <=  iocontrol.0.coolant-flood
+
+net in-position               <=  motion.in-position
+net machine-is-enabled        <=  motion.motion-enabled
+
+# Tool change loopback (idem real)
+net tool-change-loop    iocontrol.0.tool-change   iocontrol.0.tool-changed
+net tool-prepare-loop   iocontrol.0.tool-prepare  iocontrol.0.tool-prepared

@@ -1,0 +1,82 @@
+{
+  "config": {
+    "programNumber": 2000,
+    "title": "EIXO ROSCADO",
+    "unitSystem": "metric",
+    "feedMode": "REV"
+  },
+  "ops": [
+    {
+      "label": "Desbaste Ext",
+      "params": {
+        "operationType": "OD_TURN",
+        "title": "Desbaste Ext",
+        "material": "Aco 1045",
+        "workOffset": "G54",
+        "unitSystem": "metric",
+        "roughingSFM": 120,
+        "finishingSFM": 145,
+        "maxSpindleRPM": 1800,
+        "roughingFPR": 0.25,
+        "finishingFPR": 0.12,
+        "speedMode": "SFM",
+        "spindleDir": "CW",
+        "coolant": "FLOOD",
+        "toolNumber": 1,
+        "toolOffset": 1,
+        "initialX": 50,
+        "finalX": 24,
+        "zStart": 2.5,
+        "zEnd": -38,
+        "filletRadius": 1,
+        "roughingDOC": 2.5,
+        "finishDOC": 0.25,
+        "toolClearance": 2.5,
+        "toolNoseRadius": 0.8,
+        "useToolRadiusComp": false,
+        "useConstantSurface": false,
+        "finishOnly": false,
+        "useCannedCycle": false
+      }
+    },
+    {
+      "label": "Rosca",
+      "params": {
+        "operationType": "THREAD_EXTERNAL",
+        "title": "Rosca",
+        "material": "Aco 1045",
+        "workOffset": "G54",
+        "unitSystem": "metric",
+        "roughingSFM": 0,
+        "finishingSFM": 0,
+        "maxSpindleRPM": 1800,
+        "roughingFPR": 0,
+        "finishingFPR": 0,
+        "speedMode": "RPM",
+        "spindleDir": "CW",
+        "coolant": "FLOOD",
+        "toolNumber": 1,
+        "toolOffset": 1,
+        "side": "EXTERNAL",
+        "xStart": 24,
+        "xEnd": 24,
+        "zStart": 2,
+        "zEnd": -20,
+        "clearance": 2.5,
+        "threadType": "metric",
+        "pitch": 1,
+        "tpi": 0,
+        "threadAngle": 60,
+        "minorDiameter": 0,
+        "passes": 0,
+        "springPasses": 2,
+        "depthOfCut": 0,
+        "spindleRPM": 800,
+        "leadInLength": 0,
+        "leadOutLength": 0,
+        "infeedAngle": 0,
+        "useCannedCycle": false
+      }
+    }
+  ]
+}

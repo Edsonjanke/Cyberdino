@@ -1032,6 +1032,75 @@ def _hide_probe_tab():
             continue  # widget C++ ja destruido
 
 
+def _wire_jog_continuous():
+    """Adiciona um botao CONT no topo da pilha de incrementos de jog.
+
+    O JogIncrementWidget so mostra incrementos discretos (pula o 0), entao o
+    jog fica preso em passo — o modo contínuo e o setting
+    'machine.jog.mode-incremental' = False, que nenhum botao ativava.
+
+    CONT (checkable, autoExclusive com os botoes de incremento por serem
+    filhos do mesmo widget) ativa contínuo; clicar em qualquer incremento
+    volta pra passo. Os botoes de jog X/Z ja existentes passam a mover
+    contínuo enquanto segurados."""
+    from qtpy.QtCore import Qt
+    from qtpy.QtWidgets import QAbstractButton
+    from qtpyvcp.utilities.settings import setSetting
+
+    try:
+        from qtpyvcp.widgets.input_widgets.jog_increment import JogIncrementWidget
+    except Exception:
+        JogIncrementWidget = None
+
+    jw = None
+    for w in QApplication.allWidgets():
+        try:
+            if w.objectName() == "jogincrement" or \
+               (JogIncrementWidget is not None and isinstance(w, JogIncrementWidget)):
+                jw = w
+                break
+        except RuntimeError:
+            continue
+    if jw is None:
+        LOG.warning("Jog continuo: JogIncrementWidget nao encontrado")
+        return
+    if jw.findChild(QAbstractButton, "jog_cont_btn") is not None:
+        return  # ja adicionado (evita duplicar em reload)
+
+    lay = jw.layout()
+    if lay is None:
+        LOG.warning("Jog continuo: layout do JogIncrementWidget ausente")
+        return
+
+    try:
+        from qtpyvcp.widgets.button_widgets.led_button import LEDButton
+        cont = LEDButton(jw)
+    except Exception:
+        cont = QPushButton(jw)     # fallback: botao comum
+    cont.setObjectName("jog_cont_btn")
+    cont.setText(u"CONT")
+    cont.setCheckable(True)
+    cont.setAutoExclusive(True)    # mutuamente exclusivo com os incrementos
+    cont.setFocusPolicy(Qt.NoFocus)
+    cont.setMinimumSize(50, 42)
+    cont.setStyleSheet('QPushButton { font: 15pt "Bebas Kai"; }')
+    lay.insertWidget(0, cont)
+    try:
+        jw.placeLed()              # estiliza o LED do CONT igual aos demais
+    except Exception:
+        pass
+
+    cont.clicked.connect(
+        lambda _=False: setSetting("machine.jog.mode-incremental", False))
+    for pair in getattr(jw, "_buttons_by_value", []):
+        try:
+            pair[0].clicked.connect(
+                lambda _=False: setSetting("machine.jog.mode-incremental", True))
+        except Exception:
+            pass
+    LOG.info("Jog continuo: botao CONT adicionado")
+
+
 class UserTab(QWidget):
     def __init__(self, parent=None):
         super(UserTab, self).__init__(parent)
@@ -1048,3 +1117,4 @@ class UserTab(QWidget):
         QTimer.singleShot(0, _wire_tool_wear_info)
         QTimer.singleShot(0, _wire_cycle_start_pulse)
         QTimer.singleShot(0, _hide_probe_tab)
+        QTimer.singleShot(0, _wire_jog_continuous)

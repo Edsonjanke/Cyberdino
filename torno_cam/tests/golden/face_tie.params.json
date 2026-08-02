@@ -1,0 +1,40 @@
+{
+  "config": {
+    "programNumber": 1000,
+    "title": "TESTE",
+    "unitSystem": "metric",
+    "feedMode": "REV"
+  },
+  "ops": [
+    {
+      "label": "Faceamento",
+      "params": {
+        "operationType": "FACE",
+        "title": "Faceamento",
+        "material": "Aco 1045",
+        "workOffset": "G54",
+        "unitSystem": "metric",
+        "roughingSFM": 120,
+        "finishingSFM": 145,
+        "maxSpindleRPM": 1800,
+        "roughingFPR": 0.25,
+        "finishingFPR": 0.12,
+        "speedMode": "SFM",
+        "spindleDir": "CW",
+        "coolant": "FLOOD",
+        "toolNumber": 1,
+        "toolOffset": 1,
+        "initialX": 50,
+        "finalX": 0,
+        "zStart": 0,
+        "zEnd": 0.1,
+        "roughingDOC": 0.615,
+        "finishDOC": 0.0625,
+        "toolClearance": 2.5,
+        "toolNoseRadius": 0.8,
+        "finishOnly": false,
+        "useCannedCycle": false
+      }
+    }
+  ]
+}

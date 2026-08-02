@@ -1,7 +1,0 @@
-# Include your custom_postgui HAL commands here
-# This file will not be overwritten when you run PNCconf again
-
-# --- Indicador MPG na interface ---
-# Conecta o sinal mpg-enabled (chave fisica) ao botao MPG do painel
-# MpgButton customizado: pin .in controla checked, mouse bloqueado
-net mpg-enabled => qtpyvcp.mpg-indicator.in

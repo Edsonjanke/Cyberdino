@@ -1,0 +1,43 @@
+{
+  "config": {
+    "programNumber": 1000,
+    "title": "TESTE",
+    "unitSystem": "metric",
+    "feedMode": "REV"
+  },
+  "ops": [
+    {
+      "label": "Desbaste Ext",
+      "params": {
+        "operationType": "OD_TURN",
+        "title": "Desbaste Ext",
+        "material": "Aco 1045",
+        "workOffset": "G54",
+        "unitSystem": "imperial",
+        "roughingSFM": 800,
+        "finishingSFM": 1000,
+        "maxSpindleRPM": 1800,
+        "roughingFPR": 0.01,
+        "finishingFPR": 0.005,
+        "speedMode": "SFM",
+        "spindleDir": "CW",
+        "coolant": "FLOOD",
+        "toolNumber": 1,
+        "toolOffset": 1,
+        "initialX": 2,
+        "finalX": 1.5,
+        "zStart": 0.1,
+        "zEnd": -1.5,
+        "filletRadius": 0,
+        "roughingDOC": 0.1,
+        "finishDOC": 0.01,
+        "toolClearance": 0.1,
+        "toolNoseRadius": 0.0312,
+        "useToolRadiusComp": false,
+        "useConstantSurface": false,
+        "finishOnly": false,
+        "useCannedCycle": false
+      }
+    }
+  ]
+}

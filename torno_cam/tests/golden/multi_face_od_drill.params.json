@@ -1,0 +1,101 @@
+{
+  "config": {
+    "programNumber": 1000,
+    "title": "TESTE",
+    "unitSystem": "metric",
+    "feedMode": "REV"
+  },
+  "ops": [
+    {
+      "label": "Faceamento",
+      "params": {
+        "operationType": "FACE",
+        "title": "Faceamento",
+        "material": "Aco 1045",
+        "workOffset": "G54",
+        "unitSystem": "metric",
+        "roughingSFM": 120,
+        "finishingSFM": 145,
+        "maxSpindleRPM": 1800,
+        "roughingFPR": 0.25,
+        "finishingFPR": 0.12,
+        "speedMode": "SFM",
+        "spindleDir": "CW",
+        "coolant": "FLOOD",
+        "toolNumber": 1,
+        "toolOffset": 1,
+        "initialX": 50,
+        "finalX": 0,
+        "zStart": 0,
+        "zEnd": 0.1,
+        "roughingDOC": 2,
+        "finishDOC": 0.25,
+        "toolClearance": 2.5,
+        "toolNoseRadius": 0.8,
+        "finishOnly": false,
+        "useCannedCycle": false
+      }
+    },
+    {
+      "label": "Desbaste Ext",
+      "params": {
+        "operationType": "OD_TURN",
+        "title": "Desbaste Ext",
+        "material": "Aco 1045",
+        "workOffset": "G54",
+        "unitSystem": "metric",
+        "roughingSFM": 120,
+        "finishingSFM": 145,
+        "maxSpindleRPM": 1800,
+        "roughingFPR": 0.25,
+        "finishingFPR": 0.12,
+        "speedMode": "SFM",
+        "spindleDir": "CW",
+        "coolant": "FLOOD",
+        "toolNumber": 1,
+        "toolOffset": 1,
+        "initialX": 50,
+        "finalX": 38,
+        "zStart": 2.5,
+        "zEnd": -38,
+        "filletRadius": 0,
+        "roughingDOC": 2.5,
+        "finishDOC": 0.25,
+        "toolClearance": 2.5,
+        "toolNoseRadius": 0.8,
+        "useToolRadiusComp": false,
+        "useConstantSurface": false,
+        "finishOnly": false,
+        "useCannedCycle": false
+      }
+    },
+    {
+      "label": "Furacao",
+      "params": {
+        "operationType": "DRILL",
+        "title": "Furacao",
+        "material": "Aco 1045",
+        "workOffset": "G54",
+        "unitSystem": "metric",
+        "roughingSFM": 70,
+        "finishingSFM": 70,
+        "maxSpindleRPM": 2228,
+        "roughingFPR": 0.12,
+        "finishingFPR": 0.084,
+        "speedMode": "RPM",
+        "spindleDir": "CW",
+        "coolant": "FLOOD",
+        "toolNumber": 5,
+        "toolOffset": 5,
+        "drillDiameter": 10,
+        "zStart": 2,
+        "zEnd": -25,
+        "peckDepth": 2,
+        "dwellSeconds": 0,
+        "toolClearance": 2.5,
+        "drillPointAngle": 118,
+        "useCannedCycle": false
+      }
+    }
+  ]
+}

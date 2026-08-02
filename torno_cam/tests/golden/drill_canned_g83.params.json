@@ -1,0 +1,38 @@
+{
+  "config": {
+    "programNumber": 1000,
+    "title": "TESTE",
+    "unitSystem": "metric",
+    "feedMode": "REV"
+  },
+  "ops": [
+    {
+      "label": "Furacao",
+      "params": {
+        "operationType": "DRILL",
+        "title": "Furacao",
+        "material": "Aco 1045",
+        "workOffset": "G54",
+        "unitSystem": "metric",
+        "roughingSFM": 70,
+        "finishingSFM": 70,
+        "maxSpindleRPM": 2228,
+        "roughingFPR": 0.12,
+        "finishingFPR": 0.084,
+        "speedMode": "RPM",
+        "spindleDir": "CW",
+        "coolant": "FLOOD",
+        "toolNumber": 5,
+        "toolOffset": 5,
+        "drillDiameter": 10,
+        "zStart": 2,
+        "zEnd": -40,
+        "peckDepth": 2,
+        "dwellSeconds": 0,
+        "toolClearance": 2.5,
+        "drillPointAngle": 118,
+        "useCannedCycle": true
+      }
+    }
+  ]
+}

@@ -47,3 +47,15 @@ hm2.txt
 # Installer/artifact downloads
 DELTA_IA-PLC_WPL_*.zip
 google-chrome-stable*.deb*
+
+# torno_cam UI state
+torno_cam_ui.json
+
+# App de referencia do porte (projeto separado, tem git proprio e node_modules)
+Evo-CNC-Guia/
+
+# Arquivo morto: backups, instaladores e espelhos — fora do versionamento
+Arquivo morto desenvolvimento/
+
+# Diagnostico de tamanho da aba GERAR PGM (temporario)
+torno_cam_diag.log

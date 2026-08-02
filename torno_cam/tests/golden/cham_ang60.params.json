@@ -1,0 +1,40 @@
+{
+  "config": {
+    "programNumber": 1000,
+    "title": "TESTE",
+    "unitSystem": "metric",
+    "feedMode": "REV"
+  },
+  "ops": [
+    {
+      "label": "Chanfro",
+      "params": {
+        "operationType": "CHAMFER",
+        "title": "Chanfro",
+        "material": "6061-T6 Aluminum",
+        "workOffset": "G54",
+        "unitSystem": "metric",
+        "roughingSFM": 120,
+        "finishingSFM": 145,
+        "maxSpindleRPM": 1800,
+        "roughingFPR": 0.15,
+        "finishingFPR": 0.08,
+        "speedMode": "RPM",
+        "spindleDir": "CW",
+        "coolant": "FLOOD",
+        "toolNumber": 3,
+        "toolOffset": 3,
+        "mode": "CHAMFER",
+        "side": "OD",
+        "x": 50,
+        "zStart": 0,
+        "zEnd": -2,
+        "chamferAngle": 60,
+        "chamferLength": 2,
+        "roughingDOC": 1,
+        "finishDOC": 0.15,
+        "toolClearance": 2.5
+      }
+    }
+  ]
+}

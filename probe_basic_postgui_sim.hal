@@ -1,0 +1,54 @@
+# probe_basic_postgui_sim.hal - Versao simulacao
+# Mesmo que probe_basic_postgui_fix.hal MENOS ams32 (PLC Modbus serial) e jogs do PLC.
+# Mantem timer, spindle restore, gear selector, parts counter (UI completa).
+
+loadrt time
+addf time.0 servo-thread
+
+# Timer cycle
+loadrt not names=not.0
+addf not.0 servo-thread
+net prog-idle => not.0.in
+net prog-paused => time.0.pause
+net cycle-timer time.0.start <= not.0.out
+net cycle-seconds qtpyvcp.timerseconds.in <= time.0.seconds
+net cycle-minutes qtpyvcp.timerminutes.in <= time.0.minutes
+net cycle-hours qtpyvcp.timerhours.in <= time.0.hours
+
+# Spindle RPM display (cmd loopbackado em Dino_Evo_sim.hal)
+net spindle-fb-rpm-abs-filtered => qtpyvcp.spindle-encoder-rpm.in
+
+# MPG indicator: forca FALSE (nao tem MPG em sim)
+setp qtpyvcp.mpg-indicator.in 0
+
+# Cycle blocked: nunca bloqueado em sim
+setp qtpyvcp.cycle-start-button.blocked 0
+
+# Spindle buttons na aba CUSTOMS - mantem fluxo igual real
+net spindle-manual-stop <= qtpyvcp.spindle-off.out
+net spindle-manual-stop => dino_spindle.save
+net spindle-restore-cw  <= qtpyvcp.spindle-on-cw.out  => dino_spindle.restore-cw
+net spindle-restore-ccw <= qtpyvcp.spindle-on-ccw.out => dino_spindle.restore-ccw
+
+net spindle-vel-cmd-rpm => dino_spindle.speed-in
+net dino-css-d <= motion.analog-out-05 => dino_spindle.css-d
+
+# GearSelector (UI) -> gear-sel{0,1,2} usados no Dino_Evo_sim.hal
+net gear-sel0 <= qtpyvcp.gear-selector.sel0
+net gear-sel1 <= qtpyvcp.gear-selector.sel1
+net gear-sel2 <= qtpyvcp.gear-selector.sel2
+net spindle-enable => qtpyvcp.gear-selector.spinning
+
+# Parts counter (puro python, funciona sem hardware)
+loadusr -Wn partcounter python3 partcounter.py
+net parts-count <= partcounter.count => qtpyvcp.parts-count.in => qtpyvcp.parts-count-dro.in
+net parts-count-reset <= qtpyvcp.parts-reset.out => partcounter.reset
+net parts-preset-val  <= qtpyvcp.parts-preset.out => partcounter.preset
+net parts-preset-load <= qtpyvcp.parts-load.out   => partcounter.load
+
+# Jog speed para halui.axis.jog-speed
+sets jog-speed 4500
+
+# AMS32 PLC nao carregado em sim (precisa serial Modbus).
+# Sinais jog-x/z-pos/neg ficam soltos -> halui.axis.* nao acionado por PLC, OK.
+# servo-fault nao existe -> nenhum estop automatico, OK em sim.

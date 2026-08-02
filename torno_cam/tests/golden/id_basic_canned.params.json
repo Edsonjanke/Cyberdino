@@ -1,0 +1,45 @@
+{
+  "config": {
+    "programNumber": 1000,
+    "title": "TESTE",
+    "unitSystem": "metric",
+    "feedMode": "REV"
+  },
+  "ops": [
+    {
+      "label": "Desbaste Int",
+      "params": {
+        "operationType": "ID_TURN",
+        "title": "Desbaste Int",
+        "material": "6061-T6 Aluminum",
+        "workOffset": "G54",
+        "unitSystem": "metric",
+        "roughingSFM": 120,
+        "finishingSFM": 145,
+        "maxSpindleRPM": 1800,
+        "roughingFPR": 0.15,
+        "finishingFPR": 0.08,
+        "speedMode": "SFM",
+        "spindleDir": "CW",
+        "coolant": "FLOOD",
+        "toolNumber": 2,
+        "toolOffset": 2,
+        "mode": "BASIC",
+        "initialX": 20,
+        "finalX": 28,
+        "zStart": 2.5,
+        "zEnd": -30,
+        "filletRadius": 0,
+        "pilotEnd": 0,
+        "faceRoughDOC": 0.5,
+        "idRoughDOC": 1.5,
+        "finishDOC": 0.2,
+        "toolClearance": 2,
+        "toolNoseRadius": 0.4,
+        "useToolRadiusComp": false,
+        "finishOnly": false,
+        "useCannedCycle": true
+      }
+    }
+  ]
+}

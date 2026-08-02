@@ -20061,9 +20061,9 @@ QPushButton:pressed, QPushButton:hover {
                          <number>0</number>
                         </property>
                         <item>
-                         <widget class="ReadOnlyAction" name="manual_mode_button">
+                         <widget class="ActionButton" name="manual_mode_button">
                           <property name="enabled">
-                           <bool>false</bool>
+                           <bool>true</bool>
                           </property>
                           <property name="sizePolicy">
                            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
