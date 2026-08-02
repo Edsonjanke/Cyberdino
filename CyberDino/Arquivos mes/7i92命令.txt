@@ -1,0 +1,45 @@
+
+电脑ip设置成192.168.1.100	子网24  网关不填
+然后再添加一个ip10.10.10.1的 子网8 网关不填
+网线一头插mesa卡 一头插电脑网口
+然后打开终端 输入 ping 192.168.1.121 看能否ping通
+然后打开setname64文件夹 再文件夹里面右键打开终端
+输入
+sudo cp setname /usr/bin/
+sudo cp setenv /usr/bin/
+
+然后输入复制粘贴一下代码
+此步骤为改mesa卡名称 如果出现问号就是有问题
+export INTERFACE='elbp16'
+export IPADDR='192.168.1.121'
+export PROTOCOL='direct'
+setname 7I92
+
+然后输入
+更改mesa卡固件ip地址
+sudo mesaflash --device 7i92 --addr 192.168.1.121 --set ip=10.10.10.10
+
+.
+
+
+这里4个刷入固件命令 依次执行1，2，3，4，5，6	代码
+	要刷入其他固件把命令里面的固件名称替换成你要刷的固件名 
+	以下代码刷入的是名为7i92_fallback.bit 的测试固件 也可做为基本io固件使用
+	注意 刷固件命令有4行必须全部执行
+	注意 刷固件命令有4行必须全部执行
+	注意 刷固件命令有4行必须全部执行
+  1	sudo mesaflash --device 7i92 --addr 10.10.10.10 --write 7i92_fallback.bit --fix --fallback	刷入固件
+  2	sudo mesaflash --device 7i92 --addr 10.10.10.10 --write 7i92_fallback.bit --fallback		刷入固件
+  3	sudo mesaflash --device 7i92 --addr 10.10.10.10 --reload --fallback  重启mesa卡
+ 
+
+  4	sudo mesaflash --device 7i92 --addr 10.10.10.10 --write 7i92_fallback.bit --fix 		刷入固件
+  5	sudo mesaflash --device 7i92 --addr 10.10.10.10 --write 7i92_fallback.bit 			刷入固件
+
+
+
+ 6	sudo mesaflash --device 7i92 --addr 10.10.10.10 --reload   重启mesa卡
+
+sudo mesaflash --device 7i92 --addr 10.10.10.10 --verbose	查询mesa卡信息
+
+sudo mesaflash --device 7i92 --addr 10.10.10.10 --readhmid	查询mesa卡GPIO信息

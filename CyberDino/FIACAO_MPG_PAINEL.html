@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Dino Evo - Fiacao MPG e Painel de Comando</title>
+<style>
+  @media print {
+    body { margin: 10mm; }
+    .page-break { page-break-before: always; }
+    table { page-break-inside: avoid; }
+  }
+  body {
+    font-family: 'Courier New', monospace;
+    font-size: 11pt;
+    line-height: 1.4;
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 15mm;
+    color: #000;
+    background: #fff;
+  }
+  h1 {
+    text-align: center;
+    font-size: 18pt;
+    border-bottom: 3px solid #000;
+    padding-bottom: 8px;
+    margin-bottom: 5px;
+  }
+  h2 {
+    font-size: 14pt;
+    border-bottom: 2px solid #000;
+    padding-bottom: 4px;
+    margin-top: 25px;
+  }
+  h3 {
+    font-size: 12pt;
+    margin-top: 18px;
+    margin-bottom: 5px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 10pt;
+    color: #555;
+    margin-bottom: 20px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 10px 0;
+    font-size: 10pt;
+  }
+  th, td {
+    border: 1px solid #000;
+    padding: 4px 8px;
+    text-align: left;
+  }
+  th {
+    background-color: #ddd;
+    font-weight: bold;
+  }
+  .used { background-color: #d4edda; }
+  .unused { background-color: #f0f0f0; color: #999; }
+  .warning {
+    border: 2px solid #000;
+    padding: 8px 12px;
+    margin: 10px 0;
+    font-weight: bold;
+  }
+  .note {
+    border-left: 4px solid #000;
+    padding: 5px 12px;
+    margin: 10px 0;
+    font-size: 10pt;
+  }
+  pre {
+    font-family: 'Courier New', monospace;
+    font-size: 9pt;
+    line-height: 1.3;
+    background: #f5f5f5;
+    border: 1px solid #ccc;
+    padding: 10px;
+    overflow-x: visible;
+    white-space: pre;
+  }
+  .component-list td:first-child { font-weight: bold; }
+  .check { margin: 3px 0; }
+  .header-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9pt;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 3px;
+    margin-bottom: 15px;
+  }
+</style>
+</head>
+<body>
+
+<h1>DINO EVO - FIACAO MPG E PAINEL</h1>
+<div class="subtitle">
+  Maquina: Dino Evo | Controle: Mesa 7i92 + LinuxCNC 2.9 + ProbeBasic<br>
+  Placa: 7i92 Integrada V1.0 | Firmware: 7i92_5ABOB_Enc.bit<br>
+  Data: 2026-04-06 | Revisao: 01
+</div>
+
+<!-- ============================================================= -->
+<h2>1. LISTA DE COMPONENTES - MPG CUSTOM</h2>
+
+<table class="component-list">
+  <tr><th>Item</th><th>Componente</th><th>Especificacao</th><th>Qtd</th></tr>
+  <tr>
+    <td>1</td>
+    <td>Handwheel encoder (manivela)</td>
+    <td>MPG 5V, 100PPR, saida A/B, diametro 60mm ou 80mm</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td>2</td>
+    <td>Chave rotativa - selecao de eixo</td>
+    <td>2 posicoes + OFF (ou 3 posicoes): X / Z<br>
+        Tipo: rotativa com retorno, 1 polo N posicoes</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td>3</td>
+    <td>Chave rotativa - selecao de escala</td>
+    <td>3 posicoes: x1 / x10 / x100<br>
+        Tipo: rotativa com retorno, 1 polo N posicoes</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td>4</td>
+    <td>Conector DB15 macho</td>
+    <td>HD DB15 macho com capa plastica (para plugar na placa)</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td>5</td>
+    <td>Cabo blindado</td>
+    <td>Cabo com 8+ vias, 0.5mm2, blindado (para o pendant)</td>
+    <td>2m</td>
+  </tr>
+  <tr>
+    <td>6</td>
+    <td>Caixa / gabinete</td>
+    <td>Caixa plastica ou metalica para montar handwheel + chaves</td>
+    <td>1</td>
+  </tr>
+  <tr>
+    <td>7</td>
+    <td>Botao E-Stop (opcional no pendant)</td>
+    <td>Botao cogumelo NF (normalmente fechado), 22mm</td>
+    <td>1</td>
+  </tr>
+</table>
+
+<div class="note">
+  <strong>IMPORTANTE:</strong> O encoder DEVE ser 5V. A placa fornece +5V pelo pino 15 do DB15.
+</div>
+
+<!-- ============================================================= -->
+<h2>2. PINAGEM DB15 - CONECTOR NA PLACA 7i92</h2>
+
+<div class="note">
+  O conector na placa e DB15 FEMEA. O plug do cabo MPG e DB15 MACHO.<br>
+  Vista frontal do conector FEMEA na placa:
+</div>
+
+<pre>
+        DB15 FEMEA - VISTA FRONTAL (na placa 7i92)
+       ___________________________________________
+      /  1    2    3    4    5    6    7    8   \
+     |   o    o    o    o    o    o    o    o    |
+     |     o    o    o    o    o    o    o       |
+      \   9   10   11   12   13   14   15      /
+       -------------------------------------------
+
+        DB15 MACHO - VISTA TRASEIRA (solda no plug)
+        (mesmo layout - soldar visto por tras)
+       ___________________________________________
+      /  1    2    3    4    5    6    7    8   \
+     |   o    o    o    o    o    o    o    o    |
+     |     o    o    o    o    o    o    o       |
+      \   9   10   11   12   13   14   15      /
+       -------------------------------------------
+</pre>
+
+<table>
+  <tr>
+    <th>Pino</th><th>Funcao</th><th>GPIO Mesa</th><th>Ligar em</th><th>Uso Torno</th>
+  </tr>
+  <tr class="unused">
+    <td>1</td><td>Eixo 4</td><td>-</td><td>-</td><td>N/A</td>
+  </tr>
+  <tr class="used">
+    <td>2</td><td>Escala x1</td><td>gpio.016</td>
+    <td>Chave escala - posicao x1</td><td>SIM</td>
+  </tr>
+  <tr class="used">
+    <td>3</td><td>Encoder B (pulso B)</td><td>encoder.01.B</td>
+    <td>Encoder handwheel - fio B</td><td>SIM</td>
+  </tr>
+  <tr class="used">
+    <td>4</td><td>Encoder A (pulso A)</td><td>encoder.01.A</td>
+    <td>Encoder handwheel - fio A</td><td>SIM</td>
+  </tr>
+  <tr class="used">
+    <td>5</td><td>Escala x10</td><td>gpio.015</td>
+    <td>Chave escala - posicao x10</td><td>SIM</td>
+  </tr>
+  <tr class="unused">
+    <td>6</td><td>Eixo Y</td><td>gpio.030</td><td>-</td><td>N/A</td>
+  </tr>
+  <tr class="used">
+    <td>7</td><td>Eixo Z</td><td>gpio.031</td>
+    <td>Chave eixo - posicao Z</td><td>SIM</td>
+  </tr>
+  <tr class="unused">
+    <td>8</td><td>Reservado</td><td>-</td><td>-</td><td>N/A</td>
+  </tr>
+  <tr class="used">
+    <td>9</td><td>Escala x100</td><td>a confirmar</td>
+    <td>Chave escala - posicao x100</td><td>OPCIONAL</td>
+  </tr>
+  <tr class="used">
+    <td>10</td><td>E-Stop contato</td><td>-</td>
+    <td>Botao E-Stop NF (outro lado)</td><td>OPCIONAL</td>
+  </tr>
+  <tr class="used">
+    <td>11</td><td>Eixo X</td><td>gpio.026</td>
+    <td>Chave eixo - posicao X</td><td>SIM</td>
+  </tr>
+  <tr class="unused">
+    <td>12</td><td>Eixo 5</td><td>-</td><td>-</td><td>N/A</td>
+  </tr>
+  <tr class="unused">
+    <td>13</td><td>Reservado</td><td>-</td><td>-</td><td>N/A</td>
+  </tr>
+  <tr class="used">
+    <td>14</td><td>COM (GND)</td><td>0V</td>
+    <td>Comum de TODAS as chaves + GND encoder + E-Stop</td><td>SIM</td>
+  </tr>
+  <tr class="used">
+    <td>15</td><td>+5V</td><td>+5V</td>
+    <td>Alimentacao encoder + LEDs</td><td>SIM</td>
+  </tr>
+</table>
+
+<div class="warning">
+  ATENCAO: Para o torno, usar somente os pinos marcados SIM.<br>
+  Pinos minimos: 2, 3, 4, 5, 7, 11, 14, 15 (8 fios)
+</div>
+
+<!-- ============================================================= -->
+<div class="page-break"></div>
+<h2>3. DIAGRAMA DE FIACAO - MPG CUSTOM</h2>
+
+<h3>3.1 Encoder Handwheel (manivela)</h3>
+<pre>
+  ENCODER MPG (5V, 100PPR)            DB15 MACHO
+  ┌─────────────┐                     (soldar)
+  │             │
+  │  A ─────────┼──────────────────── Pino 4 (Encoder A)
+  │  B ─────────┼──────────────────── Pino 3 (Encoder B)
+  │ +5V ────────┼──────────────────── Pino 15 (+5V)
+  │ GND ────────┼──────────────────── Pino 14 (COM/GND)
+  │             │
+  └─────────────┘
+
+  Cores tipicas do encoder (verificar seu modelo):
+    Vermelho = +5V     Verde = A
+    Preto    = GND     Branco = B
+</pre>
+
+<h3>3.2 Chave Seletora de Eixo (X / OFF / Z)</h3>
+<pre>
+  CHAVE ROTATIVA 3 POSICOES           DB15 MACHO
+  (1 polo, 3 posicoes)                (soldar)
+  ┌─────────────┐
+  │             │
+  │ COM ────────┼──────────────────── Pino 14 (COM/GND)
+  │             │
+  │ Pos 1 (X)──┼──────────────────── Pino 11 (Eixo X)
+  │ Pos 2 (OFF)┼──── nao conecta
+  │ Pos 3 (Z)──┼──────────────────── Pino 7  (Eixo Z)
+  │             │
+  └─────────────┘
+
+  Funcionamento:
+    Posicao X  : pino 11 conecta ao COM (GND) → jog eixo X
+    Posicao OFF: nenhum pino conecta → jog desabilitado
+    Posicao Z  : pino 7 conecta ao COM (GND) → jog eixo Z
+</pre>
+
+<h3>3.3 Chave Seletora de Escala (x1 / x10 / x100)</h3>
+<pre>
+  CHAVE ROTATIVA 3 POSICOES           DB15 MACHO
+  (1 polo, 3 posicoes)                (soldar)
+  ┌─────────────┐
+  │             │
+  │ COM ────────┼──────────────────── Pino 14 (COM/GND)
+  │             │
+  │ Pos 1 (x1) ┼──────────────────── Pino 2  (Escala x1)
+  │ Pos 2 (x10)┼──────────────────── Pino 5  (Escala x10)
+  │ Pos 3(x100)┼──────────────────── Pino 9  (Escala x100)*
+  │             │
+  └─────────────┘
+
+  Valores por click do encoder em cada escala:
+    x1   = 0.025 mm   (desbaste / movimentacao rapida)
+    x10  = 0.0025 mm  (acabamento)
+    x100 = 0.00025 mm (ultra-fino)
+
+  * Pino 9 (x100): GPIO a confirmar com readhmid.
+    Se nao funcionar, usar apenas x1 e x10.
+</pre>
+
+<h3>3.4 E-Stop no Pendant (opcional)</h3>
+<pre>
+  BOTAO E-STOP NF                     DB15 MACHO
+  (Normalmente Fechado)                (soldar)
+  ┌─────────────┐
+  │             │
+  │ NF 1 ───────┼──────────────────── Pino 10 (E-Stop C)
+  │ NF 2 ───────┼──────────────────── Pino 14 (COM/GND)
+  │             │
+  └─────────────┘
+
+  Normal:    circuito fechado (pinos 10-14 conectados)
+  Emergencia: circuito aberto (pinos 10-14 desconectados)
+</pre>
+
+<!-- ============================================================= -->
+<h2>4. ESQUEMA COMPLETO DO CABO MPG</h2>
+
+<pre>
+ ┌────────────────────────────────────────────────┐
+ │              PENDANT MPG CUSTOM                │
+ │                                                │
+ │  ┌──────────┐  ┌─────────┐  ┌─────────┐      │
+ │  │ ENCODER  │  │  CHAVE  │  │  CHAVE  │      │
+ │  │ HANDWHEEL│  │  EIXO   │  │ ESCALA  │      │
+ │  │ 100PPR   │  │ X/OFF/Z │  │ x1/x10  │      │
+ │  │          │  │         │  │  /x100  │      │
+ │  └──┬─┬─┬──┘  └─┬──┬──┬─┘  └─┬──┬──┬─┘      │
+ │     │ │ │       │  │  │       │  │  │         │
+ │     A B 5V     COM  X  Z    COM x1 x10       │
+ │     │ │ │       │  │  │       │  │  │         │
+ └─────┼─┼─┼───────┼──┼──┼───────┼──┼──┼─────────┘
+       │ │ │       │  │  │       │  │  │
+       │ │ │       └──┼──┼───────┘  │  │
+       │ │ │       (COM unificado)  │  │
+       │ │ │          │  │          │  │
+ ══════╪═╪═╪══════════╪══╪══════════╪══╪══════ CABO 8 VIAS
+       │ │ │          │  │          │  │
+  ┌────┴─┴─┴──────────┴──┴──────────┴──┴────────┐
+  │           CONECTOR DB15 MACHO                 │
+  │                                               │
+  │  Pino 4  ← Encoder A  (fio 1)               │
+  │  Pino 3  ← Encoder B  (fio 2)               │
+  │  Pino 15 ← +5V        (fio 3)               │
+  │  Pino 14 ← COM/GND    (fio 4) ← COMUM      │
+  │  Pino 11 ← Eixo X     (fio 5)               │
+  │  Pino 7  ← Eixo Z     (fio 6)               │
+  │  Pino 2  ← Escala x1  (fio 7)               │
+  │  Pino 5  ← Escala x10 (fio 8)               │
+  │                                               │
+  └───────────────────────────────────────────────┘
+              │
+              ▼
+  ┌───────────────────────────────────────────────┐
+  │  DB15 FEMEA NA PLACA 7i92 INTEGRADA          │
+  │  (lado direito da placa)                      │
+  └───────────────────────────────────────────────┘
+</pre>
+
+<div class="warning">
+  FIOS MINIMOS: 8 vias (sem E-stop e sem x100)<br>
+  COM EXTRAS: 10 vias (com E-stop pino 10 e x100 pino 9)
+</div>
+
+<!-- ============================================================= -->
+<div class="page-break"></div>
+<h2>5. FIACAO DA PLACA 7i92 - OUTROS CONECTORES</h2>
+
+<h3>5.1 Spindle (Placa de Potencia / VFD / Inversor)</h3>
+<pre>
+  PLACA 7i92                              VFD / INVERSOR
+  ┌──────────┐                           ┌──────────────┐
+  │          │                           │              │
+  │  PWM0  + ├───────────────────────────┤ Entrada AIN  │
+  │        - ├───────────────────────────┤ GND          │
+  │          │  (sinal 0-5V proporcional │              │
+  │          │   ao RPM: 0V=0, 5V=2000) │              │
+  │          │                           │              │
+  │ GPIO.013 ├───────────────────────────┤ Entrada FWD  │
+  │      GND ├───────────────────────────┤ COM          │
+  │          │  (HIGH = gira horario M3) │              │
+  │          │                           │              │
+  └──────────┘                           └──────────────┘
+
+  PWM0: Velocidade do spindle (duty cycle proporcional)
+    - Frequencia: 20kHz (ajustar se VFD nao responder)
+    - Escala: 2000 RPM = 100% duty
+    - Se o VFD precisa 0-10V, usar divisor/amplificador
+
+  GPIO.013: Direcao CW (saida digital)
+    - HIGH = M3 (horario)
+    - LOW = parado ou M4
+</pre>
+
+<h3>5.2 Coolant / Refrigeracao</h3>
+<pre>
+  PLACA 7i92                      RELE 24V          BOMBA
+  ┌──────────┐                  ┌──────────┐     ┌────────┐
+  │          │                  │          │     │        │
+  │  PWM1  + ├──────────────────┤ Entrada  │     │        │
+  │        - ├──────────────────┤ GND      │     │        │
+  │          │                  │          │     │        │
+  │          │                  │ Contato ─┼─────┤ FASE   │
+  │          │                  │ COM ─────┼─────┤ NEUTRO │
+  │          │                  │          │     │        │
+  └──────────┘                  └──────────┘     └────────┘
+
+  PWM1: Ativa a bomba de refrigeracao via rele
+    - 50% duty cycle quando coolant ligado (M8)
+    - Usar rele adequado para a potencia da bomba
+</pre>
+
+<h3>5.3 E-Stop (Emergencia Principal)</h3>
+<pre>
+  PLACA 7i92                     BOTAO E-STOP
+  ┌──────────┐                  ┌──────────────┐
+  │          │                  │   COGUMELO   │
+  │ GPIO.019 ├──────────────────┤ NF (contato  │
+  │      GND ├──────────────────┤  normalmente │
+  │          │                  │   fechado)   │
+  └──────────┘                  └──────────────┘
+
+  FUNCIONAMENTO:
+    Normal:     GPIO.019 = HIGH (circuito NF fechado)
+    Emergencia: GPIO.019 = LOW  (circuito aberto)
+    A maquina PARA imediatamente.
+
+  ATENCAO: SEMPRE usar botao NF (normalmente fechado)!
+  Se o fio romper, a maquina para (fail-safe).
+</pre>
+
+<h3>5.4 Encoder do Spindle (VIA DB15!)</h3>
+
+<div class="warning">
+  ATENCAO: O borne de encoder na placa (conector central inferior,
+  rotulado "1路输入") NAO FUNCIONA - nao esta conectado ao FPGA.<br>
+  O encoder DEVE ser ligado pelo conector DB15 (P1), nos pinos 3 e 4,
+  que mapeiam para I/O 17 e 18 do FPGA (encoder.00 hardware).
+</div>
+
+<pre>
+  ENCODER SPINDLE                DB15 (P1) NA PLACA
+  (acoplado ao eixo-arvore)     (conector lado direito)
+  ┌──────────────┐              ┌──────────────────────┐
+  │              │              │                      │
+  │  Fase A  ────┼──────────────┤ Pino 4  (I/O 17 = encoder.00.A)
+  │  Fase B  ────┼──────────────┤ Pino 3  (I/O 18 = encoder.00.B)
+  │  +5V     ────┼──────────────┤ Pino 15 (+5V)
+  │  GND     ────┼──────────────┤ Pino 14 (COM/GND)
+  │              │              │                      │
+  └──────────────┘              └──────────────────────┘
+
+  Configuracao HAL (JA CONFIGURADO, sem alteracao):
+    encoder.00.scale = 400 pulsos/volta
+    encoder.00.counter-mode = 0 (quadratura)
+    encoder.00.filter = 1
+
+  NOTA: O borne "1路输入" na placa esta MORTO.
+  O encoder OBRIGATORIAMENTE passa pelo DB15.
+  Index (Z) nao disponivel neste firmware.
+</pre>
+
+<!-- ============================================================= -->
+<div class="page-break"></div>
+<h2>6. DIAGRAMA GERAL - TODAS AS CONEXOES</h2>
+
+<pre>
+                    ┌─────────────────────────────────────────┐
+                    │        PLACA 7i92 INTEGRADA V1.0       │
+                    │                                         │
+   STEPPER X ◄──────┤ STEP.00  [A]   [Y]   [Z]   [A]   [5] │
+   STEPPER Z ◄──────┤ STEP.01                                │
+                    │                                         │
+   VFD velocid◄─────┤ PWM0 ────── Spindle RPM (0-5V)        │
+   BOMBA COOL ◄─────┤ PWM1 ────── Coolant ON/OFF            │
+           livre ───┤ PWM2                                    │
+                    │                                         │
+   (ENC.IN MORTO)   │ ENC.IN ──── NAO USAR (nao conectado)   │
+                    │                                         │
+   VFD direcao◄─────┤ GPIO.013 ── Spindle CW (saida)        │
+   E-STOP ──────────┤ GPIO.019 ── Emergencia (entrada NF)    │
+                    │                                         │
+   ENCODER SPNDL◄───┤ DB15 pino 3,4 ── Enc A/B (encoder.00) │
+   MPG PENDANT◄─────┤ DB15 demais ──── Chaves + 5V          │
+                    │                                         │
+       24V DC ──────┤ 24V IN                                  │
+                    └─────────────────────────────────────────┘
+                            │
+                            │ Ethernet 10.10.10.10
+                            ▼
+                    ┌─────────────────────────────────────────┐
+                    │         PC LINUX                         │
+                    │   LinuxCNC 2.9 + ProbeBasic              │
+                    │                                         │
+                    │   USB-RS485 ──────────┐                 │
+                    └──────────────────────┼─────────────────┘
+                                           │ Modbus RTU
+                                           ▼
+                    ┌─────────────────────────────────────────┐
+                    │       AMS32ES2 (FASE 3 - FUTURO)        │
+                    │                                         │
+                    │   Feed Override ── Encoder AB            │
+                    │   Spindle Override ── Encoder AB         │
+                    │   Botoes painel ── X0-X17               │
+                    │   LEDs painel ── Y0-Y17                 │
+                    └─────────────────────────────────────────┘
+</pre>
+
+<!-- ============================================================= -->
+<h2>7. TABELA RESUMO - FIOS POR CONECTOR</h2>
+
+<table>
+  <tr><th>Conector</th><th>Fios</th><th>De</th><th>Para</th></tr>
+  <tr class="used"><td>DB15 pino 3,4</td><td>2</td><td>Encoder spindle A/B</td><td>Placa 7i92 (encoder.00)</td></tr>
+  <tr><td>DB15 pino 14,15</td><td>2</td><td>GND/+5V encoder spindle</td><td>Placa 7i92</td></tr>
+  <tr><td>DB15 (demais)</td><td>4-6</td><td>Pendant MPG (chaves)</td><td>Placa 7i92</td></tr>
+  <tr><td>PWM0</td><td>2</td><td>Placa 7i92</td><td>VFD (velocidade)</td></tr>
+  <tr><td>PWM1</td><td>2</td><td>Placa 7i92</td><td>Rele bomba coolant</td></tr>
+  <tr><td>GPIO.013</td><td>2</td><td>Placa 7i92</td><td>VFD (direcao CW)</td></tr>
+  <tr><td>GPIO.019</td><td>2</td><td>Botao E-Stop</td><td>Placa 7i92</td></tr>
+  <tr><td><s>ENC IN</s></td><td><s>5</s></td><td colspan="2"><s>NAO USAR - conector morto</s></td></tr>
+  <tr><td>STEP X</td><td>4</td><td>Placa 7i92</td><td>Driver eixo X</td></tr>
+  <tr><td>STEP Z</td><td>4</td><td>Placa 7i92</td><td>Driver eixo Z</td></tr>
+  <tr><td>24V</td><td>2</td><td>Fonte 24V</td><td>Placa 7i92</td></tr>
+</table>
+
+<!-- ============================================================= -->
+<h2>8. CHECKLIST DE MONTAGEM</h2>
+
+<h3>8.1 ENCODER SPINDLE (PRIORIDADE - fazer primeiro!)</h3>
+<div class="check">[ ] Desligar encoder spindle do borne "1路输入" (conector morto)</div>
+<div class="check">[ ] Ligar fio A do encoder no pino 4 do DB15</div>
+<div class="check">[ ] Ligar fio B do encoder no pino 3 do DB15</div>
+<div class="check">[ ] Ligar +5V do encoder no pino 15 do DB15</div>
+<div class="check">[ ] Ligar GND do encoder no pino 14 do DB15</div>
+<div class="check">[ ] Plugar DB15 na placa e abrir LinuxCNC</div>
+<div class="check">[ ] Verificar: halcmd getp hm2_7i92.0.encoder.00.rawcounts (girar spindle, deve mudar)</div>
+<div class="check">[ ] Verificar: bash verify_encoder.sh (script de verificacao)</div>
+<div class="check">[ ] Se rawcounts conta ao contrario: trocar fios A/B ou ENCODER_SCALE=-400</div>
+
+<h3>8.2 Demais conexoes</h3>
+<div class="check">[ ] Ligar E-Stop NF no GPIO.019 + GND</div>
+<div class="check">[ ] Ligar PWM0 no VFD (entrada analogica)</div>
+<div class="check">[ ] Ligar GPIO.013 no VFD (entrada direcao)</div>
+<div class="check">[ ] Ligar PWM1 no rele da bomba coolant</div>
+<div class="check">[ ] Testar E-Stop: apertar e confirmar parada</div>
+<div class="check">[ ] Testar Spindle: M3 S500 e verificar RPM no display</div>
+<div class="check">[ ] Testar Coolant: M8 e verificar bomba</div>
+
+<h3>8.3 MPG Pendant (futuro - apos resolver encoder)</h3>
+<div class="check">[ ] Conferir encoder MPG: 5V, saida A/B (4 fios)</div>
+<div class="check">[ ] Montar chave eixo: X / OFF / Z (3 terminais)</div>
+<div class="check">[ ] Montar chave escala: x1 / x10 (3 terminais)</div>
+<div class="check">[ ] Soldar DB15 macho (8 fios minimo)</div>
+<div class="check">[ ] Testar continuidade de cada fio antes de plugar</div>
+<div class="check">[ ] Testar MPG: girar roda e verificar DRO move</div>
+<div class="check">[ ] Testar chave eixo: alternar X/Z e conferir</div>
+<div class="check">[ ] Testar chave escala: alternar x1/x10 e conferir</div>
+
+<!-- ============================================================= -->
+<div class="page-break"></div>
+<h2>9. CORRESPONDENCIA HAL &lt;-&gt; FIACAO</h2>
+
+<table>
+  <tr><th>Arquivo HAL</th><th>Linha</th><th>Sinal</th><th>Pino Fisico</th></tr>
+  <tr><td>Dino_Evo.hal</td><td>9</td><td>num_encoders=1</td><td>Encoder spindle via DB15</td></tr>
+  <tr><td>Dino_Evo.hal</td><td>177-187</td><td>encoder.00 → spindle</td><td><strong>DB15 pinos 3,4</strong> (I/O 17,18)</td></tr>
+  <tr><td>Dino_Evo.hal</td><td>217-220</td><td>pwmgen.00 → spindle</td><td>PWM0 bornes</td></tr>
+  <tr><td>Dino_Evo.hal</td><td>223-224</td><td>gpio.013 → spindle-cw</td><td>GPIO.013 bornes</td></tr>
+  <tr><td>Dino_Evo.hal</td><td>227-229</td><td>pwmgen.01 → coolant</td><td>PWM1 bornes</td></tr>
+  <tr><td>Dino_Evo.hal</td><td>276</td><td>gpio.019 → estop</td><td>GPIO.019 bornes</td></tr>
+  <tr><td colspan="4"><em>custom.hal - MPG desabilitado (firmware so tem 1 encoder, usado pelo spindle)</em></td></tr>
+  <tr><td>custom.hal</td><td>futuro</td><td>gpio.016 → escala x1</td><td>DB15 pino 2</td></tr>
+  <tr><td>custom.hal</td><td>futuro</td><td>gpio.015 → escala x10</td><td>DB15 pino 5</td></tr>
+  <tr><td>custom.hal</td><td>futuro</td><td>gpio.026 → eixo X</td><td>DB15 pino 11</td></tr>
+  <tr><td>custom.hal</td><td>futuro</td><td>gpio.031 → eixo Z</td><td>DB15 pino 7</td></tr>
+</table>
+
+<h2>10. NOTAS</h2>
+
+<div class="note">
+  <strong>PWM FREQUENCY:</strong> Atualmente 20kHz. Se o VFD nao responder,
+  mudar para 500Hz no Dino_Evo.hal linha 10:<br>
+  <code>setp hm2_7i92.0.pwmgen.pwm_frequency 500</code>
+</div>
+
+<div class="note">
+  <strong>SPINDLE SCALE:</strong> Atualmente 2000 RPM = 100% duty.<br>
+  Se o RPM maximo real for diferente, ajustar no Dino_Evo.hal linha 218:<br>
+  <code>setp hm2_7i92.0.pwmgen.00.scale XXXX</code>
+</div>
+
+<div class="note">
+  <strong>ENCODER SPINDLE:</strong> Scale = 400 (pulsos por volta).<br>
+  Se o encoder for diferente, ajustar no Dino_Evo.ini [SPINDLE_0]:<br>
+  <code>ENCODER_SCALE = XXX</code>
+</div>
+
+<div class="note">
+  <strong>ESCALA x100 (pino 9):</strong> GPIO nao confirmado. Rodar na maquina:<br>
+  <code>sudo mesaflash --device 7i92 --addr 10.10.10.10 --readhmid</code><br>
+  para descobrir qual GPIO corresponde ao pino 9 do DB15.
+</div>
+
+</body>
+</html>

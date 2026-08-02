@@ -1,0 +1,36 @@
+#*********************
+# 主轴设置
+#*********************
+
+#set pwm frequency: 500hz
+setp hm2_7i92.0.pwmgen.pwm_frequency 			500
+# 设置输出类型为1（PWM模式）
+setp hm2_7i92.0.pwmgen.00.output-type 1
+net spindle-enable <= spindle.0.on
+#设置 PWM 发生器的比例因子为 24000 ,24000为电主轴的最高转速
+setp hm2_7i92.0.pwmgen.00.scale 24000
+
+# 添加缩放模块，将电机速度信号（单位：RPM）转为主轴速度（主轴转速是电机的2倍）
+loadrt scale count=1
+addf scale.0 servo-thread
+# 设置增益为0.3738，电机1圈 主轴2.675圈
+setp scale.0.gain 0.3738   
+
+# 将电机速度信号通过缩放模块处理
+net spindle-speed-scaled <= spindle.0.speed-out => scale.0.in  # 将电机速度传递给缩放模块
+net spindle-vel-cmd-rpm <= scale.0.out  # 将缩放后的速度命令传递给主轴速度命令
+
+# 将缩放后的速度信号传递给 PWM 发生器
+net spindle-vel-cmd-rpm => hm2_7i92.0.pwmgen.00.value  # 将缩放后的速度命令传递给 PWM 发生器
+
+
+# 当主轴启用时使能PWM发生器
+net spindle-enable => hm2_7i92.0.pwmgen.00.enable
+
+#设置引脚为输出模式。
+setp hm2_7i92.0.gpio.013.is_output				1
+#设置引脚的输出反向
+#setp hm2_7i92.0.gpio.013.invert_output			1
+net spindle-cw <= spindle.0.forward
+# 正转（CW）
+net spindle-cw => hm2_7i92.0.gpio.013.out 

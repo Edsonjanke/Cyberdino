@@ -1,0 +1,19 @@
+# Postgui mínimo para evitar conflito de tool-change-confirmed no Probe Basic
+# Tool-change continua via hal_manualtoolchange (carregado no HAL principal)
+
+loadrt time
+loadrt not
+
+addf time.0 servo-thread
+addf not.0 servo-thread
+
+# *** Timer - obrigatório para Probe Basic ***
+net prog-running not.0.in <= halui.program.is-idle
+net prog-paused halui.program.is-paused => time.0.pause
+net cycle-timer time.0.start <= not.0.out
+net cycle-seconds qtpyvcp.timerseconds.in <= time.0.seconds
+net cycle-minutes qtpyvcp.timerminutes.in <= time.0.minutes
+net cycle-hours qtpyvcp.timerhours.in <= time.0.hours
+
+# *** Spindle RPM display - encoder hardware filtrado ***
+net spindle-fb-rpm-abs-filtered => qtpyvcp.spindle-encoder-rpm.in

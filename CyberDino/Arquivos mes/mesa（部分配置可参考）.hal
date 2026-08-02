@@ -1,0 +1,114 @@
+loadrt hostmot2
+loadrt hm2_eth board_ip="10.10.10.10" config="num_encoders=2 num_pwmgens=3 num_stepgens=1"
+addf hm2_7i92.0.read          servo-thread
+addf hm2_7i92.0.write         servo-thread
+#setp hm2_7i92.0.dpll.01.timer-us -50
+
+#*********************
+#   手轮设置
+#*********************
+loadrt encoder num_chan=1
+loadrt mux4 count=1
+addf encoder.capture-position servo-thread
+addf encoder.update-counters servo-thread
+addf mux4.0 servo-thread
+
+
+# If your MPG outputs a quadrature signal per click set x4 to 1
+# If your MPG puts out 1 pulse per click set x4 to 0
+setp encoder.0.x4-mode 0
+
+# For velocity mode, set to 1
+# In velocity mode the axis stops when the dial is stopped
+# even if that means the commanded motion is not completed,
+# For position mode (the default), set to 0
+# In position mode the axis will move exactly jog-scale
+# units for each count, regardless of how long that might take,
+setp axis.x.jog-vel-mode 1
+setp axis.y.jog-vel-mode 1
+setp axis.z.jog-vel-mode 0
+
+# This sets the scale that will be used based on the input to the mux4
+setp mux4.0.in0 0.025
+setp mux4.0.in1 0.0025
+setp mux4.0.in2 0.00025
+
+# The inputs to the mux4 component
+net scale1 mux4.0.sel0 <= hm2_7i92.0.gpio.016.in_not
+net scale2 mux4.0.sel1 <= hm2_7i92.0.gpio.015.in_not
+
+# The output from the mux4 is sent to each axis jog scale
+net mpg-scale <= mux4.0.out
+net mpg-scale => axis.x.jog-scale
+net mpg-scale => axis.y.jog-scale
+net mpg-scale => axis.z.jog-scale
+
+
+# The MPG inputs
+#net mpg-a encoder.0.phase-A <= hm2_7i92.0.encoder.01.input-a
+#net mpg-b encoder.0.phase-B <= hm2_7i92.0.encoder.01.input-b
+net encoder-counts     <=  hm2_7i92.0.encoder.01.count
+
+
+# The Axis select inputs
+net mpg-x axis.x.jog-enable <= hm2_7i92.0.gpio.026.in_not
+net mpg-y axis.y.jog-enable <= hm2_7i92.0.gpio.030.in_not
+net mpg-z axis.z.jog-enable <= hm2_7i92.0.gpio.031.in_not
+
+# The encoder output counts to the axis. Only the selected axis will move.
+net encoder-counts => axis.x.jog-counts
+net encoder-counts => axis.y.jog-counts
+net encoder-counts => axis.z.jog-counts
+#*********************
+# 主轴设置
+#*********************
+
+#set pwm frequency: 500hz
+setp hm2_7i92.0.pwmgen.pwm_frequency 			500
+# 设置输出类型为1（PWM模式）
+setp hm2_7i92.0.pwmgen.00.output-type 1
+net spindle-enable <= spindle.0.on
+#设置 PWM 发生器的比例因子为 24000 ,24000为电主轴的最高转速
+setp hm2_7i92.0.pwmgen.00.scale 24000
+
+# 连接主轴速度命令（单位RPM）到PWM输出
+net spindle-vel-cmd-rpm <= spindle.0.speed-out
+net spindle-vel-cmd-rpm => hm2_7i92.0.pwmgen.00.value
+# 当主轴启用时使能PWM发生器
+net spindle-enable => hm2_7i92.0.pwmgen.00.enable
+
+#设置引脚为输出模式。
+setp hm2_7i92.0.gpio.013.is_output				1
+#设置引脚的输出反向
+#setp hm2_7i92.0.gpio.013.invert_output			1
+net spindle-cw <= spindle.0.forward
+# 正转（CW）
+net spindle-cw => hm2_7i92.0.gpio.013.out 
+
+#*********************
+# 冷却水设置
+#*********************
+
+# 设置输出类型为1（PWM模式）
+setp hm2_7i92.0.pwmgen.01.output-type 1
+# 设置占空比
+setp hm2_7i92.0.pwmgen.01.value 0.5
+net coolant-flood <= iocontrol.0.coolant-flood
+net coolant-flood => hm2_7i92.0.pwmgen.01.enable
+
+#*********************
+#  急停设置
+#*********************
+
+net estop-ext       <= hm2_7i92.0.gpio.019.in
+net estop-out       <= iocontrol.0.user-enable-out
+net estop-ext       => iocontrol.0.emc-enable-in
+
+
+#*********************
+#  对刀设置
+#*********************
+
+net probe-in <= hm2_7i92.0.gpio.020.in_not
+net probe-in => motion.probe-input
+

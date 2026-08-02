@@ -1,0 +1,15 @@
+Pronto — g:\Linux\tema_evo.zip com apenas o probe_basic_evo.qss (2.9 KB).
+
+No Linux, após extrair, adicione uma linha no seu INI:
+
+
+# Copiar o arquivo
+cp probe_basic_evo.qss ~/linuxcnc/configs/Dino_Evo/
+
+# Editar o INI e adicionar na seção [DISPLAY]
+nano ~/linuxcnc/configs/Dino_Evo/probe_basic_lathe.ini
+Na seção [DISPLAY], adicione:
+
+
+STYLESHEET = probe_basic_evo.qss
+Depois é só reiniciar o LinuxCN
