@@ -616,10 +616,13 @@ def _wire_auto_clear_backplot():
     def _add_backplot_logo(bp=backplot):
         try:
             import vtk
+            # Simbolo MONO BRANCO: sobre o fundo escuro do backplot a versao
+            # colorida some (62% da arte tem contraste 1.22 contra o fundo; o
+            # cobre fica em 2.24, abaixo do minimo 3.0). O branco da 13.19.
             logo_path = os.path.join(
                 os.environ.get('CONFIG_DIR') or os.path.dirname(
                     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-                'pbsplash.png')
+                'logo', 'evo-simbolo-branco.png')
             if not os.path.exists(logo_path):
                 print("[customs.py] logo nao encontrada: %s" % logo_path)
                 return
@@ -631,7 +634,10 @@ def _wire_auto_clear_backplot():
             logo_rep.SetRenderer(bp.renderer)     # <- essencial sem widget
             logo_rep.SetPosition(0.80, 0.02)      # canto inferior direito
             logo_rep.SetPosition2(0.18, 0.18)     # ~18% da viewport
-            logo_rep.GetImageProperty().SetOpacity(0.35)
+            # 0.35 era calibrado para o splash colorido; com o simbolo BRANCO
+            # puro ficava quase invisivel. 0.50 aparece sem competir com as
+            # linhas do percurso.
+            logo_rep.GetImageProperty().SetOpacity(0.50)
             logo_rep.BuildRepresentation()        # <- constroi a geometria
             bp.renderer.AddViewProp(logo_rep)
             # ref pra nao ser coletado + refresh
@@ -642,9 +648,9 @@ def _wire_auto_clear_backplot():
                 pass
         except Exception as e:
             print("[customs.py] logo no backplot falhou: {}".format(e))
-    # DESATIVADA por ora (usuario vai melhorar a arte antes). Pra reativar,
-    # troque False -> True. O arquivo usado e o pbsplash.png do config.
-    _LOGO_BACKPLOT_ATIVA = False
+    # ATIVA desde 2026-08-02, com a arte oficial (logo/evo-simbolo-branco.png).
+    # Para desligar, troque True -> False.
+    _LOGO_BACKPLOT_ATIVA = True
     if _LOGO_BACKPLOT_ATIVA:
         QTimer.singleShot(3000, _add_backplot_logo)
 
