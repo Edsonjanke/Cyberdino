@@ -43,7 +43,19 @@ def generate_thread(p):
     x_clear = (round4(p.xStart + p.clearance * 2) if p.side == "EXTERNAL"
                else round4(p.xStart - p.clearance * 2))
 
-    if p.useCannedCycle:
+    # G76 nao tem palavra de conicidade: pedir ciclo numa rosca conica (NPT)
+    # cortaria um cilindro com o diametro do inicio — passa no calibre de boca
+    # e nao veda. Nesse caso o ciclo cai fora e a rosca sai linha a linha.
+    conica = p.xEnd != p.xStart
+    # Com `taperTrueAngle` (a UI liga) o cone passa exatamente por
+    # (zStart,xStart) e (zEnd,xEnd). Sem a flag vale o comportamento do app,
+    # que e' o que mantem o golden thread_taper valido.
+    cone_exato = bool(getattr(p, "taperTrueAngle", False))
+    usar_ciclo = p.useCannedCycle and not conica
+    if p.useCannedCycle and conica:
+        b.comment("ROSCA CONICA: G76 NAO FAZ CONICIDADE - GERADO LINHA A LINHA")
+
+    if usar_ciclo:
         b.comment("G76 CICLO AUTOMATICO DE ROSCA")
         b.rapid(x=x_clear, z=round4(p.zStart + p.clearance))
 
@@ -80,10 +92,24 @@ def generate_thread(p):
                 js_num(round4(pas.depth))))
             b.rapid(x=x_clear)
             b.rapid(z=z_lead)
-            b.rapid(x=round4(pas.xPosition))
+            if not (cone_exato and inp.xEnd is not None):
+                b.rapid(x=round4(pas.xPosition))
 
             end_x = ThreadingEngine.taper_end_x(inp, pas.depth)
-            if end_x is not None:
+            if end_x is not None and cone_exato:
+                # O app aplicava a conicidade INTEIRA entre a entrada e a saida
+                # (z_lead..z_end_lead), que sao mais longas que a rosca: o cone
+                # saia mais aberto do que o pedido. Numa NPT isso e' a diferenca
+                # entre vedar e nao vedar. Aqui a conicidade e' a inclinacao
+                # entre (zStart,xStart) e (zEnd,xEnd), estendida ate a entrada
+                # e a saida.
+                inclin = (p.xEnd - p.xStart) / float(p.zEnd - p.zStart)
+                x_ini = round4(pas.xPosition + inclin * (z_lead - p.zStart))
+                b.rapid(x=x_ini)
+                b.threadFeed(
+                    x=round4(pas.xPosition + inclin * (z_end_lead - p.zStart)),
+                    z=z_end_lead, pitch=result.pitch)
+            elif end_x is not None:
                 b.threadFeed(x=round4(end_x), z=z_end_lead, pitch=result.pitch)
             else:
                 b.threadFeed(z=z_end_lead, pitch=result.pitch)

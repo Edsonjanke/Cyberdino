@@ -198,16 +198,33 @@ class ComboRoscas(QComboBox):
         cores = [it.get("cor", "#E6E6E6") for it in self._itens]
         # o comentario NAO entra no texto do item: o valor guardado no estado
         # e' o "nome" da rosca, e sujar o texto quebraria roscas.buscar()
-        self._coment = [ROTULO_TIPO.get(it.get("tipo"), "") for it in self._itens]
+        self._preencher(cores)
+        self.setMaxVisibleItems(20)
+        self.currentIndexChanged.connect(self._pintar_fechado)
+        self._pintar_fechado(self.currentIndex())
+
+    def _preencher(self, cores):
+        from qtpy.QtGui import QBrush, QColor
+        # o comentario vem do item quando existe (UNC/UNF, Conica 1:16) e
+        # cai no rotulo do tipo (Padrao/Fina) quando nao vem
+        self._coment = [it.get("comentario") or ROTULO_TIPO.get(it.get("tipo"), "")
+                        for it in self._itens]
         for i, it in enumerate(self._itens):
             self.addItem(it["nome"])
             self.setItemData(i, QBrush(QColor(cores[i])), Qt.ForegroundRole)
-        self.setMaxVisibleItems(20)
         # o delegate e' quem realmente faz a cor aparecer (ver _DelegadoCorItem)
         self._delegado = _DelegadoCorItem(cores, self._coment, self)
         self.setItemDelegate(self._delegado)
-        self.currentIndexChanged.connect(self._pintar_fechado)
-        self._pintar_fechado(self.currentIndex())
+
+    def recarregar(self, itens):
+        """Troca a tabela inteira (metrica <-> polegada <-> NPT)."""
+        self.blockSignals(True)
+        self.clear()
+        self._itens = list(itens)
+        self._preencher([it.get("cor", "#E6E6E6") for it in self._itens])
+        self.setCurrentIndex(0)
+        self.blockSignals(False)
+        self._pintar_fechado(0)
 
     def paintEvent(self, event):
         """A caixa FECHADA nao passa pelo delegate — o Qt desenha o texto do
