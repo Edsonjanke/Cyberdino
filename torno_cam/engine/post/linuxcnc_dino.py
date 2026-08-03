@@ -167,9 +167,16 @@ class LinuxCNCDinoPost(LinuxCNCPost):
     #   final    = pico -/+ K
     #
     # E o mais importante: I/J/K seguem o MODO ATIVO — em G7 (diametro) sao
-    # lidos como diametro, em G8 (raio) como raio. Como o engine calcula tudo
-    # em raio, o ciclo vai embrulhado em G8 e volta pra G7 depois; assim o
-    # numero no programa e' a profundidade real do fio.
+    # lidos como DIAMETRO, em G8 (raio) como raio. Medido no rs274, partindo
+    # do mesmo ponto fisico (raio 11) com I-2.5 J0.2:
+    #
+    #   G8 -> 1o passe no raio 8.30   (11 - 2.5 - 0.2)
+    #   G7 -> 1o passe no raio 9.65   (11 - 2.5/2 - 0.2/2)  = METADE
+    #
+    # O programa fica SEMPRE em G7 (nunca troca de modo no meio), entao os
+    # valores saem em diametro: pico, primeiro passe e profundidade vao
+    # dobrados. Conferido no interpretador: da exatamente os mesmos passes
+    # que a versao antiga embrulhada em G8.
     #
     # Tres defeitos do pos original corrigidos aqui:
     #  1) I = -profundidade E K = profundidade -> o pico descia uma
@@ -190,19 +197,18 @@ class LinuxCNCDinoPost(LinuxCNCPost):
         angulo = node.threadAngle or 60.0
         carro = max(0.0, angulo / 2.0 - 0.5)     # 60 graus -> 29.5
 
-        linha = gline(
+        return gline(
             "G76",
             word("P", node.pitch),
             word("Z", node.finalZ),
-            word("I", round(pico, 4)),
-            word("J", round(primeiro, 4)),
-            word("K", round(prof, 4)),
+            # x2: o engine calcula em raio e o programa esta em G7 (diametro)
+            word("I", round(pico * 2.0, 4)),
+            word("J", round(primeiro * 2.0, 4)),
+            word("K", round(prof * 2.0, 4)),
             word("Q", round(carro, 4)),
             word("H", node.springPasses),
             "L0",
         )
-        return ("G8  (MODO RAIO: I/J/K DO G76 EM RAIO)\n"
-                + linha + "\nG7  (VOLTA AO MODO DIAMETRO)")
 
     def _format_canned_thread_cycle_bloqueado(self, node):
         self._canned_bloqueado()

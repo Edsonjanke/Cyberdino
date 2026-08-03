@@ -95,7 +95,10 @@ def _g76(gcode):
 def test_g76_corta_a_profundidade_certa():
     """O pos do EvoCAM emitia I=-profundidade E K=profundidade: o pico descia
     uma profundidade e o ciclo cortava outra = rosca com o DOBRO. Aqui I e' o
-    deslocamento do pico (a folga), entao o fundo cai em pico -/+ K."""
+    deslocamento do pico (a folga), entao o fundo cai em pico -/+ K.
+
+    Os valores saem em DIAMETRO (o programa fica em G7 o tempo todo), entao
+    valem o dobro do que o engine calcula em raio."""
     for lado, sinal in (("EXTERNAL", -1), ("INTERNAL", +1)):
         p = default_params("THREAD_EXTERNAL")
         p.update(dict(side=lado, useCannedCycle=True,
@@ -104,23 +107,27 @@ def test_g76_corta_a_profundidade_certa():
         g = _gera_thread(p)
         c = _g76(g)
         assert c, "nao emitiu G76 para " + lado
-        # I = deslocamento do pico = -/+ folga (poe o pico no diametro da rosca)
-        assert abs(c["I"] - sinal * p["clearance"]) < 1e-6, (lado, c)
-        # K = profundidade do fio (raio), nunca o dobro
-        assert 0 < c["K"] < p["pitch"], (lado, c)
+        # I = deslocamento do pico = -/+ folga, em diametro
+        assert abs(c["I"] - sinal * p["clearance"] * 2) < 1e-6, (lado, c)
+        # K = profundidade do fio em diametro; nunca o dobro do fio
+        assert 0 < c["K"] < 2 * p["pitch"], (lado, c)
+        assert c["J"] < c["K"], ("primeiro passe deve ser menor que o fundo", c)
         # Q em GRAUS (29.5 para fio de 60), nao em decimos
         assert 0 <= c["Q"] <= 45, (lado, c)
 
 
-def test_g76_vai_embrulhado_em_g8():
-    """I/J/K seguem o modo ativo: em G7 seriam lidos como DIAMETRO e a rosca
-    sairia pela metade. O ciclo entra em G8 e volta pra G7."""
+def test_g76_nao_troca_de_modo_no_meio_do_programa():
+    """O programa fica SEMPRE em diametro (G7): nada de entrar em G8 para o
+    ciclo e voltar. Medido no rs274 partindo do raio 11 com I-2.5 J0.2:
+    em G8 o primeiro passe cai no raio 8.30 e em G7 no 9.65 (metade), entao
+    ficar em G7 so' e' correto com I/J/K escritos em diametro."""
     p = default_params("THREAD_EXTERNAL")
     p.update(dict(useCannedCycle=True))
-    linhas = [l.split()[0] for l in _gera_thread(p).splitlines() if l.strip()]
-    i = linhas.index("G76")
-    assert linhas[i - 1] == "G8", "faltou G8 antes do G76"
-    assert "G7" in linhas[i + 1:i + 3], "faltou voltar pra G7 depois do G76"
+    g = _gera_thread(p)
+    assert "G8" not in [l.split()[0] for l in g.splitlines() if l.strip()], g
+    modo = [l.split()[0] for l in g.splitlines()
+            if l.strip() and l.split()[0] in ("G7", "G8")]
+    assert modo == ["G7"], ("so pode declarar diametro, uma vez", modo)
 
 
 def _gera_thread(p):

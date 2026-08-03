@@ -83,7 +83,7 @@ maquina), nao no olho. Ficaram atras de flags (`fixArcOvercut`,
 | P em G81/G83 | ignorado (so G82 pausa) | usa G82 quando ha pausa |
 | Arco em modo RAIO nao fechava | LinuxCNC recusa o arco | recalcula o ponto final |
 | G76 com I=-prof E K=prof | **rosca com o DOBRO da profundidade** | I = folga do pico, K = filete |
-| G76 dentro de G7 | I/J/K lidos como diametro, rosca pela metade | embrulha em G8 e volta pra G7 |
+| G76 dentro de G7 | I/J/K lidos como diametro, rosca pela metade | I/J/K saem em diametro (x2); o programa nunca sai do G7 |
 | Sangria ignorava a largura | peca sai curta pela largura da pastilha | corte em -5 com pastilha de 3 = Z-8 |
 
 Q do G76 e' em **graus** (29.5), nao em decimos.
