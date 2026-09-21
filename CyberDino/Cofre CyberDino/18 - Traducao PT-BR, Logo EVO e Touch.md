@@ -65,6 +65,27 @@ Tres defeitos so' visuais, medidos rodando o sim sob Xvfb:
 Os botoes **funcionam** — foram testados com clique de mouse real e
 verificando que nada os cobre. O que estava errado era so o desenho.
 
+## Armadilha: o pyuic aceita, o LinuxCNC quebra pela metade
+
+Para dividir um QHBoxLayout em partes iguais NAO use a propriedade `stretch`
+do layout. O `pyuic` compila sem reclamar (so ignora), mas o `uic.loadUi`,
+que e' o que o LinuxCNC usa, estoura:
+
+    TypeError: setStretch(self, index: int, stretch: int):
+               argument 1 has unexpected type 'str'
+
+E o pior: o widget que estava sendo montado fica pela METADE — no caso do
+DRO, o `widget_big_dro` existia vazio e todos os filhos sumiam, sem erro
+visivel na tela. Use `horstretch` no sizePolicy de cada widget.
+
+Por isso existe **`tools/valida_ui.py`**: carrega o .ui com o mesmo
+carregador do LinuxCNC (widgets do qtpyvcp trocados por equivalentes
+simples) e acusa o erro em 2 segundos, sem subir o sim:
+
+```bash
+QT_QPA_PLATFORM=offscreen python3 tools/valida_ui.py <arquivo.ui> [prefixo]
+```
+
 ## Armadilha que se repete: QSS vence setFont()
 
 A folha de estilo da aplicacao **sobrepoe** `setFont()` e tambem o

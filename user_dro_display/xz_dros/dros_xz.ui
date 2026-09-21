@@ -916,6 +916,12 @@ DROLabel[style=&quot;homing&quot;]{
            <property name="spacing"><number>8</number></property>
            <item>
             <widget class="StatusLabel" name="big_wcs_header">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>1</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -940,6 +946,20 @@ DROLabel[style=&quot;homing&quot;]{
           </widget>
            </item>
            <item>
+            <widget class="QWidget" name="big_parts_box" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>1</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+             <layout class="QHBoxLayout" name="big_parts_row">
+              <property name="spacing"><number>6</number></property>
+              <property name="leftMargin"><number>0</number></property>
+              <property name="topMargin"><number>0</number></property>
+              <property name="rightMargin"><number>0</number></property>
+              <property name="bottomMargin"><number>0</number></property>
+<item>
             <widget class="QLabel" name="big_parts_caption">
              <property name="styleSheet">
               <string notr="true">QLabel {
@@ -984,6 +1004,42 @@ DROLabel[style=&quot;homing&quot;]{
              </property>
             </widget>
            </item>
+                       </layout>
+            </widget>
+           </item>
+           <item>
+          <widget class="GearLabel" name="gear_current_dro">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>1</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>34</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">GearLabel {
+    border: none;
+    color: #26C6DA;
+    background: transparent;
+    font: 17pt "Bebas Kai";
+}</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <property name="text">
+            <string>M01 - 2360 RPM</string>
+           </property>
+           <property name="pinBaseName" stdset="0">
+            <string>gear-current-dro</string>
+           </property>
+          </widget>
+         </item>
           </layout>
          </item>
          <item>

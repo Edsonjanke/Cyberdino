@@ -21684,7 +21684,7 @@ QPushButton[style='active']{
            <property name="minimumSize">
             <size>
              <width>0</width>
-             <height>40</height>
+             <height>85</height>
             </size>
            </property>
            <property name="focusPolicy">
@@ -21696,7 +21696,7 @@ QPushButton[style='active']{
     background: rgb(30, 30, 30);
     border: 1px solid rgb(96, 96, 97);
     border-radius: 4px;
-    font: 17pt "Bebas Kai";
+    font: 22pt "Bebas Kai";
     padding: 4px;
 }
 QPushButton:pressed {
@@ -21704,7 +21704,7 @@ QPushButton:pressed {
 }</string>
            </property>
            <property name="text">
-            <string>DESG X 0.0000</string>
+            <string>D-X 0.0000</string>
            </property>
            <property name="toolTip">
             <string>Desgaste X da ferramenta atual. Clique para ajustar (o valor digitado SOMA ao desgaste, em diametro).</string>
@@ -21716,7 +21716,7 @@ QPushButton:pressed {
            <property name="minimumSize">
             <size>
              <width>0</width>
-             <height>40</height>
+             <height>85</height>
             </size>
            </property>
            <property name="focusPolicy">
@@ -21728,7 +21728,7 @@ QPushButton:pressed {
     background: rgb(30, 30, 30);
     border: 1px solid rgb(96, 96, 97);
     border-radius: 4px;
-    font: 17pt "Bebas Kai";
+    font: 22pt "Bebas Kai";
     padding: 4px;
 }
 QPushButton:pressed {
@@ -21736,7 +21736,7 @@ QPushButton:pressed {
 }</string>
            </property>
            <property name="text">
-            <string>DESG Z 0.0000</string>
+            <string>D-Z 0.0000</string>
            </property>
            <property name="toolTip">
             <string>Desgaste Z da ferramenta atual. Clique para ajustar (o valor digitado SOMA ao desgaste).</string>
@@ -21744,33 +21744,7 @@ QPushButton:pressed {
           </widget>
          </item>
          
-         <item>
-          <widget class="GearLabel" name="gear_current_dro">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>34</height>
-            </size>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">GearLabel {
-    border: none;
-    color: #26C6DA;
-    background: transparent;
-    font: 15pt "Bebas Kai";
-}</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignCenter</set>
-           </property>
-           <property name="text">
-            <string>M01 - 2360 RPM</string>
-           </property>
-           <property name="pinBaseName" stdset="0">
-            <string>gear-current-dro</string>
-           </property>
-          </widget>
-         </item>
+         
          <item>
           <widget class="MDIButton" name="diameter_mode_button_2">
            <property name="visible">

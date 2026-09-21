@@ -927,7 +927,7 @@ class _WearAdjustDialog(object):
 
 
 def _wire_tool_wear_info():
-    """Botoes 'DESG X n' / 'DESG Z n' (embaixo do campo T): mostram o desgaste
+    """Botoes 'D-X n' / 'D-Z n' (embaixo do campo T): mostram o desgaste
     da ferramenta ATIVA e, ao clicar, abrem um dialogo pra SOMAR um ajuste ao
     desgaste (atalho, sem ir na aba FERRAMENTAS). Mesma semantica incremental
     da tabela: X digitado em DIAMETRO (convertido pra raio no model); Z direto.
@@ -964,9 +964,9 @@ def _wire_tool_wear_info():
         gcodes = STATUS.gcodes.value or ()
         xw = xr if "G8" in gcodes else xr * 2.0
         if btn_x is not None:
-            btn_x.setText("DESG X {:.4f}".format(xw))
+            btn_x.setText("D-X {:.4f}".format(xw))
         if btn_z is not None:
-            btn_z.setText("DESG Z {:.4f}".format(zr))
+            btn_z.setText("D-Z {:.4f}".format(zr))
 
     # Dialogo unico, reutilizado (nao-modal -> teclado virtual funciona).
     dialog = _WearAdjustDialog(btn_x or btn_z)
