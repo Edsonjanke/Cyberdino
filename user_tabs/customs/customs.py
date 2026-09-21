@@ -1111,6 +1111,49 @@ def _wire_jog_continuous():
     LOG.info("Jog continuo: botao CONT adicionado")
 
 
+def _wire_atalhos_abas():
+    """Ctrl+1 ... Ctrl+9 trocam de aba, e o atalho fica escrito no titulo.
+
+    Roda DEPOIS do _hide_probe_tab: o APALPADOR sai com removeTab, entao a
+    numeracao precisa ser a das abas que sobraram — a que o operador ve.
+
+    O titulo e' mudado aqui, em tempo de execucao, e nao no .ui de proposito:
+    o probe_basic monta a lista de 'aba inicial' (AJUSTES) casando pelo TEXTO
+    da aba durante o boot, que acontece antes disto. Mexer no .ui renomearia
+    a aba antes dessa conferencia e a preferencia de aba inicial pararia de
+    casar, caindo sempre na primeira."""
+    from qtpy.QtCore import Qt
+    from qtpy.QtGui import QKeySequence
+    from qtpy.QtWidgets import QShortcut, QTabWidget
+
+    tabs = None
+    for w in QApplication.allWidgets():
+        try:
+            if isinstance(w, QTabWidget) and w.objectName() == "tabWidget":
+                tabs = w
+                break
+        except RuntimeError:
+            continue          # widget C++ ja destruido
+    if tabs is None:
+        LOG.warning("Atalhos de aba: tabWidget nao encontrado")
+        return
+
+    janela = tabs.window()
+    quantas = min(tabs.count(), 9)          # Ctrl+0 nao entra na sequencia
+    for i in range(quantas):
+        titulo = tabs.tabText(i)
+        if "CTRL+" in titulo.upper():
+            continue                        # ja passou por aqui (reload)
+        tabs.setTabText(i, u"%s  CTRL+%d" % (titulo, i + 1))
+        tabs.setTabToolTip(i, u"%s — atalho Ctrl+%d" % (titulo, i + 1))
+        atalho = QShortcut(QKeySequence("Ctrl+%d" % (i + 1)), janela)
+        # WindowShortcut: vale com a janela em foco e continua sujeito ao
+        # filtro do editor de G-code, que engole atalhos durante a digitacao
+        atalho.setContext(Qt.WindowShortcut)
+        atalho.activated.connect(lambda _i=i, _t=tabs: _t.setCurrentIndex(_i))
+    LOG.info("Atalhos de aba: Ctrl+1 a Ctrl+%d", quantas)
+
+
 class UserTab(QWidget):
     def __init__(self, parent=None):
         super(UserTab, self).__init__(parent)
@@ -1128,3 +1171,5 @@ class UserTab(QWidget):
         QTimer.singleShot(0, _wire_cycle_start_pulse)
         QTimer.singleShot(0, _hide_probe_tab)
         QTimer.singleShot(0, _wire_jog_continuous)
+        # depois do _hide_probe_tab: a numeracao segue as abas visiveis
+        QTimer.singleShot(0, _wire_atalhos_abas)

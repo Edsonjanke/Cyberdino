@@ -65,6 +65,22 @@ Tres defeitos so' visuais, medidos rodando o sim sob Xvfb:
 Os botoes **funcionam** — foram testados com clique de mouse real e
 verificando que nada os cobre. O que estava errado era so o desenho.
 
+## Atalhos de teclado das abas
+
+**Ctrl+1 a Ctrl+9** trocam de aba, na ordem em que aparecem, e o atalho vai
+escrito no proprio titulo ("PRINCIPAL  CTRL+1"). Feito em
+`_wire_atalhos_abas` (customs.py), agendado DEPOIS do `_hide_probe_tab` —
+o APALPADOR sai com removeTab, entao a numeracao segue as abas visiveis.
+
+O titulo e' mudado em tempo de execucao, nao no .ui, de proposito: o
+probe_basic monta a lista de "aba inicial" dos AJUSTES casando pelo TEXTO
+da aba durante o boot. Renomear no .ui faria essa conferencia falhar e a
+aba inicial cairia sempre na primeira.
+
+**A barra esta no limite:** as 9 abas com o sufixo somam exatamente os
+1410px disponiveis a 1920x1080 (a maior, FERRAMENTAS, fica com 160px). Uma
+aba a mais, ou um nome mais longo, e a barra ganha setas de rolagem.
+
 ## Armadilha: o pyuic aceita, o LinuxCNC quebra pela metade
 
 Para dividir um QHBoxLayout em partes iguais NAO use a propriedade `stretch`
