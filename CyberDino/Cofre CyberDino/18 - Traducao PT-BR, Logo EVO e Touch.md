@@ -67,19 +67,28 @@ verificando que nada os cobre. O que estava errado era so o desenho.
 
 ## Atalhos de teclado das abas
 
-**Ctrl+1 a Ctrl+9** trocam de aba, na ordem em que aparecem, e o atalho vai
-escrito no proprio titulo ("PRINCIPAL  CTRL+1"). Feito em
+**Ctrl+1 a Ctrl+9** trocam de aba, na ordem em que aparecem. Feito em
 `_wire_atalhos_abas` (customs.py), agendado DEPOIS do `_hide_probe_tab` —
 o APALPADOR sai com removeTab, entao a numeracao segue as abas visiveis.
 
-O titulo e' mudado em tempo de execucao, nao no .ui, de proposito: o
-probe_basic monta a lista de "aba inicial" dos AJUSTES casando pelo TEXTO
-da aba durante o boot. Renomear no .ui faria essa conferencia falhar e a
-aba inicial cairia sempre na primeira.
+O "CTRL+N" **nao entra no texto da aba**: vai como um QLabel proprio preso
+ao lado direito (`setTabButton(i, QTabBar.RightSide, ...)`), em azul claro
+#B3E5FC e 11pt. E' o unico jeito de dar cor e tamanho so' a essa parte,
+porque o texto de uma aba e' uma string sem formatacao por pedaco.
 
-**A barra esta no limite:** as 9 abas com o sufixo somam exatamente os
-1410px disponiveis a 1920x1080 (a maior, FERRAMENTAS, fica com 160px). Uma
-aba a mais, ou um nome mais longo, e a barra ganha setas de rolagem.
+Dois detalhes que custam caro se esquecer:
+- o rotulo leva `WA_TransparentForMouseEvents`, senao um toque em cima do
+  "CTRL+N" cai no QLabel e a aba nao troca;
+- o titulo da aba continua o nome puro, o que mantem a preferencia de "aba
+  inicial" dos AJUSTES funcionando (o probe_basic casa pelo TEXTO da aba
+  durante o boot).
+
+Na aba selecionada o azul cai para 3.3:1 sobre o ciano — legivel, e e'
+justamente a aba onde o atalho nao importa. Nas outras fica 8.8:1.
+
+**A barra esta no limite:** as 9 abas com a etiqueta somam 1406px dos
+1410px disponiveis a 1920x1080. Uma aba a mais, ou um nome mais longo, e a
+barra ganha setas de rolagem.
 
 ## Armadilha: o pyuic aceita, o LinuxCNC quebra pela metade
 

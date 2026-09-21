@@ -1112,19 +1112,27 @@ def _wire_jog_continuous():
 
 
 def _wire_atalhos_abas():
-    """Ctrl+1 ... Ctrl+9 trocam de aba, e o atalho fica escrito no titulo.
+    """Ctrl+1 ... Ctrl+9 trocam de aba, com o atalho escrito na propria aba.
+
+    O "CTRL+N" NAO entra no texto da aba: vai como um QLabel proprio, preso
+    ao lado direito de cada aba (setTabButton). E' o unico jeito de dar cor e
+    tamanho diferentes so' a essa parte — o texto de uma aba e' uma string so,
+    sem formatacao por pedaco. Azul claro e menor, pra ler como legenda e nao
+    competir com o nome.
+
+    O rotulo e' transparente ao mouse: sem isso, um toque bem em cima do
+    "CTRL+N" cairia no QLabel e a aba nao trocaria.
 
     Roda DEPOIS do _hide_probe_tab: o APALPADOR sai com removeTab, entao a
-    numeracao precisa ser a das abas que sobraram — a que o operador ve.
-
-    O titulo e' mudado aqui, em tempo de execucao, e nao no .ui de proposito:
-    o probe_basic monta a lista de 'aba inicial' (AJUSTES) casando pelo TEXTO
-    da aba durante o boot, que acontece antes disto. Mexer no .ui renomearia
-    a aba antes dessa conferencia e a preferencia de aba inicial pararia de
-    casar, caindo sempre na primeira."""
+    numeracao precisa ser a das abas que sobraram — a que o operador ve."""
     from qtpy.QtCore import Qt
     from qtpy.QtGui import QKeySequence
-    from qtpy.QtWidgets import QShortcut, QTabWidget
+    from qtpy.QtWidgets import QShortcut, QTabWidget, QTabBar
+
+    # #B3E5FC: 8.8:1 na aba normal e 3.3:1 na selecionada (fundo ciano) —
+    # o melhor equilibrio entre os azuis do tema para as duas situacoes.
+    ETIQUETA_QSS = ('QLabel { color: #B3E5FC; background: transparent;'
+                    ' font: 11pt "Bebas Kai"; padding-left: 6px; }')
 
     tabs = None
     for w in QApplication.allWidgets():
@@ -1138,14 +1146,17 @@ def _wire_atalhos_abas():
         LOG.warning("Atalhos de aba: tabWidget nao encontrado")
         return
 
+    barra = tabs.tabBar()
     janela = tabs.window()
     quantas = min(tabs.count(), 9)          # Ctrl+0 nao entra na sequencia
     for i in range(quantas):
-        titulo = tabs.tabText(i)
-        if "CTRL+" in titulo.upper():
+        if barra.tabButton(i, QTabBar.RightSide) is not None:
             continue                        # ja passou por aqui (reload)
-        tabs.setTabText(i, u"%s  CTRL+%d" % (titulo, i + 1))
-        tabs.setTabToolTip(i, u"%s — atalho Ctrl+%d" % (titulo, i + 1))
+        etiqueta = QLabel("CTRL+%d" % (i + 1))
+        etiqueta.setStyleSheet(ETIQUETA_QSS)
+        etiqueta.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+        barra.setTabButton(i, QTabBar.RightSide, etiqueta)
+        tabs.setTabToolTip(i, u"%s — atalho Ctrl+%d" % (tabs.tabText(i), i + 1))
         atalho = QShortcut(QKeySequence("Ctrl+%d" % (i + 1)), janela)
         # WindowShortcut: vale com a janela em foco e continua sujeito ao
         # filtro do editor de G-code, que engole atalhos durante a digitacao
