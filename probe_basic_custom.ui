@@ -19812,6 +19812,94 @@ border-radius: 4px;
                            </layout>
                           </widget>
                          </item>
+                        <item>
+          <widget class="QWidget" name="widget_chuck_angle_panel" native="true">
+                           <property name="maximumSize">
+                            <size>
+                             <width>200</width>
+                             <height>16777215</height>
+                            </size>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">padding-left: 10px;</string>
+                           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>40</height>
+            </size>
+           </property>
+           <layout class="QHBoxLayout" name="chuck_angle_panel_layout">
+            <property name="spacing">
+             <number>6</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="chuck_angle_caption">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>38</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QLabel {
+    border: none;
+    color: white;
+    background: transparent;
+    font: 18pt "Bebas Kai";
+}</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+              <property name="text">
+               <string>C°</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="HalLabel" name="chuck_angle_dro">
+              <property name="minimumSize">
+               <size>
+                <width>80</width>
+                <height>38</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">HalLabel {
+    border: none;
+    color: rgb(94, 115, 255);
+    background: transparent;
+    font: 28pt "Bebas Kai";
+    padding-right: 10px;
+}</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+              <property name="text">
+               <string>0.00</string>
+              </property>
+              <property name="pinBaseName" stdset="0">
+               <string>chuck-angle</string>
+              </property>
+              <property name="pinType" stdset="0">
+               <enum>HalLabel::float</enum>
+              </property>
+              <property name="textFormat" stdset="0">
+               <string>.2f</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
                          <item>
                           <widget class="QWidget" name="widget" native="true">
                            <property name="sizePolicy">
@@ -21490,13 +21578,13 @@ QPushButton[style='active']{
               <property name="minimumSize">
                <size>
                 <width>50</width>
-                <height>40</height>
+                <height>120</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>40</height>
+                <height>120</height>
                </size>
               </property>
               <property name="styleSheet">
@@ -21511,7 +21599,7 @@ QPushButton[style='active']{
 
 .SubCallButton {
     font-family: "Bebas Kai";
-    font-size: 15pt;
+    font-size: 30pt;
 }
 
 .SubCallButton:disabled {
@@ -21557,13 +21645,13 @@ QPushButton[style='active']{
               <property name="minimumSize">
                <size>
                 <width>50</width>
-                <height>38</height>
+                <height>120</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>38</height>
+                <height>120</height>
                </size>
               </property>
               <property name="focusPolicy">
@@ -21577,7 +21665,7 @@ QPushButton[style='active']{
     border-radius: 5px;
     color: #00E676;
     background: #0D0F0E;
-	font: 75 17pt "Bebas Kai";
+	font: 75 52pt "Bebas Kai";
 }</string>
               </property>
               <property name="alignment">
@@ -21655,99 +21743,7 @@ QPushButton:pressed {
            </property>
           </widget>
          </item>
-         <item>
-          <widget class="QWidget" name="widget_chuck_angle_panel" native="true">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>40</height>
-            </size>
-           </property>
-           <layout class="QHBoxLayout" name="chuck_angle_panel_layout">
-            <property name="spacing">
-             <number>6</number>
-            </property>
-            <property name="leftMargin">
-             <number>0</number>
-            </property>
-            <property name="topMargin">
-             <number>0</number>
-            </property>
-            <property name="rightMargin">
-             <number>0</number>
-            </property>
-            <property name="bottomMargin">
-             <number>0</number>
-            </property>
-            <item>
-             <widget class="QLabel" name="chuck_angle_caption">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>40</width>
-                <height>38</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QLabel {
-    font: 17pt "Bebas Kai";
-    color: white;
-    background: black;
-    border: 1px solid black;
-    border-radius: 5px;
-}</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-              <property name="text">
-               <string>C°</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="HalLabel" name="chuck_angle_dro">
-              <property name="minimumSize">
-               <size>
-                <width>80</width>
-                <height>38</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">HalLabel{
-    border: 1px solid #3A3F43;
-    border-radius: 5px;
-    color: #00E676;
-    background: #0D0F0E;
-    padding-right: 4px;
-    font: 17pt "Bebas Kai";
-}</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-              </property>
-              <property name="text">
-               <string>0.00</string>
-              </property>
-              <property name="pinBaseName" stdset="0">
-               <string>chuck-angle</string>
-              </property>
-              <property name="pinType" stdset="0">
-               <enum>HalLabel::float</enum>
-              </property>
-              <property name="textFormat" stdset="0">
-               <string>.2f</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
-         </item>
+         
          <item>
           <widget class="GearLabel" name="gear_current_dro">
            <property name="minimumSize">
