@@ -90,6 +90,13 @@ justamente a aba onde o atalho nao importa. Nas outras fica 8.8:1.
 1410px disponiveis a 1920x1080. Uma aba a mais, ou um nome mais longo, e a
 barra ganha setas de rolagem.
 
+**No modo EDIT eles continuam valendo.** O `_EditShortcutBlocker` engole
+todos os atalhos enquanto o editor esta editavel (pra digitar G-code nao
+mover eixo nem ligar fuso), mas abre excecao para Ctrl+1..Ctrl+9: sao os
+unicos que nao tocam na maquina, so mudam o que aparece na tela. O Ctrl+R
+segue bloqueado de proposito — e' o Recarregar do menu, que descartaria o
+que estivesse sendo digitado.
+
 ## Armadilha: o pyuic aceita, o LinuxCNC quebra pela metade
 
 Para dividir um QHBoxLayout em partes iguais NAO use a propriedade `stretch`

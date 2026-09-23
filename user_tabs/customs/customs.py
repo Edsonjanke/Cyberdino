@@ -535,15 +535,29 @@ class _EditShortcutBlocker(QObject):
     aceitarmos esse evento, a tecla e entregue como digitacao normal ao editor
     em vez de acionar o atalho -> nenhum eixo se move / nada liga por engano.
 
-    Fora do modo EDIT o editor e read-only, entao o filtro fica inerte."""
+    Fora do modo EDIT o editor e read-only, entao o filtro fica inerte.
+
+    EXCECAO: Ctrl+1..Ctrl+9 (troca de aba) passam. Sao os unicos atalhos que
+    nao mexem na maquina — so mudam o que esta na tela — e ficar preso na aba
+    EDITAR sem poder sair pelo teclado atrapalhava mais do que ajudava.
+    Ctrl+R continua bloqueado de proposito: e' o Recarregar do menu, que
+    descartaria o que estivesse sendo digitado."""
 
     def __init__(self, editor):
         super(_EditShortcutBlocker, self).__init__(editor)
         self._editor = editor
 
+    @staticmethod
+    def _troca_de_aba(event):
+        from qtpy.QtCore import Qt
+        return bool(event.modifiers() & Qt.ControlModifier) and \
+            Qt.Key_1 <= event.key() <= Qt.Key_9
+
     def eventFilter(self, obj, event):
         try:
             if event.type() == QEvent.ShortcutOverride and not self._editor.isReadOnly():
+                if self._troca_de_aba(event):
+                    return False          # deixa o atalho da aba disparar
                 # Aceita -> Qt entrega como KeyPress normal ao editor,
                 # nao dispara o shortcut global.
                 event.accept()
@@ -556,7 +570,8 @@ class _EditShortcutBlocker(QObject):
 def _wire_edit_mode():
     """Modo EDIT (aba do painel direito): destrava o editor SO quando a aba EDIT
     esta selecionada; senao mantem read-only. Tambem bloqueia atalhos de teclado
-    enquanto edita (seguranca: nao mover eixos / ligar spindle sem querer).
+    enquanto edita (seguranca: nao mover eixos / ligar spindle sem querer) —
+    menos o Ctrl+1..Ctrl+9 das abas, que so mudam o que aparece na tela.
     Wira os botoes da aba EDIT (FIND/REPL, SAVE, COPIAR, COLAR)."""
     editor = edit_tab = None
     find_b = save_b = copy_b = paste_b = None
