@@ -1271,6 +1271,20 @@ def _wire_posicao_salva():
         return
     if not re.search(r"^HOME_SEARCH_VEL\s*=\s*0+(\.0*)?\s*$", texto, re.M):
         LOG.info("Posicao salva: .inc esta no modo chave, nao referencio sozinho")
+        # Se a chave foi armada de proposito (botao ou script), lembra o
+        # operador do ultimo passo da rotina — senao ele liga a maquina
+        # achando que ja esta referenciada.
+        marca = os.path.join(cfg, prefixo + "chave_armada.marca")
+        if os.path.exists(marca):
+            try:
+                getPlugin('notifications').captureMessage(
+                    'info',
+                    u"Referenciamento NA CHAVE armado. Ligue a maquina e "
+                    u"aperte REF ALL: os eixos vao procurar o fim de curso. "
+                    u"Depois disso a posicao volta a ser salva sozinha.")
+                os.remove(marca)
+            except Exception:
+                pass
         return
 
     quando = posicao = None

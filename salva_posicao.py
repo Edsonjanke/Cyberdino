@@ -57,6 +57,10 @@ ARQ_JSON = os.path.join(AQUI, PREFIXO + "posicao_salva.json")
 # cima, desarmando sozinho.
 ARQ_BANDEIRA = os.path.join(AQUI, PREFIXO + "armar_chave.flag")
 
+# Marca deixada ao armar a chave: a interface le no boot seguinte pra avisar
+# o operador que agora o referenciamento e' o fisico, e apaga.
+ARQ_MARCA = os.path.join(AQUI, PREFIXO + "chave_armada.marca")
+
 # (nome do pino, arquivo .inc, numero da sequencia de referenciamento)
 JOINTS = (
     ("x", os.path.join(AQUI, PREFIXO + "home_joint0.inc"), 1),
@@ -101,6 +105,7 @@ def arma_chave():
     for n, (_eixo, destino, _seq) in enumerate(JOINTS):
         molde = os.path.join(AQUI, "home_chave_joint%d.inc" % n)
         escreve_atomico(destino, io.open(molde, encoding="utf-8").read())
+    escreve_atomico(ARQ_MARCA, time.strftime("%Y-%m-%d %H:%M:%S") + "\n")
 
 
 def grava(posicoes, motivo):

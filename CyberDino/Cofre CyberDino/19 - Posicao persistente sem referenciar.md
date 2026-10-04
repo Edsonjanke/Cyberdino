@@ -98,6 +98,38 @@ Os `home_joint*.inc` da maquina real estao com **busca na chave** — o
 primeiro boot depois dessa mudanca referencia normal, e dai em diante a
 posicao passa a ser salva sozinha.
 
+## Rotina: referenciar no fim de curso quando quiser
+
+O modo de referenciamento vem do INI, que so' e' lido no BOOT — nao da pra
+trocar com o LinuxCNC no ar. O modulo de homing padrao nao expoe isso em
+pino HAL e o `homecomp` e' so' um molde pra compilar um modulo em C. Entao
+a rotina tem tres passos, e o reinicio e' inevitavel:
+
+**1. Armar.** Aba CUSTOMS -> **REFERENCIAR NA CHAVE**. Ele pergunta se quer
+reiniciar o LinuxCNC na hora (Sim reinicia sozinho; Nao so' arma, e vale no
+proximo boot). Pelo terminal, com o LinuxCNC fechado:
+`./referenciar_na_chave.sh`.
+
+**2. Reiniciar.** Na volta a maquina sobe SEM referencia e com um aviso na
+tela: "Referenciamento NA CHAVE armado. Ligue a maquina e aperte REF ALL".
+
+**3. Referenciar.** LIGAR e REF ALL — X busca a chave a -20 mm/s, latch a
+2, termina em HOME=5.0; depois o Z, igual sempre foi.
+
+Terminado isso o `salva_posicao.py` volta a gravar sozinho: a proxima vez
+que ligar ja sobe com a posicao salva. Nao precisa desfazer nada.
+
+### Como CONFERIR se a posicao salva estava certa
+
+So olhar o DRO nao prova nada — ele mostra o que foi restaurado, certo ou
+errado. O teste de verdade:
+
+1. com a posicao restaurada, encoste a ferramenta num ponto que de pra
+   reconhecer (face da placa, um ressalto) e anote o DRO;
+2. rode a rotina acima e referencie na chave;
+3. mande voltar: `G53 G0 X<anotado> Z<anotado>`;
+4. se a ferramenta parar no MESMO ponto fisico, a posicao salva valia.
+
 ## O que ficou de fora (do plano original)
 
 Por decisao do operador, estas pecas do plano NAO foram feitas:
