@@ -288,6 +288,50 @@ QPushButton:pressed {
     <layout class="QVBoxLayout" name="middleColumnLayout">
      <property name="spacing"><number>20</number></property>
      <item>
+      <widget class="QGroupBox" name="referencia_group">
+       <property name="title">
+        <string>REFERENCIAMENTO</string>
+       </property>
+       <layout class="QVBoxLayout" name="referencia_layout">
+        <item>
+         <widget class="QLabel" name="referencia_estado">
+          <property name="styleSheet">
+           <string notr="true">QLabel { color: #9BB0B5; font: 11pt &quot;Bebas Kai&quot;; }</string>
+          </property>
+          <property name="text">
+           <string>Modo: —</string>
+          </property>
+          <property name="wordWrap">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="referenciar_chave_btn">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>60</height>
+           </size>
+          </property>
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QPushButton { font: 15pt &quot;Bebas Kai&quot;; }</string>
+          </property>
+          <property name="text">
+           <string>REFERENCIAR NA CHAVE</string>
+          </property>
+          <property name="toolTip">
+           <string>Arma a busca na chave de referencia para a proxima vez que o LinuxCNC subir. Use quando a posicao salva nao valer mais: eixo movido com a maquina desligada, batida, alarme de servo.</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
     <widget class="QGroupBox" name="mdi_macros_group">
      <property name="title">
       <string>MACROS MDI</string>

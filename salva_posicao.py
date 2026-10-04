@@ -35,6 +35,7 @@ gravacao, o .inc que o INI vai ler no boot seguinte continua inteiro — um
 """
 
 import hal
+import io
 import json
 import os
 import signal
@@ -49,6 +50,12 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 PREFIXO = sys.argv[1] if len(sys.argv) > 1 else ""
 
 ARQ_JSON = os.path.join(AQUI, PREFIXO + "posicao_salva.json")
+
+# Bandeira criada pelo botao REFERENCIAR NA CHAVE (aba CUSTOMS) ou pelo
+# referenciar_na_chave.sh. Quem escreve nos .inc e' SO este componente —
+# senao o botao armava a chave e o encerramento regravava a posicao por
+# cima, desarmando sozinho.
+ARQ_BANDEIRA = os.path.join(AQUI, PREFIXO + "armar_chave.flag")
 
 # (nome do pino, arquivo .inc, numero da sequencia de referenciamento)
 JOINTS = (
@@ -89,6 +96,13 @@ def bloco_inc(eixo, posicao, sequencia, quando):
     )
 
 
+def arma_chave():
+    """Copia os blocos de busca na chave para os .inc ativos."""
+    for n, (_eixo, destino, _seq) in enumerate(JOINTS):
+        molde = os.path.join(AQUI, "home_chave_joint%d.inc" % n)
+        escreve_atomico(destino, io.open(molde, encoding="utf-8").read())
+
+
 def grava(posicoes, motivo):
     """Grava os .inc de cada joint e o json de acompanhamento."""
     agora = time.time()
@@ -114,11 +128,19 @@ def main():
         comp.newpin("%s-homed" % eixo, hal.HAL_BIT, hal.HAL_IN)
     comp.ready()
 
-    estado = {"ultima": None, "ultimo_write": 0.0, "movia": False}
+    estado = {"ultima": None, "ultimo_write": 0.0, "movia": False,
+              "modo_chave": False}
+
+    # Bandeira que sobrou da sessao passada nao vale: o INI ja foi lido.
+    if os.path.exists(ARQ_BANDEIRA):
+        try:
+            os.remove(ARQ_BANDEIRA)
+        except OSError:
+            pass
 
     def ao_encerrar(_sig=None, _frame=None):
         """SIGTERM: o LinuxCNC esta fechando. Ultima gravada antes de sair."""
-        if estado["ultima"] is not None:
+        if estado["ultima"] is not None and not estado["modo_chave"]:
             grava(estado["ultima"], "encerramento")
         comp.exit()
         sys.exit(0)
@@ -129,6 +151,22 @@ def main():
     periodo = 1.0 / POLL_HZ
     while True:
         time.sleep(periodo)
+
+        # Pediram referenciamento na chave: escreve os moldes e para de
+        # salvar ate o proximo boot (inclusive no encerramento).
+        if not estado["modo_chave"] and os.path.exists(ARQ_BANDEIRA):
+            try:
+                arma_chave()
+                os.remove(ARQ_BANDEIRA)
+                estado["modo_chave"] = True
+                print("salva_posicao: referenciamento na chave armado "
+                      "para o proximo boot")
+            except Exception as e:
+                print("salva_posicao: erro armando a chave: %s" % e,
+                      file=sys.stderr)
+        if estado["modo_chave"]:
+            continue
+
         try:
             referenciados = all(comp["%s-homed" % eixo]
                                 for eixo, _a, _s in JOINTS)

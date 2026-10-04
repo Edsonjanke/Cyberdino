@@ -12,9 +12,16 @@
 set -e
 cd "$(dirname "$0")"
 
-for n in 0 1; do
-    cp "home_chave_joint${n}.inc" "home_joint${n}.inc"
-done
+if pgrep -x linuxcncsvr >/dev/null; then
+    # LinuxCNC no ar: quem escreve nos .inc e' o salva_posicao.py. Sem isso
+    # o encerramento regravaria a posicao por cima e desarmaria a chave.
+    touch armar_chave.flag
+    sleep 1
+else
+    for n in 0 1; do
+        cp "home_chave_joint${n}.inc" "home_joint${n}.inc"
+    done
+fi
 echo "Referenciamento na chave armado para o proximo boot."
 
 if [ "$1" = "--iniciar" ]; then

@@ -60,11 +60,22 @@ entra por um fragmento gerado, sem reescrever o INI principal.
 | `salva_posicao.py` | componente HAL; grava a posicao nos `.inc` a cada parada do eixo, a cada 500 ms enquanto anda, e no SIGTERM |
 | `home_joint0.inc` / `home_joint1.inc` | bloco de referenciamento ATIVO, lido pelo INI com `#INCLUDE` |
 | `home_chave_joint*.inc` | os valores originais (busca na chave), usados como molde |
-| `referenciar_na_chave.sh` | devolve o referenciamento na chave pro proximo boot |
+| `referenciar_na_chave.sh` | devolve o referenciamento na chave pro proximo boot (terminal) |
+| Botao **REFERENCIAR NA CHAVE** (aba CUSTOMS) | o mesmo, pela tela, com o modo atual escrito em cima e opcao de reiniciar o LinuxCNC na hora |
 | `_wire_posicao_salva` (customs.py) | referencia sozinho ao LIGAR, quando o `.inc` ativo e' do tipo posicao salva, e avisa na tela de onde veio |
 
 O sim grava com prefixo `sim_` — jogar no sim nao mexe no ponto de partida
 do torno de verdade.
+
+**Quem escreve nos .inc e' SO o salva_posicao.py.** O botao e o script
+apenas criam a bandeira `armar_chave.flag`; o componente ve a bandeira,
+escreve os moldes da chave e para de salvar ate o proximo boot. Se o botao
+escrevesse direto, o encerramento regravaria a posicao por cima e
+desarmaria sozinho — foi a primeira versao, e quebrava.
+
+O modo de referenciamento vem do INI, que so' e' lido no boot: nao da pra
+trocar com o LinuxCNC no ar. O modulo de homing padrao nao expoe isso em
+pino HAL, e o `homecomp` e' so' um molde pra compilar um modulo em C.
 
 ### Teste no sim (2026-10-04)
 
@@ -75,6 +86,8 @@ do torno de verdade.
 | Religar | subiu em X=111.121 Z=-222.232, onde a sessao parou |
 | So apertar LIGAR, sem tocar em REFERENCIAR | referenciou sozinho em X=77.777 Z=-88.888 |
 | `referenciar_na_chave.sh` | `.inc` volta a ter `HOME_SEARCH_VEL = -20` |
+| Botao da aba CUSTOMS | armou a chave, e **mover depois nao desfez** (o componente parou de salvar) |
+| Rotulo do botao | passou de "posicao salva (11:00:00)" para "busca na CHAVE no proximo boot" sozinho |
 
 O referenciamento NA CHAVE nao da pra testar no sim: sem o 7i92 a
 GPIO.014 nunca fecha e o home nunca completa.

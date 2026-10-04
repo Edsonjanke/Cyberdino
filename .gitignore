@@ -67,3 +67,5 @@ torno_cam_diag.log
 # senao um clone novo nao sobe — o LinuxCNC nao acha o #INCLUDE)
 posicao_salva.json
 sim_posicao_salva.json
+armar_chave.flag
+sim_armar_chave.flag

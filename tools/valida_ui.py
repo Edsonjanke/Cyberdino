@@ -24,24 +24,48 @@ pra conferir que a parte que voce mexeu realmente entrou.
 Nao serve para o probe_basic_custom.ui inteiro: ele puxa widgets do
 ProbeBasic que exigem o LinuxCNC rodando."""
 import sys, types
-from qtpy.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QLineEdit
+from qtpy.QtWidgets import (QApplication, QWidget, QLabel, QPushButton,
+                            QLineEdit, QDoubleSpinBox)
 app = QApplication([])
-def stub(mod, **classes):
-    m = types.ModuleType(mod)
-    for k, base in classes.items():
-        setattr(m, k, type(k, (base,), {}))
-    sys.modules[mod] = m
-stub("qtpyvcp.widgets.display_widgets.status_label", StatusLabel=QLabel)
-stub("qtpyvcp.widgets.display_widgets.dro_label", DROLabel=QLabel)
-stub("qtpyvcp.widgets.input_widgets.dro_line_edit", DROLineEdit=QLineEdit)
-stub("qtpyvcp.widgets.hal_widgets.hal_label", HalLabel=QLabel)
-# o .ui usa enums do HalLabel (pinType); o stub precisa te-los
-_hl = sys.modules["qtpyvcp.widgets.hal_widgets.hal_label"].HalLabel
-for _i, _n in enumerate(("bit", "s32", "u32", "float")):
-    setattr(_hl, _n, _i)
-stub("qtpyvcp.widgets.button_widgets.mdi_button", MDIButton=QPushButton)
-stub("qtpyvcp.widgets.button_widgets.action_button", ActionButton=QPushButton)
-stub("mpg_button", GearLabel=QLabel, GearSelector=QPushButton, MPGButton=QPushButton)
+class _ModuloFalso(types.ModuleType):
+    """Devolve um widget simples para QUALQUER classe pedida.
+
+    Assim o validador serve pra qualquer .ui do projeto sem precisar listar
+    os widgets um a um — foi o que fez ele falhar com o customs.ui, que usa
+    JogIncrement, GearSelector e companhia."""
+
+    BASES = {
+        "button": QPushButton, "btn": QPushButton, "selector": QPushButton,
+        "spin": QDoubleSpinBox,          # tem setMinimum/setMaximum
+        "edit": QLineEdit, "entry": QLineEdit,
+    }
+
+    def __getattr__(self, nome):
+        base = QLabel
+        for marca, classe in self.BASES.items():
+            if marca in nome.lower():
+                base = classe
+                break
+        tipo = type(nome, (base,), {})
+        # enums que alguns .ui usam em propriedades (ex.: HalLabel.s32)
+        for i, enum in enumerate(("bit", "s32", "u32", "float")):
+            setattr(tipo, enum, i)
+        setattr(self, nome, tipo)
+        return tipo
+
+
+for _mod in ("qtpyvcp.widgets.display_widgets.status_label",
+             "qtpyvcp.widgets.display_widgets.dro_label",
+             "qtpyvcp.widgets.input_widgets.dro_line_edit",
+             "qtpyvcp.widgets.hal_widgets.hal_label",
+             "qtpyvcp.widgets.hal_widgets.hal_button",
+             "qtpyvcp.widgets.hal_widgets.hal_spinbox",
+             "qtpyvcp.widgets.button_widgets.mdi_button",
+             "qtpyvcp.widgets.button_widgets.action_button",
+             "qtpyvcp.widgets.input_widgets.jog_increment",
+             "mpg_button"):
+    sys.modules[_mod] = _ModuloFalso(_mod)
+
 from qtpy import uic
 alvo, prefixo = sys.argv[1], (sys.argv[2] if len(sys.argv) > 2 else "")
 w = QWidget()

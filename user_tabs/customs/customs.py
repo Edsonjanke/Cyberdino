@@ -1314,6 +1314,108 @@ def _wire_posicao_salva():
     QTimer.singleShot(2000, _referenciar)   # caso ja esteja ligada no boot
 
 
+def _wire_referenciar_na_chave(aba):
+    """Botao REFERENCIAR NA CHAVE da aba CUSTOMS.
+
+    O modo de referenciamento vem do INI, que so' e' lido no boot — nao da
+    pra trocar com o LinuxCNC no ar (o modulo de homing padrao nao expoe
+    isso em pino HAL; o homecomp e' so um molde pra compilar em C). Entao o
+    botao ARMA a chave para a proxima vez que o LinuxCNC subir, e oferece
+    reiniciar na hora.
+
+    Quem escreve nos .inc e' sempre o salva_posicao.py — aqui so' se cria a
+    bandeira. Se o botao escrevesse direto, o encerramento regravaria a
+    posicao por cima e desarmaria sozinho."""
+    from qtpy.QtWidgets import QMessageBox
+
+    botao = aba.findChild(QPushButton, "referenciar_chave_btn")
+    rotulo = aba.findChild(QLabel, "referencia_estado")
+    if botao is None:
+        return
+
+    cfg = os.environ.get('CONFIG_DIR') or os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    prefixo = "sim_" if "sim" in (os.environ.get('INI_FILE_NAME') or "").lower() else ""
+    inc = os.path.join(cfg, prefixo + "home_joint0.inc")
+    bandeira = os.path.join(cfg, prefixo + "armar_chave.flag")
+    salvo = os.path.join(cfg, prefixo + "posicao_salva.json")
+
+    def _modo():
+        """('salva'|'chave', texto pro rotulo)"""
+        try:
+            texto = io.open(inc, encoding="utf-8").read()
+        except (IOError, OSError):
+            return "chave", u"Modo: chave (sem posicao salva)"
+        if not re.search(r"^HOME_SEARCH_VEL\s*=\s*0+(\.0*)?\s*$", texto, re.M):
+            return "chave", u"Modo: busca na CHAVE no proximo boot"
+        quando = "?"
+        try:
+            quando = json.load(io.open(salvo, encoding="utf-8")).get("salvo_em", "?")
+        except Exception:
+            pass
+        return "salva", u"Modo: posicao salva ({})".format(quando)
+
+    def _atualiza_rotulo():
+        if rotulo is not None:
+            rotulo.setText(_modo()[1])
+
+    def _clicou():
+        STATUS = getPlugin('status')
+        try:
+            rodando = STATUS.interp_state.value != linuxcnc.INTERP_IDLE
+        except Exception:
+            rodando = False
+        if rodando:
+            QMessageBox.warning(aba, u"Referenciar na chave",
+                                u"Termine ou pare o programa antes.")
+            return
+
+        resp = QMessageBox.question(
+            aba, u"Referenciar na chave",
+            u"A busca na chave fica armada para a proxima vez que o LinuxCNC "
+            u"subir — o modo de referenciamento so' muda no boot.\n\n"
+            u"Reiniciar o LinuxCNC agora?",
+            QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+            QMessageBox.No)
+        if resp == QMessageBox.Cancel:
+            return
+
+        try:
+            io.open(bandeira, "w").write("")   # o componente faz o resto
+        except Exception as e:
+            QMessageBox.critical(aba, u"Referenciar na chave",
+                                 u"Nao consegui armar: {}".format(e))
+            return
+        QTimer.singleShot(1500, _atualiza_rotulo)
+        LOG.info("Referenciar na chave: armado pelo botao da aba CUSTOMS")
+
+        if resp == QMessageBox.Yes:
+            _reinicia()
+
+    def _reinicia():
+        """Sobe de novo assim que o LinuxCNC atual terminar de sair."""
+        import subprocess
+        ini = os.environ.get('INI_FILE_NAME') or ""
+        try:
+            subprocess.Popen(
+                ["/bin/bash", "-c",
+                 'for i in $(seq 1 90); do pgrep -x linuxcncsvr >/dev/null '
+                 '|| break; sleep 1; done; sleep 3; exec linuxcnc "$0"', ini],
+                start_new_session=True)
+            QApplication.quit()
+        except Exception as e:
+            LOG.warning("Nao consegui reiniciar o LinuxCNC: %s", e)
+
+    botao.clicked.connect(_clicou)
+    _atualiza_rotulo()
+    # o rotulo le o estado real de tempos em tempos: o modo tambem muda pelo
+    # referenciar_na_chave.sh, de fora da interface
+    relogio = QTimer(aba)
+    relogio.timeout.connect(_atualiza_rotulo)
+    relogio.start(5000)
+    aba._dino_relogio_referencia = relogio
+
+
 class UserTab(QWidget):
     def __init__(self, parent=None):
         super(UserTab, self).__init__(parent)
@@ -1334,3 +1436,4 @@ class UserTab(QWidget):
         # depois do _hide_probe_tab: a numeracao segue as abas visiveis
         QTimer.singleShot(0, _wire_atalhos_abas)
         QTimer.singleShot(0, _wire_posicao_salva)
+        QTimer.singleShot(0, lambda: _wire_referenciar_na_chave(self))
