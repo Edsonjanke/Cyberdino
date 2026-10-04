@@ -12,16 +12,13 @@
 set -e
 cd "$(dirname "$0")"
 
-if pgrep -x linuxcncsvr >/dev/null; then
-    # LinuxCNC no ar: quem escreve nos .inc e' o salva_posicao.py. Sem isso
-    # o encerramento regravaria a posicao por cima e desarmaria a chave.
-    touch armar_chave.flag
-    sleep 1
-else
-    for n in 0 1; do
-        cp "home_chave_joint${n}.inc" "home_joint${n}.inc"
-    done
-fi
+# Escreve direto, com o LinuxCNC no ar ou nao: o salva_posicao.py OBEDECE o
+# arquivo de estado e rele ele antes de cada gravacao, inclusive na de saida.
+for n in 0 1; do
+    cp "home_chave_joint${n}.inc" "home_joint${n}.inc"
+done
+echo chave > modo_referenciamento.txt
+echo botao > chave_armada.marca
 echo "Referenciamento na chave armado para o proximo boot."
 
 if [ "$1" = "--iniciar" ]; then

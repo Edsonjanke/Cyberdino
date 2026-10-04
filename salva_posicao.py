@@ -51,15 +51,30 @@ PREFIXO = sys.argv[1] if len(sys.argv) > 1 else ""
 
 ARQ_JSON = os.path.join(AQUI, PREFIXO + "posicao_salva.json")
 
-# Bandeira criada pelo botao REFERENCIAR NA CHAVE (aba CUSTOMS) ou pelo
-# referenciar_na_chave.sh. Quem escreve nos .inc e' SO este componente —
-# senao o botao armava a chave e o encerramento regravava a posicao por
-# cima, desarmando sozinho.
-ARQ_BANDEIRA = os.path.join(AQUI, PREFIXO + "armar_chave.flag")
+# ESTADO do referenciamento: "chave" ou "posicao". Quem muda e' o botao da
+# aba CUSTOMS ou o referenciar_na_chave.sh; este componente OBEDECE.
+#
+# Era uma bandeira de uma vez so, atendida pelo componente — e dependia de
+# tempo: o botao reiniciava antes do atendimento e o encerramento gravava a
+# posicao por cima. Quebrou duas vezes na maquina (04/10). Agora o estado
+# fica no disco e e' relido ANTES DE CADA GRAVACAO, inclusive na saida.
+ARQ_MODO = os.path.join(AQUI, PREFIXO + "modo_referenciamento.txt")
 
 # Marca deixada ao armar a chave: a interface le no boot seguinte pra avisar
 # o operador que agora o referenciamento e' o fisico, e apaga.
 ARQ_MARCA = os.path.join(AQUI, PREFIXO + "chave_armada.marca")
+
+
+def modo_ref():
+    """"chave" (busca fisica no proximo boot) ou "posicao" (padrao)."""
+    try:
+        return io.open(ARQ_MODO, encoding="utf-8").read().strip().lower()
+    except (IOError, OSError):
+        return "posicao"
+
+
+def define_modo(valor):
+    escreve_atomico(ARQ_MODO, valor + "\n")
 
 # (nome do pino, arquivo .inc, numero da sequencia de referenciamento)
 JOINTS = (
@@ -109,7 +124,12 @@ def arma_chave():
 
 
 def grava(posicoes, motivo):
-    """Grava os .inc de cada joint e o json de acompanhamento."""
+    """Grava os .inc de cada joint e o json de acompanhamento.
+
+    Rele o estado antes de escrever: se alguem pediu a chave entre a decisao
+    e a escrita, nao sobrescreve."""
+    if modo_ref() == "chave":
+        return
     agora = time.time()
     quando = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(agora))
     try:
@@ -136,33 +156,22 @@ def main():
     estado = {"ultima": None, "ultimo_write": 0.0, "movia": False,
               "modo_chave": False}
 
-    # Bandeira encontrada no startup: HONRA, nao descarta. Ela chega aqui
-    # quando o pedido nao foi processado antes do LinuxCNC fechar (o botao
-    # reiniciou rapido demais). Descartar fazia o pedido sumir calado e a
-    # maquina continuava referenciando parado — foi exatamente o que
-    # aconteceu na maquina em 2026-10-04.
-    if os.path.exists(ARQ_BANDEIRA):
-        try:
-            arma_chave()
-            os.remove(ARQ_BANDEIRA)
-            estado_inicial_chave = True
-            print("salva_posicao: bandeira pendente honrada no boot; "
-                  "a busca na chave vale no proximo boot")
-        except Exception as e:
-            print("salva_posicao: erro honrando a bandeira: %s" % e,
-                  file=sys.stderr)
-            estado_inicial_chave = False
-    else:
-        estado_inicial_chave = False
+    # Este boot subiu em modo chave? Entao a maquina ainda vai referenciar
+    # fisicamente: nao se escreve nada ate isso acontecer.
+    esperando_chave = modo_ref() == "chave"
+    if esperando_chave:
+        print("salva_posicao: boot em modo CHAVE — aguardando o "
+              "referenciamento fisico antes de voltar a salvar")
 
     def ao_encerrar(_sig=None, _frame=None):
-        """SIGTERM: o LinuxCNC esta fechando. Ultima gravada antes de sair."""
-        if estado["ultima"] is not None and not estado["modo_chave"]:
+        """SIGTERM: o LinuxCNC esta fechando. Ultima gravada antes de sair.
+
+        grava() rele o estado, entao um pedido de chave feito segundos antes
+        de fechar NAO e' desfeito aqui."""
+        if estado["ultima"] is not None:
             grava(estado["ultima"], "encerramento")
         comp.exit()
         sys.exit(0)
-
-    estado["modo_chave"] = estado_inicial_chave
 
     signal.signal(signal.SIGTERM, ao_encerrar)
     signal.signal(signal.SIGINT, ao_encerrar)
@@ -170,21 +179,6 @@ def main():
     periodo = 1.0 / POLL_HZ
     while True:
         time.sleep(periodo)
-
-        # Pediram referenciamento na chave: escreve os moldes e para de
-        # salvar ate o proximo boot (inclusive no encerramento).
-        if not estado["modo_chave"] and os.path.exists(ARQ_BANDEIRA):
-            try:
-                arma_chave()
-                os.remove(ARQ_BANDEIRA)
-                estado["modo_chave"] = True
-                print("salva_posicao: referenciamento na chave armado "
-                      "para o proximo boot")
-            except Exception as e:
-                print("salva_posicao: erro armando a chave: %s" % e,
-                      file=sys.stderr)
-        if estado["modo_chave"]:
-            continue
 
         try:
             referenciados = all(comp["%s-homed" % eixo]
@@ -196,6 +190,18 @@ def main():
             # sem referencia a posicao de maquina nao vale nada: nao grava e
             # nao perde o que ja estava salvo
             estado["ultima"] = None
+            continue
+
+        if esperando_chave:
+            # o operador acabou de referenciar NA CHAVE: o pedido foi
+            # cumprido, volta a salvar a posicao a partir daqui
+            esperando_chave = False
+            define_modo("posicao")
+            print("salva_posicao: referenciamento fisico concluido; "
+                  "voltando a salvar a posicao")
+
+        if modo_ref() == "chave":
+            # pediram a chave nesta sessao (botao): nao escreve mais nada
             continue
 
         anterior = estado["ultima"]

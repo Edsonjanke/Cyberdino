@@ -1351,7 +1351,7 @@ def _wire_referenciar_na_chave(aba):
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     prefixo = "sim_" if "sim" in (os.environ.get('INI_FILE_NAME') or "").lower() else ""
     inc = os.path.join(cfg, prefixo + "home_joint0.inc")
-    bandeira = os.path.join(cfg, prefixo + "armar_chave.flag")
+    modo_arq = os.path.join(cfg, prefixo + "modo_referenciamento.txt")
     salvo = os.path.join(cfg, prefixo + "posicao_salva.json")
 
     def _modo():
@@ -1407,27 +1407,38 @@ def _wire_referenciar_na_chave(aba):
         if resp == QMessageBox.Yes:
             _reinicia()
 
-    def _arma_e_confirma(espera_s=4.0):
-        """Cria a bandeira e ESPERA o componente processar.
+    def _arma_e_confirma():
+        """Escreve DIRETO os moldes da chave e o estado. Sem repasse.
 
-        Sem essa espera o botao reiniciava antes do salva_posicao.py ler a
-        bandeira; o encerramento entao gravava a posicao por cima e a
-        maquina continuava referenciando parado. Aconteceu na maquina em
-        2026-10-04 — o .inc ficou com a hora do encerramento."""
-        import time as _time
+        A versao anterior criava uma bandeira e esperava o salva_posicao.py
+        atender. Dependia de tempo e falhou duas vezes na maquina (04/10): o
+        encerramento gravava a posicao por cima e o pedido sumia calado.
+        Agora quem escreve e' quem foi clicado, e o componente OBEDECE o
+        arquivo de estado — ele rele esse arquivo antes de cada gravacao,
+        inclusive na de saida."""
         try:
-            io.open(bandeira, "w").write("")   # o componente faz o resto
+            for n in (0, 1):
+                molde = os.path.join(cfg, "home_chave_joint%d.inc" % n)
+                destino = os.path.join(cfg, prefixo + "home_joint%d.inc" % n)
+                conteudo = io.open(molde, encoding="utf-8").read()
+                tmp = destino + ".tmp"
+                with io.open(tmp, "w", encoding="utf-8") as fh:
+                    fh.write(conteudo)
+                    fh.flush()
+                    os.fsync(fh.fileno())
+                os.replace(tmp, destino)
+            with io.open(modo_arq, "w", encoding="utf-8") as fh:
+                fh.write(u"chave\n")
+                fh.flush()
+                os.fsync(fh.fileno())
+            io.open(os.path.join(cfg, prefixo + "chave_armada.marca"),
+                    "w", encoding="utf-8").write(u"botao\n")
         except Exception as e:
             QMessageBox.critical(aba, u"Referenciar na chave",
                                  u"Nao consegui armar: {}".format(e))
             return False
-        limite = _time.time() + espera_s
-        while _time.time() < limite:
-            QApplication.processEvents()
-            _time.sleep(0.1)
-            if not os.path.exists(bandeira) and _modo()[0] == "chave":
-                return True
-        return False
+        # confere no disco: o que vale e' o que o INI vai ler no boot
+        return _modo()[0] == "chave"
 
     def _reinicia():
         """Sobe de novo assim que o LinuxCNC atual terminar de sair."""
