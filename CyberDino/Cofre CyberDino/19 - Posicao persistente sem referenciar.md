@@ -119,6 +119,21 @@ tela: "Referenciamento NA CHAVE armado. Ligue a maquina e aperte REF ALL".
 Terminado isso o `salva_posicao.py` volta a gravar sozinho: a proxima vez
 que ligar ja sobe com a posicao salva. Nao precisa desfazer nada.
 
+### Armadilha paga (2026-10-04): armar e reiniciar na mesma hora
+
+A primeira versao do botao criava a bandeira e chamava o reinicio na linha
+seguinte. O salva_posicao.py le a bandeira a cada 100 ms e nao tinha tempo:
+o encerramento gravava a POSICAO por cima dos moldes da chave, e no boot
+seguinte a bandeira era descartada como velha. Resultado na maquina: REF
+ALL referenciava parado, como se nada tivesse sido pedido. O rastro ficou
+no proprio arquivo — a hora gravada era a do encerramento.
+
+Corrigido nos dois lados:
+- o botao ESPERA (ate 4 s) a bandeira ser consumida e o modo virar chave
+  antes de reiniciar; se nao vier resposta, nao reinicia e manda usar o
+  script;
+- o componente HONRA uma bandeira encontrada no boot em vez de descartar.
+
 ### Como CONFERIR se a posicao salva estava certa
 
 So olhar o DRO nao prova nada — ele mostra o que foi restaurado, certo ou

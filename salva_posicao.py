@@ -136,12 +136,24 @@ def main():
     estado = {"ultima": None, "ultimo_write": 0.0, "movia": False,
               "modo_chave": False}
 
-    # Bandeira que sobrou da sessao passada nao vale: o INI ja foi lido.
+    # Bandeira encontrada no startup: HONRA, nao descarta. Ela chega aqui
+    # quando o pedido nao foi processado antes do LinuxCNC fechar (o botao
+    # reiniciou rapido demais). Descartar fazia o pedido sumir calado e a
+    # maquina continuava referenciando parado — foi exatamente o que
+    # aconteceu na maquina em 2026-10-04.
     if os.path.exists(ARQ_BANDEIRA):
         try:
+            arma_chave()
             os.remove(ARQ_BANDEIRA)
-        except OSError:
-            pass
+            estado_inicial_chave = True
+            print("salva_posicao: bandeira pendente honrada no boot; "
+                  "a busca na chave vale no proximo boot")
+        except Exception as e:
+            print("salva_posicao: erro honrando a bandeira: %s" % e,
+                  file=sys.stderr)
+            estado_inicial_chave = False
+    else:
+        estado_inicial_chave = False
 
     def ao_encerrar(_sig=None, _frame=None):
         """SIGTERM: o LinuxCNC esta fechando. Ultima gravada antes de sair."""
@@ -149,6 +161,8 @@ def main():
             grava(estado["ultima"], "encerramento")
         comp.exit()
         sys.exit(0)
+
+    estado["modo_chave"] = estado_inicial_chave
 
     signal.signal(signal.SIGTERM, ao_encerrar)
     signal.signal(signal.SIGINT, ao_encerrar)

@@ -1394,17 +1394,40 @@ def _wire_referenciar_na_chave(aba):
         if resp == QMessageBox.Cancel:
             return
 
+        if not _arma_e_confirma():
+            QMessageBox.warning(
+                aba, u"Referenciar na chave",
+                u"O componente que escreve o referenciamento nao respondeu.\n\n"
+                u"Feche o LinuxCNC e rode no terminal:\n"
+                u"    ./referenciar_na_chave.sh")
+            return
+        _atualiza_rotulo()
+        LOG.info("Referenciar na chave: armado pelo botao da aba CUSTOMS")
+
+        if resp == QMessageBox.Yes:
+            _reinicia()
+
+    def _arma_e_confirma(espera_s=4.0):
+        """Cria a bandeira e ESPERA o componente processar.
+
+        Sem essa espera o botao reiniciava antes do salva_posicao.py ler a
+        bandeira; o encerramento entao gravava a posicao por cima e a
+        maquina continuava referenciando parado. Aconteceu na maquina em
+        2026-10-04 — o .inc ficou com a hora do encerramento."""
+        import time as _time
         try:
             io.open(bandeira, "w").write("")   # o componente faz o resto
         except Exception as e:
             QMessageBox.critical(aba, u"Referenciar na chave",
                                  u"Nao consegui armar: {}".format(e))
-            return
-        QTimer.singleShot(1500, _atualiza_rotulo)
-        LOG.info("Referenciar na chave: armado pelo botao da aba CUSTOMS")
-
-        if resp == QMessageBox.Yes:
-            _reinicia()
+            return False
+        limite = _time.time() + espera_s
+        while _time.time() < limite:
+            QApplication.processEvents()
+            _time.sleep(0.1)
+            if not os.path.exists(bandeira) and _modo()[0] == "chave":
+                return True
+        return False
 
     def _reinicia():
         """Sobe de novo assim que o LinuxCNC atual terminar de sair."""
