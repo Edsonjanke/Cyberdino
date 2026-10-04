@@ -38,6 +38,7 @@ import hal
 import io
 import json
 import os
+import re
 import signal
 import sys
 import time
@@ -77,6 +78,29 @@ def registra(texto):
                      % (time.strftime("%Y-%m-%d %H:%M:%S"), texto))
     except Exception:
         pass
+
+
+INI_EM_USO = os.environ.get("INI_FILE_NAME") or ""
+
+
+def homing_do_ini_em_uso():
+    """Como o JOINT_0 esta configurado no INI QUE VALE nesta sessao.
+
+    Devolve "chave", "posicao" ou None. Serve de conferencia: o LinuxCNC roda
+    a partir de um .ini.expanded gerado no boot, e ja aconteceu de uma sessao
+    subir com um expandido VELHO (reinicio feito com o proprio .expanded).
+    Nesse caso o estado dizia "chave" e a maquina referenciava parado."""
+    try:
+        texto = io.open(INI_EM_USO, encoding="utf-8", errors="replace").read()
+    except (IOError, OSError):
+        return None
+    bloco = re.search(r"\[JOINT_0\](.*?)(?=\n\[|\Z)", texto, re.S)
+    if not bloco:
+        return None
+    vel = re.search(r"^HOME_SEARCH_VEL\s*=\s*([-\d.]+)", bloco.group(1), re.M)
+    if vel is None:
+        return "posicao"            # ausente = zero = referenciar parado
+    return "posicao" if float(vel.group(1)) == 0 else "chave"
 
 
 def modo_ref():
@@ -172,9 +196,18 @@ def main():
 
     # Este boot subiu em modo chave? Entao a maquina ainda vai referenciar
     # fisicamente: nao se escreve nada ate isso acontecer.
-    esperando_chave = modo_ref() == "chave"
-    registra("boot em modo %s" % ("CHAVE (espera o referenciamento fisico)"
-                                  if esperando_chave else "posicao"))
+    pedido = modo_ref()
+    vigente = homing_do_ini_em_uso()
+    registra("boot: estado=%s | INI em uso=%s | %s"
+             % (pedido, vigente, os.path.basename(INI_EM_USO)))
+    esperando_chave = pedido == "chave"
+    if esperando_chave and vigente == "posicao":
+        # a chave esta armada mas ESTA sessao subiu em modo posicao: o
+        # referenciamento daqui nao e' o fisico. Nao salva e nao desarma —
+        # o pedido continua de pe pro proximo boot, feito do jeito certo.
+        esperando_chave = False
+        registra("ATENCAO: chave armada mas o INI desta sessao referencia "
+                 "parado (expandido velho?). Pedido mantido para o proximo boot.")
 
     def ao_encerrar(_sig=None, _frame=None):
         registra("encerrando (modo=%s)" % modo_ref())

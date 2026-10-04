@@ -1452,7 +1452,13 @@ def _wire_referenciar_na_chave(aba):
     def _reinicia():
         """Sobe de novo assim que o LinuxCNC atual terminar de sair."""
         import subprocess
+        # INI_FILE_NAME aponta pro .expanded (o LinuxCNC resolve os #INCLUDE
+        # num arquivo gerado e passa ELE adiante). Reiniciar com o expandido
+        # fazia a sessao nova subir com os valores CONGELADOS da expansao
+        # anterior — a chave era armada e ignorada. Volta pro INI original.
         ini = os.environ.get('INI_FILE_NAME') or ""
+        if ini.endswith(".expanded"):
+            ini = ini[:-len(".expanded")]
         try:
             subprocess.Popen(
                 ["/bin/bash", "-c",
