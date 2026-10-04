@@ -26,6 +26,7 @@ Retrofit de torno convencional "Dino Evo" para CNC.
 - [[16 - Interface v2 Fanuc e Atalhos]]
 - [[17 - Aba GERAR PGM (Conversational de Torno)]]
 - [[18 - Traducao PT-BR, Logo EVO e Touch]]
+- [[19 - Posicao persistente sem referenciar]] (PLANO, nao implementado)
 
 ### Referencia
 - [[20 - Parametros VFD 9600]] (atual)
@@ -37,4 +38,4 @@ Retrofit de torno convencional "Dino Evo" para CNC.
 ---
 **Status:** Em operacao desde marco 2026. VFD 9600 instalado 2026-04-23. Caixa de marchas + aba CUSTOMS adicionadas 2026-04-29. Interface v2 (tema Fanuc, PT-BR, aba EDIT, atalhos de desgaste) 2026-07-05.
 Aba GERAR PGM (conversational de torno, 7 operacoes) 2026-08-02 — ainda **sem validacao na maquina**.
-**Ultima atualizacao:** 2026-08-02
+**Ultima atualizacao:** 2026-10-04
