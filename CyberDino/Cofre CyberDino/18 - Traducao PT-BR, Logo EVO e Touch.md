@@ -97,6 +97,26 @@ unicos que nao tocam na maquina, so mudam o que aparece na tela. O Ctrl+R
 segue bloqueado de proposito — e' o Recarregar do menu, que descartaria o
 que estivesse sendo digitado.
 
+## Editor de G-code: Ctrl+S e o zoom do backplot
+
+**Ctrl+S salva** (QKeySequence.Save, ligado no `_wire_edit_mode`). So' vale
+com o editor destravado — fora do modo EDIT a tecla nao faz nada, pra nao
+gravar um arquivo que o operador nem abriu pra editar. Esta na lista de
+excecoes do `_EditShortcutBlocker`, junto com Ctrl+1..9.
+
+**O backplot nao reenquadra mais a cada salvada.** O slot nativo
+`setProgramViewWhenLoadingProgram(True)` reenquadra em TODA carga, e salvar
+no editor recarrega o mesmo arquivo: dava zoom num trecho, salvava, e a
+vista pulava pro programa inteiro. Agora o flag nativo fica DESLIGADO e o
+enquadramento e' chamado por nos no `STATUS.file.notify`, so' quando o
+caminho do arquivo muda. Programa novo enquadra; mesmo arquivo recarregado
+mantem o zoom.
+
+Detalhe: `setViewProgram` desiste calado enquanto `program_bounds_actors`
+estiver vazio, entao a chamada e' repetida ate a geometria existir (12
+tentativas de 500ms). No sim sob Xvfb os atores nunca aparecem — o VTK nao
+monta o percurso ali —, entao esse pedaco so' da pra conferir na maquina.
+
 ## Armadilha: o pyuic aceita, o LinuxCNC quebra pela metade
 
 Para dividir um QHBoxLayout em partes iguais NAO use a propriedade `stretch`

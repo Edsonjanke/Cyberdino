@@ -537,9 +537,9 @@ class _EditShortcutBlocker(QObject):
 
     Fora do modo EDIT o editor e read-only, entao o filtro fica inerte.
 
-    EXCECAO: Ctrl+1..Ctrl+9 (troca de aba) passam. Sao os unicos atalhos que
-    nao mexem na maquina — so mudam o que esta na tela — e ficar preso na aba
-    EDITAR sem poder sair pelo teclado atrapalhava mais do que ajudava.
+    EXCECAO: Ctrl+1..Ctrl+9 (troca de aba) e Ctrl+S (salvar) passam. Nenhum
+    dos dois mexe na maquina — um muda o que esta na tela, o outro grava o
+    arquivo que esta sendo editado.
     Ctrl+R continua bloqueado de proposito: e' o Recarregar do menu, que
     descartaria o que estivesse sendo digitado."""
 
@@ -549,9 +549,12 @@ class _EditShortcutBlocker(QObject):
 
     @staticmethod
     def _troca_de_aba(event):
+        """Atalhos que continuam valendo durante a edicao: trocar de aba
+        (Ctrl+1..9) e salvar (Ctrl+S). Nenhum dos dois mexe na maquina."""
         from qtpy.QtCore import Qt
-        return bool(event.modifiers() & Qt.ControlModifier) and \
-            Qt.Key_1 <= event.key() <= Qt.Key_9
+        if not (event.modifiers() & Qt.ControlModifier):
+            return False
+        return (Qt.Key_1 <= event.key() <= Qt.Key_9) or event.key() == Qt.Key_S
 
     def eventFilter(self, obj, event):
         try:
@@ -605,6 +608,27 @@ def _wire_edit_mode():
         find_b.clicked.connect(lambda _=False, ed=editor: ed.findDialog())
     if save_b is not None:
         save_b.clicked.connect(lambda _=False, ed=editor: ed.saveFile())
+
+    # Ctrl+S salva, como em qualquer editor. So vale com o editor destravado
+    # (modo EDIT); fora dele a tecla nao faz nada, pra nao gravar por engano
+    # um arquivo que o operador nem abriu pra editar.
+    from qtpy.QtCore import Qt as _Qt
+    from qtpy.QtGui import QKeySequence
+    from qtpy.QtWidgets import QShortcut
+
+    def _salvar_pelo_teclado(ed=editor, botao=save_b):
+        if ed.isReadOnly():
+            return
+        if botao is not None:
+            botao.click()          # mesmo caminho do botao SALVAR
+        else:
+            ed.saveFile()
+        LOG.info("G-code salvo pelo Ctrl+S")
+
+    atalho_salvar = QShortcut(QKeySequence.Save, editor.window())
+    atalho_salvar.setContext(_Qt.WindowShortcut)
+    atalho_salvar.activated.connect(_salvar_pelo_teclado)
+    editor._dino_atalho_salvar = atalho_salvar     # ref pro GC nao levar
     if copy_b is not None:
         copy_b.clicked.connect(lambda _=False, ed=editor: ed.copy())
     if paste_b is not None:
@@ -612,10 +636,13 @@ def _wire_edit_mode():
 
 
 def _wire_auto_clear_backplot():
-    """Auto-limpa o rastro (clearLivePlot) do VTKBackPlot em:
+    """Backplot: rastro, logo, pan e enquadramento.
+
+    Auto-limpa o rastro (clearLivePlot) em:
        - carga de novo NGC (STATUS.file)
        - inicio de execucao (interp IDLE -> READING/WAITING)
-       - fim de execucao (interp READING/WAITING -> IDLE)"""
+       - fim de execucao (interp READING/WAITING -> IDLE)
+    e enquadra no programa SO quando o arquivo e' outro (ver abaixo)."""
     backplot = None
     for top in QApplication.topLevelWidgets():
         backplot = top.findChild(VTKBackPlot, "vtkbackplot")
@@ -685,16 +712,49 @@ def _wire_auto_clear_backplot():
     except Exception:
         pass
 
-    # Auto-enquadrar nos PROGRAM EXTENTS toda vez que um programa e carregado
-    # (equivale a apertar PGM EXT automaticamente). Slot nativo do VTKBackPlot.
+    # Auto-enquadrar nos PROGRAM EXTENTS, mas SO quando o programa e' outro.
+    #
+    # O slot nativo (setProgramViewWhenLoadingProgram) reenquadra em TODA
+    # carga, e salvar no editor recarrega o mesmo arquivo: o operador dava
+    # zoom num trecho, salvava, e a vista saltava pro programa inteiro de
+    # novo. Aqui o flag nativo fica desligado e o enquadramento e' chamado
+    # por nos, so' quando o caminho do arquivo muda.
     try:
-        backplot.setProgramViewWhenLoadingProgram(True)
+        backplot.setProgramViewWhenLoadingProgram(False)
     except Exception:
         pass
 
     STATUS = getPlugin('status')
 
-    STATUS.file.notify(lambda *_a, **_k: backplot.clearLivePlot())
+    def _enquadrar_programa(tentativa=0):
+        """PGM EXT depois que a geometria existe.
+
+        setViewProgram desiste calado enquanto program_bounds_actors estiver
+        vazio — e' o que acontece se chamarmos antes do backplot terminar de
+        montar o percurso. Dai as tentativas espacadas: ~6 s no total, que da
+        folga pra programa grande. Se nunca aparecer (foi o caso no sim sob
+        Xvfb, onde o VTK nao monta os atores), desiste sem mexer na vista."""
+        try:
+            if getattr(backplot, "program_bounds_actors", None):
+                backplot.setViewProgram('p')
+                return
+        except Exception:
+            return
+        if tentativa < 12:
+            QTimer.singleShot(500, lambda: _enquadrar_programa(tentativa + 1))
+
+    arquivo_anterior = {'caminho': None}
+
+    def _ao_trocar_arquivo(caminho=None, *_a, **_k):
+        backplot.clearLivePlot()
+        anterior = arquivo_anterior['caminho']
+        arquivo_anterior['caminho'] = caminho
+        if caminho and caminho != anterior:
+            # programa NOVO: enquadra. Mesmo arquivo recarregado (salvou no
+            # editor, ou recarregou pelo menu): mantem o zoom que estava.
+            QTimer.singleShot(300, _enquadrar_programa)
+
+    STATUS.file.notify(_ao_trocar_arquivo)
 
     state = {'prev': None}
 
