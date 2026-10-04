@@ -1354,6 +1354,16 @@ def _wire_referenciar_na_chave(aba):
     modo_arq = os.path.join(cfg, prefixo + "modo_referenciamento.txt")
     salvo = os.path.join(cfg, prefixo + "posicao_salva.json")
 
+    def _registra(texto):
+        try:
+            with open(os.path.join(cfg, prefixo + "log_referenciamento.txt"),
+                      "a") as fh:
+                fh.write("%s  botao       %s\n"
+                         % (__import__("time").strftime("%Y-%m-%d %H:%M:%S"),
+                            texto))
+        except Exception:
+            pass
+
     def _modo():
         """('salva'|'chave', texto pro rotulo)"""
         try:
@@ -1374,38 +1384,37 @@ def _wire_referenciar_na_chave(aba):
             rotulo.setText(_modo()[1])
 
     def _clicou():
-        STATUS = getPlugin('status')
-        try:
-            rodando = STATUS.interp_state.value != linuxcnc.INTERP_IDLE
-        except Exception:
-            rodando = False
-        if rodando:
-            QMessageBox.warning(aba, u"Referenciar na chave",
-                                u"Termine ou pare o programa antes.")
-            return
+        """Arma na hora, SEM dialogo.
 
-        resp = QMessageBox.question(
-            aba, u"Referenciar na chave",
-            u"A busca na chave fica armada para a proxima vez que o LinuxCNC "
-            u"subir — o modo de referenciamento so' muda no boot.\n\n"
-            u"Reiniciar o LinuxCNC agora?",
-            QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
-            QMessageBox.No)
-        if resp == QMessageBox.Cancel:
-            return
+        Tinha um QMessageBox perguntando se queria reiniciar. Numa interface
+        em tela cheia o modal pode abrir ATRAS da janela: o operador clica,
+        parece que nada aconteceu, e o clique fica preso esperando uma
+        resposta que ninguem ve. Agora o botao faz, e quem avisa e' o rotulo
+        + a notificacao, que aparecem por cima sem travar nada."""
+        _registra("clicado (modo atual: %s)" % _modo()[0])
+        try:
+            if getPlugin('status').interp_state.value != linuxcnc.INTERP_IDLE:
+                _registra("recusado: interpretador nao esta em IDLE")
+                getPlugin('notifications').captureMessage(
+                    'warn', u"Termine ou pare o programa antes de armar o "
+                            u"referenciamento na chave.")
+                return
+        except Exception:
+            pass
 
         if not _arma_e_confirma():
-            QMessageBox.warning(
-                aba, u"Referenciar na chave",
-                u"O componente que escreve o referenciamento nao respondeu.\n\n"
-                u"Feche o LinuxCNC e rode no terminal:\n"
-                u"    ./referenciar_na_chave.sh")
+            _registra("FALHOU ao armar (arquivos nao mudaram)")
+            getPlugin('notifications').captureMessage(
+                'error', u"Nao consegui armar o referenciamento na chave. "
+                         u"Feche o LinuxCNC e rode ./referenciar_na_chave.sh")
             return
-        _atualiza_rotulo()
-        LOG.info("Referenciar na chave: armado pelo botao da aba CUSTOMS")
 
-        if resp == QMessageBox.Yes:
-            _reinicia()
+        _atualiza_tudo()
+        _registra("ARMADO: modo agora e' %s" % _modo()[0])
+        LOG.info("Referenciar na chave: armado pelo botao da aba CUSTOMS")
+        getPlugin('notifications').captureMessage(
+            'info', u"Referenciamento NA CHAVE armado. Aperte REINICIAR "
+                    u"AGORA (ou feche e abra o LinuxCNC) e depois REF ALL.")
 
     def _arma_e_confirma():
         """Escreve DIRETO os moldes da chave e o estado. Sem repasse.
@@ -1454,12 +1463,23 @@ def _wire_referenciar_na_chave(aba):
         except Exception as e:
             LOG.warning("Nao consegui reiniciar o LinuxCNC: %s", e)
 
+    reiniciar = aba.findChild(QPushButton, "reiniciar_linuxcnc_btn")
+    if reiniciar is not None:
+        reiniciar.clicked.connect(lambda: (_registra("reiniciar pedido"),
+                                           _reinicia()))
+
+    def _atualiza_tudo():
+        _atualiza_rotulo()
+        if reiniciar is not None:
+            # so' deixa reiniciar quando ha o que aplicar no boot
+            reiniciar.setEnabled(_modo()[0] == "chave")
+
     botao.clicked.connect(_clicou)
-    _atualiza_rotulo()
+    _atualiza_tudo()
     # o rotulo le o estado real de tempos em tempos: o modo tambem muda pelo
     # referenciar_na_chave.sh, de fora da interface
     relogio = QTimer(aba)
-    relogio.timeout.connect(_atualiza_rotulo)
+    relogio.timeout.connect(_atualiza_tudo)
     relogio.start(5000)
     aba._dino_relogio_referencia = relogio
 

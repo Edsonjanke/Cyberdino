@@ -65,6 +65,20 @@ ARQ_MODO = os.path.join(AQUI, PREFIXO + "modo_referenciamento.txt")
 ARQ_MARCA = os.path.join(AQUI, PREFIXO + "chave_armada.marca")
 
 
+ARQ_LOG = os.path.join(AQUI, PREFIXO + "log_referenciamento.txt")
+
+
+def registra(texto):
+    """Diario do referenciamento: sem ele, uma falha so' aparece como 'nao
+    funcionou' e a investigacao vira adivinhacao (ja custou duas rodadas)."""
+    try:
+        with open(ARQ_LOG, "a") as fh:
+            fh.write("%s  componente  %s\n"
+                     % (time.strftime("%Y-%m-%d %H:%M:%S"), texto))
+    except Exception:
+        pass
+
+
 def modo_ref():
     """"chave" (busca fisica no proximo boot) ou "posicao" (padrao)."""
     try:
@@ -159,11 +173,11 @@ def main():
     # Este boot subiu em modo chave? Entao a maquina ainda vai referenciar
     # fisicamente: nao se escreve nada ate isso acontecer.
     esperando_chave = modo_ref() == "chave"
-    if esperando_chave:
-        print("salva_posicao: boot em modo CHAVE — aguardando o "
-              "referenciamento fisico antes de voltar a salvar")
+    registra("boot em modo %s" % ("CHAVE (espera o referenciamento fisico)"
+                                  if esperando_chave else "posicao"))
 
     def ao_encerrar(_sig=None, _frame=None):
+        registra("encerrando (modo=%s)" % modo_ref())
         """SIGTERM: o LinuxCNC esta fechando. Ultima gravada antes de sair.
 
         grava() rele o estado, entao um pedido de chave feito segundos antes
@@ -197,8 +211,8 @@ def main():
             # cumprido, volta a salvar a posicao a partir daqui
             esperando_chave = False
             define_modo("posicao")
-            print("salva_posicao: referenciamento fisico concluido; "
-                  "voltando a salvar a posicao")
+            registra("referenciamento fisico concluido em X=%.3f Z=%.3f; "
+                     "voltando a salvar" % (posicoes[0], posicoes[1]))
 
         if modo_ref() == "chave":
             # pediram a chave nesta sessao (botao): nao escreve mais nada

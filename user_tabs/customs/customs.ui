@@ -328,6 +328,31 @@ QPushButton:pressed {
           </property>
          </widget>
         </item>
+        <item>
+         <widget class="QPushButton" name="reiniciar_linuxcnc_btn">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>48</height>
+           </size>
+          </property>
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QPushButton { font: 13pt &quot;Bebas Kai&quot;; }</string>
+          </property>
+          <property name="text">
+           <string>REINICIAR AGORA</string>
+          </property>
+          <property name="toolTip">
+           <string>Fecha e reabre o LinuxCNC para aplicar o referenciamento na chave. So fica ativo quando ha algo armado.</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
      </item>
