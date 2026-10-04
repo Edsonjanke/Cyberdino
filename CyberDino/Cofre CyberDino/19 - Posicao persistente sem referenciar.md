@@ -1,6 +1,11 @@
-# 19 - Plano: posicao persistente (ligar sem referenciar)
+# 19 - Posicao persistente (ligar sem referenciar)
 
-**Status: PLANO, nada implementado.** Escrito em 2026-10-04.
+**Status: IMPLEMENTADO em 2026-10-04**, testado no sim, PENDENTE na maquina.
+
+Decisao do operador (2026-10-04): os eixos nao se mexem com a maquina
+desligada, entao a posicao salva vale. Sem dialogo de confirmacao — se
+precisar referenciar de novo, ele ve pelo olho e roda o script. O
+`restaurar` tem que deixar "como se nunca tivesse sido desligado".
 
 Objetivo: ligar o LinuxCNC e ja ter as coordenadas certas, sem passar a
 chave de referencia toda vez. A posicao e' salva enquanto a maquina
@@ -48,62 +53,49 @@ HOME_OFFSET, senao a maquina sai andando ate o HOME assim que referenciar.
 O INI aceita `#INCLUDE arquivo` (secao 4.4.1.5), entao a posicao salva
 entra por um fragmento gerado, sem reescrever o INI principal.
 
-## Pecas a construir
+## Como ficou (implementado)
 
-**1. `salva_posicao.py`** — componente HAL userspace (como o
-`partcounter.py` e o `chuck_angle.py` que ja existem).
-- Le os sinais que ja existem no HAL: `x-pos-fb`, `z-pos-fb` (posicao de
-  maquina, sem offset de peca) e `joint.N.homed`.
-- Grava `posicao_salva.json` por escrita atomica (tmp + rename, pra nao
-  deixar arquivo pela metade se faltar energia no meio).
-- Cadencia: a cada 500 ms, so' quando mudou mais que 1 um.
-- So' salva com a maquina REFERENCIADA — posicao de maquina nao
-  referenciada nao vale nada.
-- No SIGTERM grava uma ultima vez e marca `saida_limpa: true`.
+| Peca | O que faz |
+|---|---|
+| `salva_posicao.py` | componente HAL; grava a posicao nos `.inc` a cada parada do eixo, a cada 500 ms enquanto anda, e no SIGTERM |
+| `home_joint0.inc` / `home_joint1.inc` | bloco de referenciamento ATIVO, lido pelo INI com `#INCLUDE` |
+| `home_chave_joint*.inc` | os valores originais (busca na chave), usados como molde |
+| `referenciar_na_chave.sh` | devolve o referenciamento na chave pro proximo boot |
+| `_wire_posicao_salva` (customs.py) | referencia sozinho ao LIGAR, quando o `.inc` ativo e' do tipo posicao salva, e avisa na tela de onde veio |
 
-**2. `restaura_posicao.py`** — roda ANTES do LinuxCNC, pelo atalho de
-inicializacao.
-- Le o json e gera `home_joint0.inc` / `home_joint1.inc` com HOME,
-  HOME_OFFSET e as velocidades zeradas.
-- Se o json nao existir, estiver sujo ou velho, gera os fragmentos com o
-  homing NA CHAVE (os valores de hoje) — o padrao e' o seguro.
+O sim grava com prefixo `sim_` — jogar no sim nao mexe no ponto de partida
+do torno de verdade.
 
-**3. INI** — em cada `[JOINT_n]`, trocar as cinco linhas de homing por
-`#INCLUDE home_jointN.inc`.
+### Teste no sim (2026-10-04)
 
-**4. Dialogo de confirmacao no boot** (customs.py) — mostra a posicao
-restaurada, quando foi salva e por que ela e' (ou nao) confiavel, com dois
-botoes: **CONFIRMAR POSICAO** e **REFERENCIAR NA CHAVE**. Enquanto nao
-responder, `motion.homing-inhibit` segura o referenciamento.
-Nao-modal, por causa do teclado virtual (licao da v2).
+| Fase | Resultado |
+|---|---|
+| Ligar com posicao salva X=111.111 Z=-222.222 | referenciou sem mover, DRO exatamente nesses valores |
+| Mover e encerrar | `.inc` e json atualizados (`motivo: encerramento`) |
+| Religar | subiu em X=111.121 Z=-222.232, onde a sessao parou |
+| So apertar LIGAR, sem tocar em REFERENCIAR | referenciou sozinho em X=77.777 Z=-88.888 |
+| `referenciar_na_chave.sh` | `.inc` volta a ter `HOME_SEARCH_VEL = -20` |
 
-**5. Invalidacao automatica** — a posicao salva vira suspeita quando:
-- a saida nao foi limpa (sem SIGTERM: queda de energia, kill, travamento);
-- houve alarme de servo AMS32 desde o ultimo salvamento;
-- houve erro de seguimento (ferror);
-- o arquivo tem mais de N dias;
-- a maquina ficou em E-STOP (com o drive solto, o eixo pode ter sido
-  movido na mao).
-Em qualquer um desses casos o dialogo ja abre sugerindo referenciar.
+O referenciamento NA CHAVE nao da pra testar no sim: sem o 7i92 a
+GPIO.014 nunca fecha e o home nunca completa.
 
-**6. (Opcional) CONFERIR POSICAO** — rotina que toca a chave
-compartilhada e compara com o esperado. Se divergir mais que a
-tolerancia, avisa. E' a unica forma de a maquina *descobrir sozinha* que
-a posicao salva envelheceu.
+### Estado atual dos arquivos
 
-## Ordem de execucao
+Os `home_joint*.inc` da maquina real estao com **busca na chave** — o
+primeiro boot depois dessa mudanca referencia normal, e dai em diante a
+posicao passa a ser salva sozinha.
 
-| Fase | O que | Como se prova |
-|---|---|---|
-| 0 | Provar o Immediate Homing no sim | REFERENCIAR com HOME_OFFSET=123.456 tem que deixar o DRO em 123.456 **sem mover** |
-| 1 | So o `salva_posicao.py`, sem restaurar nada | rodar alguns dias e conferir se o json bate com o DRO ao desligar |
-| 2 | Restauracao + dialogo de confirmacao | desligar numa posicao conhecida, religar e conferir o DRO antes de liberar a maquina |
-| 3 | Invalidacao automatica + CONFERIR POSICAO | simular queda de energia (kill -9) e ver se o dialogo exige referenciar |
+## O que ficou de fora (do plano original)
 
-A fase 1 e' a que da confianca: ela mede o erro **sem** ninguem depender
-do resultado. So' depois de ver o valor bater e' que a fase 2 entra.
+Por decisao do operador, estas pecas do plano NAO foram feitas:
 
-## Riscos (o motivo de o dialogo nao ser opcional)
+- **dialogo de confirmacao no boot** — ele confere pelo olho;
+- **invalidacao automatica** (saida suja, alarme de servo, ferror, E-stop);
+- **CONFERIR POSICAO** tocando a chave.
+
+Se um dia a posicao salva trair, sao essas tres que entram.
+
+## Riscos (aceitos conscientemente)
 
 - **Malha aberta.** O LinuxCNC registra o que mandou, nao o que o eixo
   fez. Volante manual, empurrao, drive destravado, perda de passo ou
@@ -114,8 +106,9 @@ do resultado. So' depois de ver o valor bater e' que a fase 2 entra.
 - **Alarme de servo.** O AMS32 avisa, mas o LinuxCNC nao sabe quanto o
   eixo escorregou.
 
-Por isso: referenciar na chave continua a um toque, e nenhuma dessas
-fases remove o REFERENCIAR da tela.
+O operador decidiu conviver com isso: os eixos nao se mexem desligados, e
+se desconfiar ele olha a maquina e roda o `referenciar_na_chave.sh`. O
+botao REFERENCIAR continua na tela do mesmo jeito.
 
 ## O que NAO funciona (ja descartado)
 

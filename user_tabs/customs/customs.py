@@ -1,3 +1,4 @@
+import io
 import os
 import re
 import json
@@ -1240,6 +1241,79 @@ def _wire_atalhos_abas():
     LOG.info("Atalhos de aba: Ctrl+1 a Ctrl+%d", quantas)
 
 
+def _wire_posicao_salva():
+    """Referencia sozinho quando ha posicao salva da sessao anterior.
+
+    O salva_posicao.py grava a posicao nos home_jointN.inc, e o INI os le
+    por #INCLUDE. Com eles o referenciamento e' IMEDIATO: nao move nada, so'
+    assume que o eixo esta onde ficou (manual 2.9, 4.5.6.14). Entao nem faz
+    sentido obrigar o operador a apertar REFERENCIAR — a maquina liga como
+    se nunca tivesse sido desligada.
+
+    So' age quando o .inc ativo e' do tipo "posicao salva"
+    (HOME_SEARCH_VEL = 0). Se alguem rodou o referenciar_na_chave.sh, o
+    arquivo volta a ter busca na chave e aqui ninguem mexe: o operador
+    referencia na mao, como sempre.
+
+    Ver "19 - Posicao persistente sem referenciar" no cofre."""
+    from qtpyvcp.actions import machine_actions
+
+    cfg = os.environ.get('CONFIG_DIR') or os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    prefixo = "sim_" if "sim" in (os.environ.get('INI_FILE_NAME') or "").lower() else ""
+    inc = os.path.join(cfg, prefixo + "home_joint0.inc")
+    salvo = os.path.join(cfg, prefixo + "posicao_salva.json")
+
+    try:
+        texto = io.open(inc, encoding="utf-8").read()
+    except (IOError, OSError):
+        LOG.info("Posicao salva: %s nao existe, referenciamento normal", inc)
+        return
+    if not re.search(r"^HOME_SEARCH_VEL\s*=\s*0+(\.0*)?\s*$", texto, re.M):
+        LOG.info("Posicao salva: .inc esta no modo chave, nao referencio sozinho")
+        return
+
+    quando = posicao = None
+    try:
+        dados = json.load(io.open(salvo, encoding="utf-8"))
+        quando = dados.get("salvo_em")
+        posicao = dados.get("posicao")
+    except Exception:
+        pass
+
+    STATUS = getPlugin('status')
+    feito = {'ok': False}
+
+    def _referenciar(*_a, **_k):
+        """Quando a maquina liga e os eixos nao estao referenciados."""
+        if feito['ok']:
+            return
+        try:
+            if not STATUS.enabled.value:
+                return
+            if all(STATUS.homed.value or []):
+                feito['ok'] = True
+                return
+            feito['ok'] = True
+            machine_actions.home.all()
+            if posicao:
+                texto_pos = "  ".join("%s %.3f" % (k.upper(), v)
+                                      for k, v in sorted(posicao.items()))
+            else:
+                texto_pos = "da sessao anterior"
+            getPlugin('notifications').captureMessage(
+                'info',
+                u"Posicao restaurada: {} (salva em {}). "
+                u"Confira antes de usinar; pra referenciar na chave rode "
+                u"referenciar_na_chave.sh.".format(texto_pos, quando or "?"))
+            LOG.info("Posicao salva: referenciado automaticamente em %s", texto_pos)
+        except Exception as e:
+            LOG.warning("Posicao salva: nao consegui referenciar sozinho: %s", e)
+
+    STATUS.enabled.notify(_referenciar)
+    QTimer.singleShot(2000, _referenciar)   # caso ja esteja ligada no boot
+
+
 class UserTab(QWidget):
     def __init__(self, parent=None):
         super(UserTab, self).__init__(parent)
@@ -1259,3 +1333,4 @@ class UserTab(QWidget):
         QTimer.singleShot(0, _wire_jog_continuous)
         # depois do _hide_probe_tab: a numeracao segue as abas visiveis
         QTimer.singleShot(0, _wire_atalhos_abas)
+        QTimer.singleShot(0, _wire_posicao_salva)

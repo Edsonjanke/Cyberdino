@@ -62,3 +62,8 @@ torno_cam_diag.log
 
 # Backups locais antes de mudancas grandes
 *.before-*
+
+# Posicao persistente: o json e' so acompanhamento (os .inc SAO versionados,
+# senao um clone novo nao sobe — o LinuxCNC nao acha o #INCLUDE)
+posicao_salva.json
+sim_posicao_salva.json

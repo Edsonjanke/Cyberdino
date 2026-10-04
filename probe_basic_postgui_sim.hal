@@ -52,3 +52,11 @@ sets jog-speed 4500
 # AMS32 PLC nao carregado em sim (precisa serial Modbus).
 # Sinais jog-x/z-pos/neg ficam soltos -> halui.axis.* nao acionado por PLC, OK.
 # servo-fault nao existe -> nenhum estop automatico, OK em sim.
+
+# Posicao persistente — no sim grava com prefixo sim_, pra jogar aqui NAO
+# mexer no ponto de partida do torno de verdade.
+loadusr -Wn salvaposicao python3 salva_posicao.py sim_
+net x-pos-joint    joint.0.pos-fb => salvaposicao.x-pos
+net z-pos-joint    joint.1.pos-fb => salvaposicao.z-pos
+net x-is-homed     => salvaposicao.x-homed
+net z-is-homed     => salvaposicao.z-homed

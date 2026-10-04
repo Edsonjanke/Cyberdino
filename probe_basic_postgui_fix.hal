@@ -119,3 +119,15 @@ net jog-z-neg  <=  ams32.status.02
 # Reset: pressionar reset fisico (GPIO.022) apos servos ficarem OK.
 net servo-fault <= ams32.status.07
 net servo-fault => halui.estop.activate
+
+# =============================================
+#  POSICAO PERSISTENTE (ligar sem referenciar)
+# =============================================
+# salva_posicao.py grava a posicao de maquina nos home_jointN.inc, que o
+# INI le por #INCLUDE no boot seguinte. So grava com os dois eixos
+# referenciados. Ver "19 - Posicao persistente sem referenciar" no cofre.
+loadusr -Wn salvaposicao python3 salva_posicao.py
+net x-pos-joint    joint.0.pos-fb => salvaposicao.x-pos
+net z-pos-joint    joint.1.pos-fb => salvaposicao.z-pos
+net x-is-homed     => salvaposicao.x-homed
+net z-is-homed     => salvaposicao.z-homed

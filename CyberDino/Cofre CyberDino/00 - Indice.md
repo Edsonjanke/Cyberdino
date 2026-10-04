@@ -26,7 +26,7 @@ Retrofit de torno convencional "Dino Evo" para CNC.
 - [[16 - Interface v2 Fanuc e Atalhos]]
 - [[17 - Aba GERAR PGM (Conversational de Torno)]]
 - [[18 - Traducao PT-BR, Logo EVO e Touch]]
-- [[19 - Posicao persistente sem referenciar]] (PLANO, nao implementado)
+- [[19 - Posicao persistente sem referenciar]] (implementado, falta testar na maquina)
 
 ### Referencia
 - [[20 - Parametros VFD 9600]] (atual)
