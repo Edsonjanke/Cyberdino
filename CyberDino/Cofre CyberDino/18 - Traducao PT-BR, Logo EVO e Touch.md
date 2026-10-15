@@ -90,12 +90,35 @@ justamente a aba onde o atalho nao importa. Nas outras fica 8.8:1.
 1410px disponiveis a 1920x1080. Uma aba a mais, ou um nome mais longo, e a
 barra ganha setas de rolagem.
 
-**No modo EDIT eles continuam valendo.** O `_EditShortcutBlocker` engole
-todos os atalhos enquanto o editor esta editavel (pra digitar G-code nao
-mover eixo nem ligar fuso), mas abre excecao para Ctrl+1..Ctrl+9: sao os
-unicos que nao tocam na maquina, so mudam o que aparece na tela. O Ctrl+R
-segue bloqueado de proposito — e' o Recarregar do menu, que descartaria o
-que estivesse sendo digitado.
+**No modo EDIT todos os atalhos valem** (decisao do operador,
+2026-10-15). O `_EditShortcutBlocker` continua no codigo, mas desligado
+pela chave `_BLOQUEAR_ATALHOS_NO_EDIT = False` no topo do customs.py.
+
+**O risco esta medido e e' real:** `R` e' *Executar Programa*, e R aparece
+em G-code o tempo todo — raio de arco (`G2 X.. Z.. R5`), plano do ciclo
+(`G81 R2`), degressao do G76. Digitar um raio com a aba EDITAR aberta
+DISPARA o programa. `O` (letra das sub-rotinas) abre o dialogo de arquivo,
+`Ctrl+R` recarrega descartando o que foi digitado e `Ctrl+Q` fecha o
+LinuxCNC. Para voltar a bloquear, basta a chave em True.
+
+### Todos os atalhos do LinuxCNC nesta maquina
+
+| tecla | acao | de onde |
+|---|---|---|
+| **R** | **Executar Programa** | menu / .ui |
+| O | Abrir arquivo | menu / .ui |
+| Ctrl+O | Abrir arquivo | menubar.yml |
+| Ctrl+R | Recarregar programa | menu / .ui |
+| Ctrl+Q | Sair do LinuxCNC | menubar.yml |
+| F1 | Alternar E-STOP | menu / .ui |
+| F2 | Ligar/desligar maquina | menu / .ui |
+| F7 | Neblina | menu / .ui |
+| F8 | Refrigerante | menu / .ui |
+| Ctrl+1..9 | trocar de aba | customs.py |
+| Ctrl+S | salvar | customs.py |
+
+Ctrl+C/V/X/Z/A **nunca** foram bloqueados: o editor trata essas teclas por
+conta propria, sem atalho registrado, entao o filtro nem as via.
 
 ## Editor de G-code: Ctrl+S e o zoom do backplot
 

@@ -526,6 +526,21 @@ def _wire_gcode_top_buttons():
                 lambda _=False, ed=editor, sln=set_line_n: _run_from_line_armed(ed, sln))
 
 
+# Decisao do operador em 2026-10-15: TODOS os atalhos valem durante a
+# edicao de G-code. Para voltar a bloquear, ponha True aqui.
+#
+# O que isso significa, medido no proprio config:
+#   R        -> Executar Programa  ... e R e' raio de arco (G2 X.. Z.. R5),
+#               plano do ciclo (G81 R2), degressao do G76. Digitar um raio
+#               DISPARA O PROGRAMA e a maquina anda.
+#   O        -> Abrir arquivo      ... e o e' a letra das sub-rotinas
+#   F1/F2    -> E-STOP / liga maquina
+#   F7/F8    -> neblina / refrigerante
+#   Ctrl+R   -> recarrega e descarta o que estiver digitado
+#   Ctrl+Q   -> fecha o LinuxCNC
+_BLOQUEAR_ATALHOS_NO_EDIT = False
+
+
 class _EditShortcutBlocker(QObject):
     """Event filter: enquanto o editor estiver EDITAVEL (modo EDIT), impede que
     atalhos globais do LinuxCNC (jog por teclado, F-keys de spindle/coolant,
@@ -590,11 +605,17 @@ def _wire_edit_mode():
     if editor is None:
         return
 
-    # Bloqueador de atalhos: instala um event filter no editor. So atua quando
-    # o editor esta editavel (modo EDIT). Guarda ref pra nao ser coletado.
-    blocker = _EditShortcutBlocker(editor)
-    editor.installEventFilter(blocker)
-    editor._dino_shortcut_blocker = blocker
+    # Bloqueador de atalhos: so entra se _BLOQUEAR_ATALHOS_NO_EDIT estiver
+    # ligado (ver o comentario na classe). Desligado, todos os atalhos do
+    # LinuxCNC valem enquanto se digita — inclusive R, que roda o programa.
+    if _BLOQUEAR_ATALHOS_NO_EDIT:
+        blocker = _EditShortcutBlocker(editor)
+        editor.installEventFilter(blocker)
+        editor._dino_shortcut_blocker = blocker
+        LOG.info("Modo EDIT: atalhos bloqueados durante a edicao")
+    else:
+        LOG.warning("Modo EDIT: atalhos LIVRES durante a edicao — 'R' executa "
+                    "o programa, cuidado ao digitar raio de arco")
 
     # Gate: aba EDIT aceso -> destrava; apagado -> trava.
     if edit_tab is not None:
