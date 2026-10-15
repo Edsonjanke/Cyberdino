@@ -1607,6 +1607,86 @@ def _wire_procurar_gcode():
     LOG.info("Procurar no G-code: M30, busca livre e F6 (M6) ligados")
 
 
+class _LimpaAvisosNoReset(QObject):
+    """Ve o toque no PARAR mesmo quando ele esta desabilitado.
+
+    O PARAR e' um ActionButton: o qtpyvcp o desabilita quando nao ha
+    programa rodando, e botao desabilitado NAO emite `clicked`. So' que e'
+    exatamente nessa hora — maquina parada, avisos na tela — que o operador
+    aperta o RESET. Ligar em `clicked` deixava o botao mudo justamente no
+    caso que interessa (conferido no sim: clicked=0, filtro=1).
+
+    Um filtro de eventos no proprio botao continua vendo o MouseButtonPress
+    nos dois estados. O evento segue o caminho normal depois (return False),
+    entao o abortar nativo nao e' atrapalhado."""
+
+    def __init__(self, botao, limpar):
+        super(_LimpaAvisosNoReset, self).__init__(botao)
+        self._limpar = limpar
+
+    def eventFilter(self, obj, event):
+        try:
+            if event.type() == QEvent.MouseButtonPress:
+                self._limpar()
+        except Exception:
+            LOG.exception("RESET: falha limpando os avisos")
+        return False
+
+
+def _wire_reset_limpa_mensagens():
+    """PARAR (o RESET deste painel) tira da tela os avisos empilhados.
+
+    As mensagens do qtpyvcp sobem como pop-ups no canto superior direito, e
+    cada uma so' sai clicando no X dela. Cinco avisos seguidos viram cinco
+    cliques — e e' justamente quando a maquina acusou alguma coisa que o
+    operador nao esta' com tempo pra isso.
+
+    O PARAR e' o RESET do conjunto INICIAR / PAUSA / PARAR, e num CNC o
+    RESET e' quem limpa a linha de mensagem. Entao ele passa a fazer as
+    duas coisas: aborta o programa (acao nativa, intacta) e limpa a tela.
+
+    Limpa TODOS os tipos, erro incluido: foi o operador que apertou RESET.
+    As mensagens do LinuxCNC continuam gravadas na lista da aba STATUS."""
+    botao = None
+    for top in QApplication.topLevelWidgets():
+        botao = botao or top.findChild(QPushButton, "stop_button")
+    if botao is None:
+        LOG.warning("RESET limpa avisos: botao PARAR nao encontrado")
+        return
+
+    def limpar():
+        try:
+            painel = getPlugin('notifications').notification_dispatcher
+        except Exception as e:
+            LOG.warning("RESET limpa avisos: sem painel de avisos: %s", e)
+            return
+        if painel is None:
+            return
+        quantas = 0
+        for msg in list(getattr(painel, "activeMessages", [])):
+            try:
+                painel.mainLayout.removeWidget(msg)
+                msg.setParent(None)
+                msg.deleteLater()
+                quantas += 1
+            except RuntimeError:
+                pass              # widget C++ ja destruido
+        painel.activeMessages = []
+        painel.nMessages = 0
+        try:
+            painel.adjustSize()
+            painel.hide()
+        except RuntimeError:
+            pass
+        if quantas:
+            LOG.info("RESET: %d aviso(s) tirado(s) da tela", quantas)
+
+    filtro = _LimpaAvisosNoReset(botao, limpar)
+    botao.installEventFilter(filtro)
+    botao._dino_limpa_avisos = filtro       # segura a referencia
+    LOG.info("RESET (PARAR) tambem limpa os avisos da tela")
+
+
 class UserTab(QWidget):
     def __init__(self, parent=None):
         super(UserTab, self).__init__(parent)
@@ -1629,3 +1709,4 @@ class UserTab(QWidget):
         QTimer.singleShot(0, _wire_posicao_salva)
         QTimer.singleShot(0, lambda: _wire_referenciar_na_chave(self))
         QTimer.singleShot(0, _wire_procurar_gcode)
+        QTimer.singleShot(0, _wire_reset_limpa_mensagens)

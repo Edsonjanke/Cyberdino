@@ -143,6 +143,42 @@ estiver vazio, entao a chamada e' repetida ate a geometria existir (12
 tentativas de 500ms). No sim sob Xvfb os atores nunca aparecem — o VTK nao
 monta o percurso ali —, entao esse pedaco so' da pra conferir na maquina.
 
+## O PARAR (RESET) limpa os avisos da tela
+
+As mensagens do qtpyvcp sobem como pop-ups empilhados no canto superior
+direito (`NativeNotification`, ate 5), e cada uma so' sai clicando no **X
+dela**. Cinco avisos = cinco cliques, bem na hora em que o operador menos
+tem tempo. Desde 2026-10-15 o **PARAR** — que e' o RESET do conjunto
+INICIAR / PAUSA / PARAR — tambem limpa a pilha inteira.
+
+Limpa **todos** os tipos, erro incluido: foi o operador que apertou RESET,
+e e' o que um RESET de CNC faz com a linha de mensagem. As mensagens do
+LinuxCNC continuam na lista da aba STATUS.
+
+### A armadilha: `clicked` nao serve
+
+O PARAR e' um `ActionButton` e o qtpyvcp **o desabilita quando nao ha
+programa rodando** — e botao desabilitado nao emite `clicked`. Ou seja,
+ligar em `clicked` deixa o botao mudo justamente no caso que interessa:
+maquina parada, avisos na tela.
+
+Medido no sim, tocando pela janela do sistema (`QTest.mouseClick` no
+`windowHandle()`, que e' o unico jeito de passar pelo hit-test de
+verdade):
+
+| botao | filtro de evento no botao | `clicked` |
+|---|---|---|
+| desabilitado | **1** | 0 |
+| habilitado | 1 | 1 |
+
+Entao o gatilho e' um **event filter no proprio botao**
+(`_LimpaAvisosNoReset`), que devolve `False` — o evento segue o caminho
+normal e o abortar nativo nao e' atrapalhado.
+
+Cuidado ao testar: `QTest.mouseClick(widget, ...)` entrega o evento
+DIRETO no widget, sem hit-test, e por isso nao reproduz um toque de
+verdade. Tem que ser na janela (`windowHandle()`).
+
 ## Procurar no G-code (fileira do editor)
 
 Ao lado do **PROCURAR M6** entraram **PROCURAR M30** e um **campo livre**
