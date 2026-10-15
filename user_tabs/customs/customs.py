@@ -553,9 +553,9 @@ class _EditShortcutBlocker(QObject):
 
     Fora do modo EDIT o editor e read-only, entao o filtro fica inerte.
 
-    EXCECAO: Ctrl+1..Ctrl+9 (troca de aba) e Ctrl+S (salvar) passam. Nenhum
-    dos dois mexe na maquina — um muda o que esta na tela, o outro grava o
-    arquivo que esta sendo editado.
+    EXCECAO: Ctrl+1..Ctrl+9 (troca de aba), Ctrl+S (salvar) e F6 (procurar
+    M6) passam. Nenhum dos tres mexe na maquina — mudam o que esta na tela
+    ou gravam o arquivo que esta sendo editado.
     Ctrl+R continua bloqueado de proposito: e' o Recarregar do menu, que
     descartaria o que estivesse sendo digitado."""
 
@@ -566,8 +566,12 @@ class _EditShortcutBlocker(QObject):
     @staticmethod
     def _troca_de_aba(event):
         """Atalhos que continuam valendo durante a edicao: trocar de aba
-        (Ctrl+1..9) e salvar (Ctrl+S). Nenhum dos dois mexe na maquina."""
+        (Ctrl+1..9), salvar (Ctrl+S) e procurar M6 (F6). Nenhum dos tres
+        mexe na maquina — mudam o que aparece na tela ou gravam o arquivo
+        que esta sendo editado."""
         from qtpy.QtCore import Qt
+        if event.key() == Qt.Key_F6:
+            return True
         if not (event.modifiers() & Qt.ControlModifier):
             return False
         return (Qt.Key_1 <= event.key() <= Qt.Key_9) or event.key() == Qt.Key_S
@@ -1520,7 +1524,12 @@ def _wire_procurar_gcode():
 
     A busca e' por trecho, sem diferenciar maiusculas: 'g76' acha 'G76' e
     'T03' acha a linha da troca. Mesma regra do M6 do ProbeBasic, que
-    tambem casa por pedaco."""
+    tambem casa por pedaco.
+
+    Liga tambem o F6 no PROCURAR M6 (botao que ja existia). O atalho CLICA
+    o botao em vez de refazer a busca por fora: assim o F6 e o dedo andam
+    pela MESMA lista de trocas — apertar F6 depois de tocar o botao vai pra
+    proxima M6, nao de volta pra primeira."""
     from qtpy.QtWidgets import QLineEdit
 
     janela = editor = None
@@ -1534,8 +1543,9 @@ def _wire_procurar_gcode():
         LOG.warning("Procurar no G-code: editor nao encontrado")
         return
 
-    btn_m30 = campo = btn_texto = None
+    btn_m6 = btn_m30 = campo = btn_texto = None
     for top in QApplication.topLevelWidgets():
+        btn_m6 = btn_m6 or top.findChild(QPushButton, "find_m6_button")
         btn_m30 = btn_m30 or top.findChild(QPushButton, "find_m30_button")
         campo = campo or top.findChild(QLineEdit, "find_texto_edit")
         btn_texto = btn_texto or top.findChild(QPushButton, "find_texto_button")
@@ -1580,7 +1590,21 @@ def _wire_procurar_gcode():
     if campo is not None:
         # ENTER tambem procura: no teclado virtual e' como se fecha o campo
         campo.returnPressed.connect(lambda: procurar(campo.text()))
-    LOG.info("Procurar no G-code: M30 e busca livre ligados")
+
+    # F6 = PROCURAR M6. Esta livre nesta maquina: o LinuxCNC usa F1 (E-STOP),
+    # F2 (ligar), F7 (neblina) e F8 (refrigerante), mas nao o F6.
+    from qtpy.QtCore import Qt
+    from qtpy.QtGui import QKeySequence
+    from qtpy.QtWidgets import QShortcut
+    alvo_f6 = btn_m6.click if btn_m6 is not None else (lambda: procurar("M6"))
+    atalho_f6 = QShortcut(QKeySequence("F6"), janela)
+    # WindowShortcut: vale com a janela em foco, igual aos Ctrl+1..9
+    atalho_f6.setContext(Qt.WindowShortcut)
+    atalho_f6.activated.connect(alvo_f6)
+    janela._dino_atalho_f6 = atalho_f6     # segura a referencia
+    if btn_m6 is not None:
+        btn_m6.setToolTip(u"Procurar a proxima troca de ferramenta (M6) — F6")
+    LOG.info("Procurar no G-code: M30, busca livre e F6 (M6) ligados")
 
 
 class UserTab(QWidget):

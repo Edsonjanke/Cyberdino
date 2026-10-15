@@ -93,6 +93,8 @@ barra ganha setas de rolagem.
 **No modo EDIT todos os atalhos valem** (decisao do operador,
 2026-10-15). O `_EditShortcutBlocker` continua no codigo, mas desligado
 pela chave `_BLOQUEAR_ATALHOS_NO_EDIT = False` no topo do customs.py.
+Se um dia voltar a True, continuam passando Ctrl+1..9, Ctrl+S e F6 — os
+tres so' mexem na tela ou gravam o arquivo que esta aberto.
 
 **O risco esta medido e e' real:** `R` e' *Executar Programa*, e R aparece
 em G-code o tempo todo — raio de arco (`G2 X.. Z.. R5`), plano do ciclo
@@ -116,6 +118,7 @@ LinuxCNC. Para voltar a bloquear, basta a chave em True.
 | F8 | Refrigerante | menu / .ui |
 | Ctrl+1..9 | trocar de aba | customs.py |
 | Ctrl+S | salvar | customs.py |
+| **F6** | **procurar a proxima M6** | customs.py |
 
 Ctrl+C/V/X/Z/A **nunca** foram bloqueados: o editor trata essas teclas por
 conta propria, sem atalho registrado, entao o filtro nem as via.
@@ -159,8 +162,21 @@ nao perde a posicao do anterior).
 botao de executar a partir da linha tira o ponto de partida. Era assim que
 o M6 funcionava; os novos seguem o mesmo caminho.
 
+**F6 = PROCURAR M6** (2026-10-15). O F6 estava livre: o LinuxCNC usa F1
+(E-STOP), F2 (ligar), F7 (neblina) e F8 (refrigerante), e nao o F6.
+
+O atalho **clica o botao** em vez de refazer a busca por fora. Isso importa:
+o ProbeBasic guarda em que M6 parou (`current_m6_index`), entao clicando o
+botao o F6 e o dedo andam pela MESMA lista. Se o F6 chamasse a busca nova,
+seriam dois contadores — apertar F6 depois de tocar o botao voltaria pra
+primeira M6. Conferido no sim: botao -> linha 6, F6 em seguida -> linha 9.
+
 Codigo: `_wire_procurar_gcode` no customs.py. A rolagem e' do proprio
 ProbeBasic (`janela.scroll_to_line_in_gcode`).
+
+O "F6" **nao esta escrito no botao**: a fileira tem 491px e os quatro
+widgets ja a enchem (o PROCURAR M6 tem 120px pra uma dica de 98). Por
+enquanto o atalho so' aparece no tooltip.
 
 O **PROCURAR M6 encolheu de 200px para 120..145px** pra abrir espaco — a
 fileira a 1920x1080 nao tem folga sobrando.
