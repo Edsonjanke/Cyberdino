@@ -440,13 +440,13 @@ QComboBox QAbstractItemView{
                             </property>
                             <property name="minimumSize">
                              <size>
-                              <width>200</width>
+                              <width>120</width>
                               <height>42</height>
                              </size>
                             </property>
                             <property name="maximumSize">
                              <size>
-                              <width>16777215</width>
+                              <width>145</width>
                               <height>42</height>
                              </size>
                             </property>
@@ -477,6 +477,46 @@ QPushButton:pressed {
                             <property name="toolTip">
                              <string>Localiza a proxima troca de ferramenta (M6) no programa e rola/destaca a linha no editor.</string>
                             </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QPushButton" name="find_m30_button">
+                            <property name="minimumSize"><size><width>120</width><height>42</height></size></property>
+                            <property name="maximumSize"><size><width>145</width><height>42</height></size></property>
+                            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+                            <property name="styleSheet"><string notr="true">QPushButton {
+   	font: 15pt "Bebas Kai";
+}</string></property>
+                            <property name="text"><string>PROCURAR M30</string></property>
+                            <property name="toolTip"><string>Localiza o fim de programa (M30) e rola o editor ate a linha.</string></property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLineEdit" name="find_texto_edit">
+                            <property name="minimumSize"><size><width>130</width><height>42</height></size></property>
+                            <property name="maximumSize"><size><width>200</width><height>42</height></size></property>
+                            <property name="styleSheet"><string notr="true">QLineEdit {
+    background: #1E2224;
+    color: #E6E6E6;
+    border: 1px solid #5A6268;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font: 14pt "Bebas Kai";
+}</string></property>
+                            <property name="placeholderText"><string>procurar...</string></property>
+                            <property name="toolTip"><string>Digite qualquer coisa (G76, T03, um comentario) e aperte ENTER ou PROCURAR. Cada toque vai para a proxima ocorrencia.</string></property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QPushButton" name="find_texto_button">
+                            <property name="minimumSize"><size><width>95</width><height>42</height></size></property>
+                            <property name="maximumSize"><size><width>115</width><height>42</height></size></property>
+                            <property name="focusPolicy"><enum>Qt::NoFocus</enum></property>
+                            <property name="styleSheet"><string notr="true">QPushButton {
+   	font: 15pt "Bebas Kai";
+}</string></property>
+                            <property name="text"><string>PROCURAR</string></property>
+                            <property name="toolTip"><string>Procura o texto digitado ao lado. Cada toque vai para a proxima ocorrencia.</string></property>
                            </widget>
                           </item>
                           <item>

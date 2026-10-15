@@ -1511,6 +1511,78 @@ def _wire_referenciar_na_chave(aba):
     aba._dino_relogio_referencia = relogio
 
 
+def _wire_procurar_gcode():
+    """PROCURAR M30 e busca livre, ao lado do PROCURAR M6.
+
+    Reaproveita o que o ProbeBasic ja faz com o M6: le o texto do editor,
+    junta as linhas que casam e, a cada toque, vai pra proxima — rolando e
+    destacando pelo scroll_to_line_in_gcode da propria janela.
+
+    A busca e' por trecho, sem diferenciar maiusculas: 'g76' acha 'G76' e
+    'T03' acha a linha da troca. Mesma regra do M6 do ProbeBasic, que
+    tambem casa por pedaco."""
+    from qtpy.QtWidgets import QLineEdit
+
+    janela = editor = None
+    for top in QApplication.topLevelWidgets():
+        ed = top.findChild(GcodeTextEdit, "gcodetextedit_2") \
+            or top.findChild(GcodeTextEdit, "gcodetextedit")
+        if ed is not None:
+            janela, editor = top, ed
+            break
+    if editor is None:
+        LOG.warning("Procurar no G-code: editor nao encontrado")
+        return
+
+    btn_m30 = campo = btn_texto = None
+    for top in QApplication.topLevelWidgets():
+        btn_m30 = btn_m30 or top.findChild(QPushButton, "find_m30_button")
+        campo = campo or top.findChild(QLineEdit, "find_texto_edit")
+        btn_texto = btn_texto or top.findChild(QPushButton, "find_texto_button")
+
+    onde = {}          # termo -> qual ocorrencia mostrar no proximo toque
+
+    def _avisar(texto, tipo='info'):
+        try:
+            getPlugin('notifications').captureMessage(tipo, texto)
+        except Exception:
+            pass
+
+    def procurar(termo):
+        termo = (termo or "").strip()
+        if not termo:
+            return
+        alvo = termo.upper()
+        linhas = [n for n, l in enumerate(editor.toPlainText().split("\n"), 1)
+                  if alvo in l.upper()]
+        if not linhas:
+            _avisar(u"Nao achei '%s' no programa." % termo, 'warn')
+            onde.pop(alvo, None)
+            return
+        i = onde.get(alvo, 0) % len(linhas)
+        onde[alvo] = (i + 1) % len(linhas)
+        linha = linhas[i]
+        try:
+            janela.scroll_to_line_in_gcode(linha)
+        except Exception as e:
+            LOG.warning("Procurar: nao rolei ate a linha %s: %s", linha, e)
+        # mesmo campo que o PROCURAR M6 alimenta: fica escondido, mas e' de
+        # onde o EXEC. DA LINHA tira o numero
+        num = janela.findChild(QWidget, "run_from_line_Num")
+        if num is not None and hasattr(num, "setText"):
+            num.setText(str(linha))
+        _avisar(u"'%s': linha %d  (%d de %d)" % (termo, linha, i + 1, len(linhas)))
+
+    if btn_m30 is not None:
+        btn_m30.clicked.connect(lambda: procurar("M30"))
+    if btn_texto is not None and campo is not None:
+        btn_texto.clicked.connect(lambda: procurar(campo.text()))
+    if campo is not None:
+        # ENTER tambem procura: no teclado virtual e' como se fecha o campo
+        campo.returnPressed.connect(lambda: procurar(campo.text()))
+    LOG.info("Procurar no G-code: M30 e busca livre ligados")
+
+
 class UserTab(QWidget):
     def __init__(self, parent=None):
         super(UserTab, self).__init__(parent)
@@ -1532,3 +1604,4 @@ class UserTab(QWidget):
         QTimer.singleShot(0, _wire_atalhos_abas)
         QTimer.singleShot(0, _wire_posicao_salva)
         QTimer.singleShot(0, lambda: _wire_referenciar_na_chave(self))
+        QTimer.singleShot(0, _wire_procurar_gcode)
