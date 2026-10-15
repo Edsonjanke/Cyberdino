@@ -140,6 +140,31 @@ estiver vazio, entao a chamada e' repetida ate a geometria existir (12
 tentativas de 500ms). No sim sob Xvfb os atores nunca aparecem — o VTK nao
 monta o percurso ali —, entao esse pedaco so' da pra conferir na maquina.
 
+## Procurar no G-code (fileira do editor)
+
+Ao lado do **PROCURAR M6** entraram **PROCURAR M30** e um **campo livre**
+com botao PROCURAR (2026-10-15). ENTER no campo tambem procura — no
+teclado virtual e' assim que se fecha o campo.
+
+A busca e' por **trecho, sem diferenciar maiusculas**: `g76` acha G76 e
+`T03` acha a linha da troca. E' a mesma regra que o PROCURAR M6 do
+ProbeBasic ja usava, entao nao e' novidade pro operador.
+
+Toques repetidos no mesmo termo andam pelas ocorrencias e voltam pra
+primeira no fim (o contador fica por termo, num dicionario; trocar o termo
+nao perde a posicao do anterior).
+
+**O achado alimenta o EXEC. DA LINHA:** o numero da linha e' escrito no
+`run_from_line_Num`, que esta oculto na tela mas continua sendo de onde o
+botao de executar a partir da linha tira o ponto de partida. Era assim que
+o M6 funcionava; os novos seguem o mesmo caminho.
+
+Codigo: `_wire_procurar_gcode` no customs.py. A rolagem e' do proprio
+ProbeBasic (`janela.scroll_to_line_in_gcode`).
+
+O **PROCURAR M6 encolheu de 200px para 120..145px** pra abrir espaco — a
+fileira a 1920x1080 nao tem folga sobrando.
+
 ## Armadilha: o pyuic aceita, o LinuxCNC quebra pela metade
 
 Para dividir um QHBoxLayout em partes iguais NAO use a propriedade `stretch`
