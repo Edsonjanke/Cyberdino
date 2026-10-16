@@ -75,6 +75,8 @@ Ponto soldado ──── GPIO.027 ──── Botao MPG (pulso, GND no toque)
 Ponto soldado ──── GPIO.016 ──── Volante do Z fase A (P2 pino 13)
 Ponto soldado ──── GPIO.026 ──── Volante do Z fase B (P1 pino 6)
 Ponto soldado ──── GPIO.023 ──── Botao REFRIGERANTE (pulso, GND no toque)
+Ponto soldado ──── GPIO.028 ──── Botao RODAR DA LINHA (fio que era do
+                                    seletor de eixo do MPG) - A CONFERIR
 ```
 
 ## Painel Secundario (Pi 3B+)

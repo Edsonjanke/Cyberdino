@@ -22,6 +22,7 @@
 | GPIO.024 | IN | Botao AUTO | pulso |
 | GPIO.025 | IN | Botao MANUAL | pulso (abre o EDITAR junto) |
 | GPIO.027 | IN | Botao MPG | pulso, arma/desarma os dois volantes |
+| GPIO.028 | IN | Botao RODAR DA LINHA | pulso — **pino a conferir** |
 | GPIO.016 | IN | Volante do Z - fase A | P2 pino 13 |
 | GPIO.026 | IN | Volante do Z - fase B | P1 pino 6 |
 | GPIO.030 | IN | Volante do X - fase A | DB15 pino 10 |
@@ -36,7 +37,8 @@ override. O `custom.hal` antigo chamava de "encoder FYSETC EC11", como se
 fosse um botaozinho a parte, e isso ja' custou uma viagem a' maquina: o
 volante foi remapeado pra 028/029, onde nao ha fio nenhum, e ficou mudo.
 
-**GPIOs livres hoje: 028, 029, 032 e 033** (P1 pinos 8, 9, 12 e 13).
+**GPIOs livres hoje: 029, 032 e 033** (P1 pinos 9, 12 e 13) — a 028
+ficou com o RODAR DA LINHA, ainda por confirmar na maquina.
 Conferido com `mesaflash --device 7i92 --addr 10.10.10.10 --readhmid`.
 
 Na duvida sobre em que pino esta alguma coisa, **nao deduza**: com o

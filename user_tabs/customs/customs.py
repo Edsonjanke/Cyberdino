@@ -134,16 +134,24 @@ except _hal.error as e:
     print("[customs.py] HAL component dino_spindle: {}".format(e))
 
 
-# Painel de operacao: o botao MANUAL (GPIO.025) tambem abre o modo EDITAR.
-# Pedido do operador (2026-10-16): "manual ativa o modo editar sempre junto".
-# O pino e' criado em escopo de modulo pra ja existir quando o
+# Botoes do painel que precisam da INTERFACE, nao so' do HAL:
+#   manual       -> abre a aba EDITAR ("manual ativa o modo editar sempre
+#                   junto", pedido do operador 2026-10-16). O modo manual
+#                   em si quem faz e' o halui, direto no HAL.
+#   rodar-linha  -> aperta o EXEC. DA LINHA (arma o programa na linha e
+#                   deixa pausado; quem usina e' o INICIAR depois).
+#
+# Os pinos sao criados em escopo de modulo pra ja existirem quando o
 # probe_basic_postgui_fix.hal for lido.
 _hal_painel = None
 _hal_pin_manual = None
+_hal_pin_rodar_linha = None
 
 try:
     _hal_painel = _hal.component('dino_painel')
     _hal_pin_manual = _hal_painel.newpin('manual', _hal.HAL_BIT, _hal.HAL_IN)
+    _hal_pin_rodar_linha = _hal_painel.newpin('rodar-linha', _hal.HAL_BIT,
+                                              _hal.HAL_IN)
     _hal_painel.ready()
     atexit.register(lambda: _hal_painel.exit() if _hal_painel else None)
 except _hal.error as e:
@@ -151,39 +159,59 @@ except _hal.error as e:
     print("[customs.py] HAL component dino_painel: {}".format(e))
 
 
-class BotaoManualAbreEdit:
-    """Toque no MANUAL do painel -> abre a aba EDITAR e destrava o editor.
+class BotoesDoPainel:
+    """Botoes fisicos cuja acao mora na interface, nao no HAL.
 
-    So' age na BORDA de subida: segurar o botao nao fica reabrindo. E se a
-    aba EDITAR ja estiver aberta, nao faz nada — um clique ali a FECHARIA
-    (o botao e' checkable), que e' o contrario do pedido.
-
-    Nao faz o inverso: apertar AUTO nao fecha o EDITAR. Fechar sozinho
-    travaria o editor com alteracao na tela ainda nao salva.
+    Todos agem so' na BORDA de subida: segurar o botao faz uma vez so'.
+    O jeito mais seguro de executar a acao e' CLICAR no mesmo botao da
+    tela, em vez de repetir a logica dele aqui — assim o caminho e' o
+    mesmo que o dedo do operador percorre, com as mesmas travas.
     """
 
     def __init__(self):
-        self._anterior = False
+        self._anterior = {}
         self._timer = QTimer()
         self._timer.timeout.connect(self._poll)
         self._timer.start(50)
 
+    def _acoes(self):
+        return (("manual", _hal_pin_manual, self._abrir_edit),
+                ("rodar-linha", _hal_pin_rodar_linha, self._exec_da_linha))
+
     def _poll(self):
-        if _hal_pin_manual is None:
-            return
-        try:
-            agora = bool(_hal_pin_manual.value)
-        except Exception:
-            return
-        if agora and not self._anterior:
-            self._abrir_edit()
-        self._anterior = agora
+        for nome, pino, acao in self._acoes():
+            if pino is None:
+                continue
+            try:
+                agora = bool(pino.value)
+            except Exception:
+                continue
+            if agora and not self._anterior.get(nome, False):
+                try:
+                    acao()
+                except Exception:
+                    LOG.exception("Painel: falha no botao %s", nome)
+            self._anterior[nome] = agora
 
     @staticmethod
-    def _abrir_edit():
-        aba = None
+    def _achar(nome):
         for top in QApplication.topLevelWidgets():
-            aba = aba or top.findChild(QPushButton, "edit_tab")
+            achado = top.findChild(QPushButton, nome)
+            if achado is not None:
+                return achado
+        return None
+
+    @classmethod
+    def _abrir_edit(cls):
+        """Abre a aba EDITAR e, com ela, destrava o editor.
+
+        Se ja' estiver aberta nao faz nada. As abas do painel direito sao
+        autoExclusive, entao clicar na que ja' esta aberta nao a fecha —
+        mas tambem nao custa nada evitar o clique.
+
+        Nao existe o inverso: apertar AUTO nao fecha o EDITAR. Fechar
+        sozinho travaria o editor com alteracao na tela ainda nao salva."""
+        aba = cls._achar("edit_tab")
         if aba is None:
             LOG.warning("MANUAL: aba EDITAR nao encontrada")
             return
@@ -192,14 +220,30 @@ class BotaoManualAbreEdit:
         aba.click()
         LOG.info("MANUAL no painel: aba EDITAR aberta")
 
+    @classmethod
+    def _exec_da_linha(cls):
+        """Aperta o EXEC. DA LINHA do painel de botoes.
 
-_painel_manual = None
+        Nao repete a logica aqui de proposito: o proprio
+        _run_from_line_armed ja' decide de onde vem a linha (SET LINE N
+        aceso ou cursor do editor) e so' atua com o interpretador IDLE,
+        entao um toque no meio de um corte nao faz nada."""
+        botao = cls._achar("run_from_line_bottom_btn") \
+            or cls._achar("run_from_here_top_btn")
+        if botao is None:
+            LOG.warning("RODAR DA LINHA: botao EXEC. DA LINHA nao encontrado")
+            return
+        botao.click()
+        LOG.info("RODAR DA LINHA pelo painel")
+
+
+_painel_botoes = None
 
 
 def _start_painel_manual():
-    global _painel_manual
-    if _painel_manual is None:
-        _painel_manual = BotaoManualAbreEdit()
+    global _painel_botoes
+    if _painel_botoes is None:
+        _painel_botoes = BotoesDoPainel()
 
 
 class SpindleSaveRestore:

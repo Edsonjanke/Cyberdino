@@ -12,6 +12,7 @@ refrigerante**. Ver tambem [[06 - MPG Handwheel]], que mudou junto.
 | GPIO.024 | AUTO | entra em modo AUTO |
 | GPIO.025 | MANUAL | entra em MANUAL **e abre o EDITAR na tela** |
 | GPIO.023 | REFRIGERANTE | alterna liga/desliga a bomba |
+| GPIO.028 | RODAR DA LINHA | aperta o EXEC. DA LINHA (pino **a conferir**) |
 
 Nao ha mais botao fisico de MDI. O MDI continua na tela — digitar na caixa
 MDI ja troca o modo sozinho.
@@ -48,8 +49,8 @@ olhando `halui.mode.is-auto` (o modo de verdade) em vez do nivel do botao.
 
 Pedido do operador: "manual ativa o modo editar sempre junto". O mesmo
 sinal `btn-manual` vai pro componente `dino_painel` (criado no customs.py,
-netado no `probe_basic_postgui_fix.hal`). A classe `BotaoManualAbreEdit`
-le a **borda de subida** a cada 50 ms e clica na aba EDITAR.
+netado no `probe_basic_postgui_fix.hal`). A classe `BotoesDoPainel` le a
+**borda de subida** a cada 50 ms e clica na aba EDITAR.
 
 Detalhes que valem lembrar:
 - as abas do painel direito (JOG / ZERO PECA / DRO / EDITAR) sao
@@ -58,6 +59,29 @@ Detalhes que valem lembrar:
 - so' na borda: segurar o botao nao fica reabrindo;
 - **o contrario nao acontece**: apertar AUTO nao fecha o EDITAR. Fechar
   sozinho travaria o editor com alteracao na tela ainda nao salva.
+
+### RODAR DA LINHA (2026-10-16)
+
+Aproveita o fio que era do seletor de eixo do MPG. Aperta o **EXEC. DA
+LINHA** da tela: arma o programa na linha (a do cursor no editor, ou a
+salva no DEF. LINHA N) e deixa **pausado** — quem usina e' o INICIAR
+depois.
+
+Nao precisa de trava: o `_run_from_line_armed` so' atua com o
+interpretador IDLE, entao um toque no meio de um corte nao faz nada.
+
+**O pino ainda nao foi conferido na maquina.** E' o unico numero do
+`custom.hal` nessa situacao, e esta marcado no arquivo. Entrada sem fio
+nao causa problema: fica em TRUE pelo pull-up, o `.in_not` da' FALSE e o
+botao simplesmente nao dispara. Use so' pino que o firmware expoe como
+GPIO livre: **029, 032 ou 033** (a 028 e' o palpite atual).
+
+### Por que CLICAR no botao da tela, e nao repetir a logica
+
+Tanto o MANUAL quanto o RODAR DA LINHA **clicam o botao da interface** em
+vez de refazer o que ele faz. O caminho passa a ser o mesmo que o dedo do
+operador percorre, com as mesmas travas — e quando a logica da tela
+mudar, o botao fisico acompanha sozinho.
 
 ### Refrigerante: esse sim usa 'toggle'
 
