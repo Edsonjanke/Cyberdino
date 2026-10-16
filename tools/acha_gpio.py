@@ -10,6 +10,8 @@ Uso (com o LinuxCNC JA' RODANDO, maquina ligada ou nao):
 
     python3 tools/acha_gpio.py            # 15 s olhando tudo
     python3 tools/acha_gpio.py 30         # 30 s
+    python3 tools/acha_gpio.py --painel   # guiado: pede um controle por vez
+                                          # e monta o mapa inteiro
 
 Durante a contagem: aperte o botao, ou gire o volante, que voce quer
 achar. No fim ele lista so' os pinos que mudaram, do que mais mudou pro
@@ -43,14 +45,91 @@ def pinos_gpio():
     return achados
 
 
+# Os controles do painel, na ordem em que o modo guiado pergunta.
+# (nome que aparece na tela, quantos pinos esperar)
+PAINEL = (
+    ("CYCLE START", 1),
+    ("PAUSE", 1),
+    ("RESET", 1),
+    ("AUTO", 1),
+    ("MANUAL", 1),
+    ("MPG (liga/desliga)", 1),
+    ("RODAR DA LINHA", 1),
+    ("REFRIGERANTE", 1),
+    ("VOLANTE DO X (gire)", 2),
+    ("VOLANTE DO Z (gire)", 2),
+)
+
+
+def espera_mexer(nomes, anterior, limite=20.0, quietos=1.0):
+    """Espera alguem mexer e devolve {pino: trocas}.
+
+    Para de contar depois de `quietos` segundos sem nenhuma troca — assim
+    o operador aperta, solta, e o programa segue sozinho."""
+    trocas = {}
+    inicio = time.time()
+    ultima = None
+    while True:
+        agora = time.time()
+        if ultima is None and agora - inicio > limite:
+            return {}
+        if ultima is not None and agora - ultima > quietos:
+            return trocas
+        for n in nomes:
+            try:
+                v = hal.get_value(n)
+            except Exception:
+                continue
+            if v != anterior[n]:
+                anterior[n] = v
+                trocas[n] = trocas.get(n, 0) + 1
+                ultima = agora
+        time.sleep(INTERVALO)
+
+
+def modo_guiado(nomes):
+    """Pergunta um controle por vez e monta o mapa do painel."""
+    anterior = {n: hal.get_value(n) for n in nomes}
+    mapa = []
+    print("Modo guiado: aperte (ou gire) o que for pedido e espere a")
+    print("proxima pergunta. ENTER sem mexer em nada pula o item.\n")
+    for rotulo, quantos in PAINEL:
+        input("  >>> %s  — aperte agora, depois espere... " % rotulo)
+        achou = espera_mexer(nomes, anterior)
+        if not achou:
+            print("      (nada mudou — pulado)\n")
+            mapa.append((rotulo, []))
+            continue
+        ordenado = sorted(achou.items(), key=lambda kv: -kv[1])[:quantos]
+        pinos = [(n.split(".gpio.")[1].split(".")[0], c) for n, c in ordenado]
+        print("      %s\n" % "  ".join("GPIO.%s (%d trocas)" % (g, c)
+                                        for g, c in pinos))
+        mapa.append((rotulo, [g for g, _c in pinos]))
+
+    print("\n=== MAPA DO PAINEL ===")
+    for rotulo, pinos in mapa:
+        print("  %-22s %s" % (rotulo, ", ".join("GPIO.%s" % g for g in pinos)
+                              or "(nao achado)"))
+    usados = {g for _r, ps in mapa for g in ps}
+    livres = sorted(n.split(".gpio.")[1].split(".")[0] for n in nomes)
+    print("\nEntradas que ninguem usou nesta rodada:")
+    print("  " + ", ".join("GPIO.%s" % g for g in livres if g not in usados))
+    return 0
+
+
 def main():
-    segundos = float(sys.argv[1]) if len(sys.argv) > 1 else 15.0
+    guiado = "--painel" in sys.argv
+    argumentos = [a for a in sys.argv[1:] if not a.startswith("--")]
+    segundos = float(argumentos[0]) if argumentos else 15.0
 
     nomes = pinos_gpio()
     if not nomes:
         print("Nao achei pinos de GPIO. O LinuxCNC esta rodando?")
         print("(este script le a HAL da sessao em andamento)")
         return 1
+
+    if guiado:
+        return modo_guiado(nomes)
 
     print("Olhando %d entradas por %.0f s." % (len(nomes), segundos))
     print(">>> APERTE O BOTAO ou GIRE O VOLANTE agora <<<\n")
