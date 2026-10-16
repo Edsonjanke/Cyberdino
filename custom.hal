@@ -19,6 +19,8 @@
 #   GPIO.031  volante do X - B   (DB15 pino 7)
 #   GPIO.016  volante do Z - A   (P2 pino 13)
 #   GPIO.026  volante do Z - B   (P1 pino 6)
+#
+#   Em AUTO: volante do X = feed override, volante do Z = rapid override.
 #   GPIO.014  fim de curso (home compartilhado)
 #   GPIO.015  E-Stop
 #
@@ -236,32 +238,34 @@ net btn-reset halui.estop.reset   <= hm2_7i92.0.gpio.022.in_not
 net btn-reset halui.machine.on
 
 # =============================================
-#  FEED OVERRIDE pelo volante do Z em modo AUTO
+#  OVERRIDES EM AUTO: cada volante ajusta um
 # =============================================
-# O volante do Z ja' fazia isso antes da reforma, pelos mesmos
-# GPIO.016/026 — so' que valia em qualquer modo. Agora cada volante tem funcao dupla em
-# AUTO:
+# Em AUTO os dois volantes ganham funcao dupla:
 #
-#   volante do X -> rapid override
-#   volante do Z -> feed override
+#   volante do X -> FEED override
+#   volante do Z -> RAPID override
 #
-# Fora do AUTO os dois voltam a ser so' jog, porque o count-enable fica
-# FALSE e o halui ignora as contagens. Escala 0.01 = 1% por click.
-net mpgz-counts      => halui.feed-override.counts
+# (trocado em 2026-10-16 a pedido do operador; na primeira versao era o
+# contrario. O volante do Z ja' mexia no feed antes da reforma, pelos
+# mesmos GPIO.016/026, so' que valia em qualquer modo.)
+#
+# Fora do AUTO os dois voltam a ser so' jog: o count-enable fica FALSE e o
+# halui ignora as contagens. Medido no sim: girar fora do AUTO nao mexe no
+# override, e voltar pro AUTO nao da' salto — o halui acompanha as
+# contagens mesmo com o count-enable desligado, entao nao acumula o que
+# foi girado em jog.
+#
+# Escala 0.01 = 1% por click nos dois. O botao MPG nao entra nisso: ele so'
+# arma o jog, e o override continua valendo com o MPG desarmado.
+net mode-is-auto     halui.mode.is-auto
+
+net mpgx-counts      => halui.feed-override.counts
 setp halui.feed-override.scale 0.01
 net mode-is-auto     => halui.feed-override.count-enable
 
-# =============================================
-#  RAPID OVERRIDE pelo volante do X em modo AUTO
-# =============================================
-# Em AUTO: girar o volante do X ajusta o rapid override (o botao MPG nao
-# entra nisso). Fora do AUTO o volante faz jog normal, porque o
-# count-enable fica FALSE e o halui ignora as contagens.
-# Escala 0.01 = 1% por click.
-
-net mpgx-counts      => halui.rapid-override.counts
+net mpgz-counts      => halui.rapid-override.counts
 setp halui.rapid-override.scale 0.01
-net mode-is-auto     halui.mode.is-auto => halui.rapid-override.count-enable
+net mode-is-auto     => halui.rapid-override.count-enable
 
 # =============================================
 #  FIM DE CURSO - Chave compartilhada X e Z

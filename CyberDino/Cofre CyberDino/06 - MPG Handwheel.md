@@ -44,8 +44,11 @@ e isso ninguem usa aqui: os botoes de jog do PLC vao direto em
 
 | volante | em AUTO | fora do AUTO |
 |---|---|---|
-| X | rapid override (1% por click) | jog do X |
-| Z | **feed override** (1% por click) | jog do Z |
+| X | **feed override** (1% por click) | jog do X |
+| Z | **rapid override** (1% por click) | jog do Z |
+
+Trocado em 2026-10-16 a pedido do operador: na primeira versao era o
+contrario (X no rapid, Z no feed).
 
 **O volante do Z sempre esteve no GPIO.016/026.** Era ele que mexia no
 feed override antes da reforma — o comentario antigo do `custom.hal`
