@@ -142,6 +142,8 @@ except _hal.error as e:
 #                   deixa pausado; quem usina e' o INICIAR depois).
 #   passo        -> passa pro proximo incremento de jog (1 / .5 / .1 /
 #                   .05 / .01 mm). E' o botao que antes armava o MPG.
+#   limpar-avisos-> tira os avisos empilhados da tela. E' o RESET fisico
+#                   (GPIO.022), que ja' faz estop-reset + liga maquina.
 #
 # Os pinos sao criados em escopo de modulo pra ja existirem quando o
 # probe_basic_postgui_fix.hal for lido.
@@ -149,6 +151,7 @@ _hal_painel = None
 _hal_pin_manual = None
 _hal_pin_rodar_linha = None
 _hal_pin_passo = None
+_hal_pin_limpar = None
 
 try:
     _hal_painel = _hal.component('dino_painel')
@@ -156,6 +159,8 @@ try:
     _hal_pin_rodar_linha = _hal_painel.newpin('rodar-linha', _hal.HAL_BIT,
                                               _hal.HAL_IN)
     _hal_pin_passo = _hal_painel.newpin('passo', _hal.HAL_BIT, _hal.HAL_IN)
+    _hal_pin_limpar = _hal_painel.newpin('limpar-avisos', _hal.HAL_BIT,
+                                         _hal.HAL_IN)
     _hal_painel.ready()
     atexit.register(lambda: _hal_painel.exit() if _hal_painel else None)
 except _hal.error as e:
@@ -181,7 +186,8 @@ class BotoesDoPainel:
     def _acoes(self):
         return (("manual", _hal_pin_manual, self._abrir_edit),
                 ("rodar-linha", _hal_pin_rodar_linha, self._exec_da_linha),
-                ("passo", _hal_pin_passo, self._proximo_passo))
+                ("passo", _hal_pin_passo, self._proximo_passo),
+                ("limpar-avisos", _hal_pin_limpar, _limpar_avisos))
 
     def _poll(self):
         for nome, pino, acao in self._acoes():
@@ -1768,6 +1774,46 @@ def _wire_procurar_gcode():
     LOG.info("Procurar no G-code: M30, busca livre e F6 (M6) ligados")
 
 
+def _limpar_avisos():
+    """Tira da tela todos os avisos empilhados do qtpyvcp.
+
+    Eles sobem como pop-ups no canto superior direito, ate cinco, e cada um
+    so' sai clicando no X dele. Cinco avisos = cinco cliques, bem na hora
+    em que o operador menos tem tempo.
+
+    Limpa TODOS os tipos, erro incluido: quem mandou limpar foi o operador,
+    apertando RESET. As mensagens do LinuxCNC continuam gravadas na lista
+    da aba STATUS.
+
+    Chamada de dois lugares: o PARAR da tela (filtro de evento) e o botao
+    RESET do painel (GPIO.022, pelo pino dino_painel.limpar-avisos)."""
+    try:
+        painel = getPlugin('notifications').notification_dispatcher
+    except Exception as e:
+        LOG.warning("Limpar avisos: sem painel de avisos: %s", e)
+        return
+    if painel is None:
+        return
+    quantas = 0
+    for msg in list(getattr(painel, "activeMessages", [])):
+        try:
+            painel.mainLayout.removeWidget(msg)
+            msg.setParent(None)
+            msg.deleteLater()
+            quantas += 1
+        except RuntimeError:
+            pass              # widget C++ ja destruido
+    painel.activeMessages = []
+    painel.nMessages = 0
+    try:
+        painel.adjustSize()
+        painel.hide()
+    except RuntimeError:
+        pass
+    if quantas:
+        LOG.info("RESET: %d aviso(s) tirado(s) da tela", quantas)
+
+
 class _LimpaAvisosNoReset(QObject):
     """Ve o toque no PARAR mesmo quando ele esta desabilitado.
 
@@ -1815,34 +1861,7 @@ def _wire_reset_limpa_mensagens():
         LOG.warning("RESET limpa avisos: botao PARAR nao encontrado")
         return
 
-    def limpar():
-        try:
-            painel = getPlugin('notifications').notification_dispatcher
-        except Exception as e:
-            LOG.warning("RESET limpa avisos: sem painel de avisos: %s", e)
-            return
-        if painel is None:
-            return
-        quantas = 0
-        for msg in list(getattr(painel, "activeMessages", [])):
-            try:
-                painel.mainLayout.removeWidget(msg)
-                msg.setParent(None)
-                msg.deleteLater()
-                quantas += 1
-            except RuntimeError:
-                pass              # widget C++ ja destruido
-        painel.activeMessages = []
-        painel.nMessages = 0
-        try:
-            painel.adjustSize()
-            painel.hide()
-        except RuntimeError:
-            pass
-        if quantas:
-            LOG.info("RESET: %d aviso(s) tirado(s) da tela", quantas)
-
-    filtro = _LimpaAvisosNoReset(botao, limpar)
+    filtro = _LimpaAvisosNoReset(botao, _limpar_avisos)
     botao.installEventFilter(filtro)
     botao._dino_limpa_avisos = filtro       # segura a referencia
     LOG.info("RESET (PARAR) tambem limpa os avisos da tela")

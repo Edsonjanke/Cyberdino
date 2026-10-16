@@ -31,6 +31,12 @@ net mpg-enabled => qtpyvcp.mpg-indicator.in
 # proximo botao da fileira de incrementos da tela.
 net btn-passo => dino_painel.passo
 
+# --- RESET fisico (GPIO.022) tambem limpa os avisos da tela ---
+# Ele ja' faz estop-reset + liga maquina (custom.hal). Agora tira junto os
+# pop-ups empilhados — num CNC o RESET e' quem limpa a linha de mensagem.
+# O PARAR da tela faz o mesmo, por filtro de evento no proprio botao.
+net btn-reset => dino_painel.limpar-avisos
+
 # --- Aviso botao fisico: cycle-start fora de AUTO mostra mensagem na tela ---
 net cycle-blocked => qtpyvcp.cycle-start-button.blocked
 
