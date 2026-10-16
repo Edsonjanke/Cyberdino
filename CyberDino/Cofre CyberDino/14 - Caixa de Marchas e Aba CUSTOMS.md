@@ -181,3 +181,27 @@ Cabe nos 186 com folga, e o PARA SPINDLE continua sendo o maior.
 e' layout pedindo mais altura do que a pagina tem. Antes de mexer em
 fonte, medir `widget.height()` contra a soma dos minimos. O diagnostico
 que resolveu isso mede os dois e tira foto do grupo.
+
+## Macros de spindle forcam G97 (2026-10-16)
+
+As oito macros da aba CUSTOMS eram `M3 S300`, `M4 S1200` e companhia.
+**Em G96 isso nao liga a RPM pedida:** com o modo de rotacao em velocidade
+de superficie, o `S` vale m/min, nao RPM. Quem usasse a macro logo depois
+de um programa em CSS pegaria uma rotacao completamente diferente da do
+rotulo.
+
+Agora sao `G97 S<rpm> M3` / `M4`. **A ordem dentro do bloco esta certa** —
+nao depende de escrever o G97 numa linha separada. Conferido no `rs274`
+com o INI da maquina, partindo de G96 ativo:
+
+```
+G97 S300 M3  ->  SET_SPINDLE_MODE(0 0.0000)      <- o G97 vem primeiro
+                 SET_SPINDLE_SPEED(0, 300.0000)  <- depois o S
+                 START_SPINDLE_CLOCKWISE(0)      <- depois o M3
+```
+
+As oito foram verificadas assim: todas dao modo 0, a RPM exata do rotulo e
+o sentido certo (M3 horario, M4 anti-horario).
+
+Lembrete de sempre: nesta maquina **M4 = rosca direita**, por causa do
+`BACK_TOOL_LATHE = 1`.

@@ -385,7 +385,8 @@ QPushButton:pressed {
 QPushButton:pressed { background: rgb(60, 120, 180); }</string>
         </property>
         <property name="text"><string>M03 S300</string></property>
-        <property name="MDICommand" stdset="0"><string>M3 S300</string></property>
+        <property name="MDICommand" stdset="0"><string>G97 S300 M3</string></property>
+        <property name="toolTip"><string>Liga o spindle a 300 RPM. Forca G97 (RPM constante) antes do S: se a maquina estiver em G96 o S valeria velocidade de superficie, nao RPM.</string></property>
        </widget>
       </item>
       <item row="0" column="1">
@@ -402,7 +403,8 @@ QPushButton:pressed { background: rgb(60, 120, 180); }</string>
 QPushButton:pressed { background: rgb(60, 120, 180); }</string>
         </property>
         <property name="text"><string>M03 S600</string></property>
-        <property name="MDICommand" stdset="0"><string>M3 S600</string></property>
+        <property name="MDICommand" stdset="0"><string>G97 S600 M3</string></property>
+        <property name="toolTip"><string>Liga o spindle a 600 RPM. Forca G97 (RPM constante) antes do S: se a maquina estiver em G96 o S valeria velocidade de superficie, nao RPM.</string></property>
        </widget>
       </item>
       <item row="0" column="2">
@@ -419,7 +421,8 @@ QPushButton:pressed { background: rgb(60, 120, 180); }</string>
 QPushButton:pressed { background: rgb(60, 120, 180); }</string>
         </property>
         <property name="text"><string>M03 S900</string></property>
-        <property name="MDICommand" stdset="0"><string>M3 S900</string></property>
+        <property name="MDICommand" stdset="0"><string>G97 S900 M3</string></property>
+        <property name="toolTip"><string>Liga o spindle a 900 RPM. Forca G97 (RPM constante) antes do S: se a maquina estiver em G96 o S valeria velocidade de superficie, nao RPM.</string></property>
        </widget>
       </item>
       <item row="0" column="3">
@@ -436,7 +439,8 @@ QPushButton:pressed { background: rgb(60, 120, 180); }</string>
 QPushButton:pressed { background: rgb(60, 120, 180); }</string>
         </property>
         <property name="text"><string>M03 S1200</string></property>
-        <property name="MDICommand" stdset="0"><string>M3 S1200</string></property>
+        <property name="MDICommand" stdset="0"><string>G97 S1200 M3</string></property>
+        <property name="toolTip"><string>Liga o spindle a 1200 RPM. Forca G97 (RPM constante) antes do S: se a maquina estiver em G96 o S valeria velocidade de superficie, nao RPM.</string></property>
        </widget>
       </item>
       <item row="1" column="0">
@@ -453,7 +457,8 @@ QPushButton:pressed { background: rgb(60, 120, 180); }</string>
 QPushButton:pressed { background: rgb(180, 100, 60); }</string>
         </property>
         <property name="text"><string>M04 S300</string></property>
-        <property name="MDICommand" stdset="0"><string>M4 S300</string></property>
+        <property name="MDICommand" stdset="0"><string>G97 S300 M4</string></property>
+        <property name="toolTip"><string>Liga o spindle a 300 RPM. Forca G97 (RPM constante) antes do S: se a maquina estiver em G96 o S valeria velocidade de superficie, nao RPM.</string></property>
        </widget>
       </item>
       <item row="1" column="1">
@@ -470,7 +475,8 @@ QPushButton:pressed { background: rgb(180, 100, 60); }</string>
 QPushButton:pressed { background: rgb(180, 100, 60); }</string>
         </property>
         <property name="text"><string>M04 S600</string></property>
-        <property name="MDICommand" stdset="0"><string>M4 S600</string></property>
+        <property name="MDICommand" stdset="0"><string>G97 S600 M4</string></property>
+        <property name="toolTip"><string>Liga o spindle a 600 RPM. Forca G97 (RPM constante) antes do S: se a maquina estiver em G96 o S valeria velocidade de superficie, nao RPM.</string></property>
        </widget>
       </item>
       <item row="1" column="2">
@@ -487,7 +493,8 @@ QPushButton:pressed { background: rgb(180, 100, 60); }</string>
 QPushButton:pressed { background: rgb(180, 100, 60); }</string>
         </property>
         <property name="text"><string>M04 S900</string></property>
-        <property name="MDICommand" stdset="0"><string>M4 S900</string></property>
+        <property name="MDICommand" stdset="0"><string>G97 S900 M4</string></property>
+        <property name="toolTip"><string>Liga o spindle a 900 RPM. Forca G97 (RPM constante) antes do S: se a maquina estiver em G96 o S valeria velocidade de superficie, nao RPM.</string></property>
        </widget>
       </item>
       <item row="1" column="3">
@@ -504,7 +511,8 @@ QPushButton:pressed { background: rgb(180, 100, 60); }</string>
 QPushButton:pressed { background: rgb(180, 100, 60); }</string>
         </property>
         <property name="text"><string>M04 S1200</string></property>
-        <property name="MDICommand" stdset="0"><string>M4 S1200</string></property>
+        <property name="MDICommand" stdset="0"><string>G97 S1200 M4</string></property>
+        <property name="toolTip"><string>Liga o spindle a 1200 RPM. Forca G97 (RPM constante) antes do S: se a maquina estiver em G96 o S valeria velocidade de superficie, nao RPM.</string></property>
        </widget>
       </item>
      </layout>
