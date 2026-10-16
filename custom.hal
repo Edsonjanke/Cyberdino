@@ -18,24 +18,29 @@
 
 # --- Componentes ---
 loadrt encoder num_chan=2
-loadrt not names=not.0,not.axis-sel,not.mode-auto,not.mode-mdi,not.interlock,not.paused
-loadrt and2 names=and2.jog-x,and2.jog-z,and2.mode-jog,and2.interlock,and2.interlock-paused,and2.mode-mdi-paused,and2.mode-manual-paused,and2.cycle-start,and2.cycle-run,and2.cycle-resume,and2.cycle-blocked,and2.estop
+loadrt not names=not.0,not.axis-sel,not.is-auto,not.prog-run,not.paused,not.quer-auto,not.quer-refrig
+loadrt and2 names=and2.jog-x,and2.jog-z,and2.modo-livre,and2.modo-ok,and2.refrig-ok,and2.cycle-start,and2.cycle-run,and2.cycle-resume,and2.cycle-blocked,and2.estop
+# Botoes de pulso do painel (modo e refrigerante): 'toggle' transforma o
+# toque momentaneo num nivel que fica — e' esse nivel que faz o papel que a
+# chave seletora fazia. Ver as secoes la' embaixo.
+loadrt toggle names=toggle.modo,toggle.refrig
 
 addf encoder.update-counters servo-thread
 addf encoder.capture-position servo-thread
 addf not.0 servo-thread
 addf not.axis-sel servo-thread
-addf not.mode-auto servo-thread
-addf not.mode-mdi servo-thread
-addf not.interlock servo-thread
+addf not.is-auto servo-thread
+addf not.prog-run servo-thread
 addf not.paused servo-thread
-addf and2.interlock servo-thread
-addf and2.interlock-paused servo-thread
-addf and2.mode-mdi-paused servo-thread
-addf and2.mode-manual-paused servo-thread
+addf not.quer-auto servo-thread
+addf not.quer-refrig servo-thread
+addf and2.modo-livre servo-thread
+addf and2.modo-ok servo-thread
+addf and2.refrig-ok servo-thread
+addf toggle.modo servo-thread
+addf toggle.refrig servo-thread
 addf and2.jog-x servo-thread
 addf and2.jog-z servo-thread
-addf and2.mode-jog servo-thread
 addf and2.cycle-start servo-thread
 addf and2.cycle-run servo-thread
 addf and2.cycle-resume servo-thread
@@ -95,49 +100,83 @@ net axis-select-x => joint.0.jog-enable axis.x.jog-enable
 net axis-select-z => joint.1.jog-enable axis.z.jog-enable
 
 # =============================================
-#  CHAVE SELETORA MODO: AUTO / MDI / JOG
+#  BOTAO DE MODO (pulso): AUTO <-> MANUAL
 # =============================================
-# 2 pinos, 3 modos:
-#   GPIO.024 -> GND = AUTO
-#   GPIO.023 -> GND = MDI
-#   Ambos soltos    = JOG (manual)
-
-# halui.mode.mdi e halui.mode.manual gated por NOT prog-paused: mover a chave
-# durante pause nao tenta trocar modo (LinuxCNC retorna erro "impossivel mudar
-# modo enquanto AUTO e interp nao IDLE"). halui.mode.auto fica direto: voltar
-# pra AUTO durante pause e no-op (ja esta em AUTO). MPG jog ainda funciona
-# em AUTO paused pois joint.N.jog-enable nao depende do modo halui.
-net mode-auto   halui.mode.auto   <= hm2_7i92.0.gpio.024.in_not
-net mode-mdi    <= hm2_7i92.0.gpio.023.in_not
-net mode-mdi    => and2.mode-mdi-paused.in0
-net not-paused  => and2.mode-mdi-paused.in1
-net mode-mdi-gated halui.mode.mdi <= and2.mode-mdi-paused.out
-
-# JOG = nenhum dos dois ativo (ambos soltos)
-net mode-auto  => not.mode-auto.in
-net mode-mdi   => not.mode-mdi.in
-net not-auto   <= not.mode-auto.out => and2.mode-jog.in0
-net not-mdi    <= not.mode-mdi.out  => and2.mode-jog.in1
-net mode-manual <= and2.mode-jog.out
-net mode-manual => and2.mode-manual-paused.in0
-net not-paused  => and2.mode-manual-paused.in1
-net mode-manual-gated halui.mode.manual <= and2.mode-manual-paused.out
-
-# =============================================
-#  INTERLOCK: Cycle Start so funciona em AUTO
-# =============================================
-# Se programa AUTO rodar e chave sair de AUTO -> para imediatamente
-# Usa halui.mode.is-auto (modo atual) em vez de halui.program.is-running
-# (que tambem fica TRUE durante MDI e mataria comandos do painel)
-# Gated por NOT prog-paused: chave pode ir pra JOG durante pause sem matar
-# o programa, permitindo jog manual no MPG enquanto pausado.
-net mode-auto  => not.interlock.in
-net not-auto-sw   not.interlock.out   => and2.interlock.in0
-net mode-is-auto     => and2.interlock.in1
-net interlock-raw and2.interlock.out  => and2.interlock-paused.in1
+# O seletor AUTO/MDI/JOG saiu do painel (2026-10-16). No lugar ficou um
+# botao momentaneo: cada toque alterna AUTO <-> MANUAL. O MDI nao tem mais
+# botao fisico — continua na tela, e a entrada dele virou o refrigerante.
+#
+#   GPIO.024 -> GND = toque no botao de MODO
+#
+# O 'toggle' transforma o toque num NIVEL que fica ligado ate o proximo
+# toque. Esse nivel faz exatamente o papel da posicao da chave que saiu:
+# dali pra frente o resto do arquivo nao mudou.
+#
+# O toque e' IGNORADO com programa RODANDO ou PAUSADO (decisao do operador,
+# 2026-10-16): um esbarrao no botao nao derruba o ciclo. Para parar, PAUSA
+# no painel ou PARAR na tela. Bloquear a ENTRADA do toggle, e nao a saida,
+# evita pedido represado: nada dispara sozinho quando o programa acaba.
+#
+# O interlock antigo — que parava o programa quando a chave saia do AUTO —
+# foi embora junto com a chave: sem chave nao existe "posicao fora do AUTO"
+# pra detectar, e com a entrada bloqueada o nivel nem muda durante o ciclo.
+#
+# Por que NAO usar o toggle2nist (que leria o modo de verdade e nunca
+# desencontraria): medido no banco de teste, o toggle2.9.10 alterna nas
+# DUAS bordas do botao — apertar e soltar da' dois comandos, que se anulam.
+# O desenho dele serve para uma entrada de NIVEL, nao para um botao
+# momentaneo, e como ele persegue o estado ele brigaria com o M8/M9 do
+# programa e com os botoes da tela.
+#
+# Preco deste desenho: se o modo for trocado PELA TELA, o nivel fica
+# desencontrado e o primeiro toque seguinte vira no-op (o segundo ja
+# acerta). Nao trava nada e nao briga com ninguem — medido no sim: segurar
+# halui.mode.manual em TRUE nao impede a tela de ir pra MDI nem pro AUTO,
+# porque o halui atende esses pinos por BORDA.
+net btn-modo-raw     <= hm2_7i92.0.gpio.024.in_not
+net btn-modo-raw     => and2.modo-livre.in0
+net prog-running     halui.program.is-running => not.prog-run.in
+net not-running      not.prog-run.out         => and2.modo-livre.in1
+net modo-livre       and2.modo-livre.out      => and2.modo-ok.in0
 net prog-paused      => not.paused.in
-net not-paused    not.paused.out      => and2.interlock-paused.in0
-net force-stop    and2.interlock-paused.out => halui.program.stop
+net not-paused       not.paused.out           => and2.modo-ok.in1
+net btn-modo         toggle.modo.in           <= and2.modo-ok.out
+setp toggle.modo.debounce 30
+
+# Nivel ligado = AUTO, desligado = MANUAL. Como o halui so' olha a BORDA
+# destes pinos, deixar um deles em TRUE o tempo todo nao prende o modo:
+# a tela continua podendo ir pra MDI ou pra AUTO por conta propria.
+net quer-auto        toggle.modo.out          => halui.mode.auto
+net quer-auto        => not.quer-auto.in
+net quer-manual      not.quer-auto.out        => halui.mode.manual
+
+# =============================================
+#  BOTAO DO REFRIGERANTE (pulso)
+# =============================================
+# A entrada que era o MDI do seletor virou o liga/desliga do refrigerante.
+#
+#   GPIO.023 -> GND = toque no botao de REFRIGERANTE
+#
+# Mesma ideia do modo: o toque vira um nivel, o nivel manda o halui ligar
+# ou desligar. E' a MESMA bomba que o M8/M9 do programa liga —
+# coolant-flood vai pro ams32.cmd.00 (PLC) no postgui.
+#
+# O M8/M9 do programa NAO e' atrapalhado: halui.flood.off fica em TRUE
+# enquanto o botao esta' desligado, mas o halui so' olha a borda. Medido no
+# sim: com flood.off preso em TRUE, um flood.on depois liga a bomba do
+# mesmo jeito.
+#
+# So' aceita toque com a maquina LIGADA: aperto com a maquina desligada nao
+# faria nada na bomba e so' deixaria o nivel desencontrado.
+net btn-refrig-raw   <= hm2_7i92.0.gpio.023.in_not
+net btn-refrig-raw   => and2.refrig-ok.in0
+net machine-is-on    => and2.refrig-ok.in1
+net btn-refrig       toggle.refrig.in         <= and2.refrig-ok.out
+setp toggle.refrig.debounce 30
+
+net quer-refrig      toggle.refrig.out        => halui.flood.on
+net quer-refrig      => not.quer-refrig.in
+net nao-quer-refrig  not.quer-refrig.out      => halui.flood.off
 
 # =============================================
 #  BOTOES FISICOS: CYCLE START, PAUSE/RESUME, RESET
@@ -151,9 +190,9 @@ net force-stop    and2.interlock-paused.out => halui.program.stop
 net prog-paused  halui.program.is-paused => and2.cycle-resume.in1
 net prog-idle    halui.program.is-idle   => and2.cycle-run.in1
 
-# --- Cycle Start: GPIO.020 -> AND com mode-auto ---
+# --- Cycle Start: GPIO.020 -> AND com o modo AUTO de verdade ---
 net btn-cycle-start-raw  and2.cycle-start.in0  <= hm2_7i92.0.gpio.020.in_not
-net mode-auto            => and2.cycle-start.in1
+net mode-is-auto         => and2.cycle-start.in1
 net btn-cycle-start      <= and2.cycle-start.out
 
 # --- Run: btn-cycle-start AND is-idle -> program.run ---
@@ -168,7 +207,8 @@ net do-resume            halui.program.resume <= and2.cycle-resume.out
 # --- Blocked: btn-cycle-start-raw AND NOT-auto -> aviso na tela ---
 # Sinal conectado ao widget no postgui
 net btn-cycle-start-raw  => and2.cycle-blocked.in0
-net not-auto             => and2.cycle-blocked.in1
+net mode-is-auto         => not.is-auto.in
+net not-auto             not.is-auto.out => and2.cycle-blocked.in1
 net cycle-blocked        <= and2.cycle-blocked.out
 
 # --- Pause: GPIO.021 -> halui.program.pause ---

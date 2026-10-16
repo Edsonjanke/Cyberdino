@@ -98,3 +98,39 @@ com `curl -6`. ARP FAILED pro gateway confirma.
 nmcli con mod "Conexao cabeada 1" ipv4.method auto ipv4.addresses "" ipv4.gateway ""
 ```
 PC do torno hoje: **192.168.1.32** por DHCP; roteador 192.168.1.1.
+
+## HAL
+
+### Mudanca no custom.hal nao da' pra testar no sim
+O sim usa `custom_sim.hal`, que **bypassa** o `custom.hal` inteiro (Mesa,
+botoes, chaves, fim de curso). Entao mexer na logica dos botoes e abrir o
+sim nao prova nada.
+
+Dois jeitos que funcionam, sem a maquina:
+
+**1. Bancada no `halrun`.** Repetir o circuito num arquivo so', com as
+entradas que viriam do 7i92 e do halui como sinais soltos, e andar passo a
+passo com `sets` / `gets`:
+
+```bash
+halrun -U                       # o sim segura o realtime; derrubar antes
+halrun -f bancada.hal
+```
+
+Nao existe `sleep` no halcmd — o jeito de deixar a thread rodar entre um
+passo e outro e' `loadusr -w sleep 0.08`. E `print` aceita **um** argumento
+so'. Foi assim que o [[07 - Botoes de Modo e Refrigerante]] foi conferido
+(28 passos) e que o defeito do `toggle2nist` apareceu.
+
+**2. Carregar o custom.hal de verdade, sem os pinos externos.** Gerar uma
+copia tirando todo token que comeca com `hm2_7i92.`, `halui.`, `joint.`,
+`axis.`, `iocontrol.`, `motion.`, `qtpyvcp.` e rodar no `halrun`. Nao testa
+logica, mas pega **nome de pino errado, addf faltando e loadrt
+incompleto** — que e' o tipo de erro que impede a maquina de subir.
+
+### Comportamento dos pinos do halui: BORDA, nao nivel
+Os pinos de comando (`halui.mode.auto`, `halui.flood.off`, ...) so' agem na
+**borda de subida**. Segurar um deles em TRUE nao prende nada: medido no
+sim, com `halui.flood.off` preso em TRUE um `flood.on` depois liga a bomba
+do mesmo jeito, e com `halui.mode.manual` preso a tela ainda vai pra MDI.
+E' o que torna seguro mandar nivel continuo nesses pinos.

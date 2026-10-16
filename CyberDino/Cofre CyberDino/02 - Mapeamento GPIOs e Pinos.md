@@ -15,8 +15,8 @@
 
 | GPIO | I/O | Funcao | Notas |
 |------|-----|--------|-------|
-| GPIO.023 | IN | Chave seletora MDI | GND = MDI |
-| GPIO.024 | IN | Chave seletora AUTO | GND = AUTO |
+| GPIO.023 | IN | Botao REFRIGERANTE (pulso) | toque alterna liga/desliga |
+| GPIO.024 | IN | Botao MODO (pulso) | toque alterna AUTO/MANUAL |
 | GPIO.025 | IN | Chave MPG X/Z | OFF=X, ON=Z |
 | GPIO.027 | IN | Chave MPG enable | Liga/desliga MPG |
 | GPIO.030 | IN | MPG encoder fase A | DB15 pino 10 |

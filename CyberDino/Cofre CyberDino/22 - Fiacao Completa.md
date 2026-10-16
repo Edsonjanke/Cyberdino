@@ -62,11 +62,14 @@ Ponto soldado ──── GPIO.027 ──── Chave Enable
 Ponto soldado ──── GPIO.025 ──── Chave X/Z
 ```
 
-## Chave Seletora Modo (pontos soldados)
+## Botoes de Modo e Refrigerante (pontos soldados)
+
+Eram as duas posicoes da chave seletora ate 2026-10-16; agora sao dois
+botoes momentaneos. Ver [[07 - Botoes de Modo e Refrigerante]].
 
 ```
-Ponto soldado ──── GPIO.024 ──── Chave AUTO (GND = AUTO)
-Ponto soldado ──── GPIO.023 ──── Chave MDI  (GND = MDI)
+Ponto soldado ──── GPIO.024 ──── Botao MODO (pulso, GND no toque)
+Ponto soldado ──── GPIO.023 ──── Botao REFRIGERANTE (pulso, GND no toque)
 Ambos soltos = JOG
 ```
 

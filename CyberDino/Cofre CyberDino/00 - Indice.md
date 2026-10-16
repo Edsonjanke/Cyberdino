@@ -12,7 +12,7 @@ Retrofit de torno convencional "Dino Evo" para CNC.
 - [[04 - Motor Spindle]]
 - [[05 - Encoder Spindle]]
 - [[06 - MPG Handwheel]]
-- [[07 - Chave Seletora de Modo]]
+- [[07 - Botoes de Modo e Refrigerante]]
 - [[08 - PLC AMS32ES2]]
 
 ### Software
