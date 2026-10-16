@@ -27,6 +27,12 @@ net mpg-enabled => qtpyvcp.mpg-indicator.in
 # --- Aviso botao fisico: cycle-start fora de AUTO mostra mensagem na tela ---
 net cycle-blocked => qtpyvcp.cycle-start-button.blocked
 
+# --- Botao MANUAL do painel tambem abre o modo EDITAR ---
+# O mesmo toque que manda halui.mode.manual chega aqui; o customs.py le a
+# borda de subida e clica na aba EDITAR. Ver custom.hal, secao BOTOES DE
+# MODO, e a classe BotaoManualAbreEdit.
+net btn-manual => dino_painel.manual
+
 # --- Botoes Spindle na aba CUSTOMS (HalButton pulseOnPress 200ms) ---
 # PARA SPINDLE: drive halui.spindle.0.stop (via spindle-manual-stop, Dino_Evo.hal:355)
 #               + dispara save no dino_spindle (snapshot RPM atual)

@@ -134,6 +134,74 @@ except _hal.error as e:
     print("[customs.py] HAL component dino_spindle: {}".format(e))
 
 
+# Painel de operacao: o botao MANUAL (GPIO.025) tambem abre o modo EDITAR.
+# Pedido do operador (2026-10-16): "manual ativa o modo editar sempre junto".
+# O pino e' criado em escopo de modulo pra ja existir quando o
+# probe_basic_postgui_fix.hal for lido.
+_hal_painel = None
+_hal_pin_manual = None
+
+try:
+    _hal_painel = _hal.component('dino_painel')
+    _hal_pin_manual = _hal_painel.newpin('manual', _hal.HAL_BIT, _hal.HAL_IN)
+    _hal_painel.ready()
+    atexit.register(lambda: _hal_painel.exit() if _hal_painel else None)
+except _hal.error as e:
+    # Reload em dev: componente ja existe. Nao quebrar.
+    print("[customs.py] HAL component dino_painel: {}".format(e))
+
+
+class BotaoManualAbreEdit:
+    """Toque no MANUAL do painel -> abre a aba EDITAR e destrava o editor.
+
+    So' age na BORDA de subida: segurar o botao nao fica reabrindo. E se a
+    aba EDITAR ja estiver aberta, nao faz nada — um clique ali a FECHARIA
+    (o botao e' checkable), que e' o contrario do pedido.
+
+    Nao faz o inverso: apertar AUTO nao fecha o EDITAR. Fechar sozinho
+    travaria o editor com alteracao na tela ainda nao salva.
+    """
+
+    def __init__(self):
+        self._anterior = False
+        self._timer = QTimer()
+        self._timer.timeout.connect(self._poll)
+        self._timer.start(50)
+
+    def _poll(self):
+        if _hal_pin_manual is None:
+            return
+        try:
+            agora = bool(_hal_pin_manual.value)
+        except Exception:
+            return
+        if agora and not self._anterior:
+            self._abrir_edit()
+        self._anterior = agora
+
+    @staticmethod
+    def _abrir_edit():
+        aba = None
+        for top in QApplication.topLevelWidgets():
+            aba = aba or top.findChild(QPushButton, "edit_tab")
+        if aba is None:
+            LOG.warning("MANUAL: aba EDITAR nao encontrada")
+            return
+        if aba.isChecked():
+            return
+        aba.click()
+        LOG.info("MANUAL no painel: aba EDITAR aberta")
+
+
+_painel_manual = None
+
+
+def _start_painel_manual():
+    global _painel_manual
+    if _painel_manual is None:
+        _painel_manual = BotaoManualAbreEdit()
+
+
 class SpindleSaveRestore:
     """Poll 50ms detecta rising edge nos pins save/restore-cw/restore-ccw.
        Sempre rastreia ultima RPM nao-zero (entao funciona mesmo se snapshot
@@ -1710,3 +1778,4 @@ class UserTab(QWidget):
         QTimer.singleShot(0, lambda: _wire_referenciar_na_chave(self))
         QTimer.singleShot(0, _wire_procurar_gcode)
         QTimer.singleShot(0, _wire_reset_limpa_mensagens)
+        QTimer.singleShot(0, _start_painel_manual)

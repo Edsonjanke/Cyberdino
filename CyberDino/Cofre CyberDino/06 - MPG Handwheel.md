@@ -1,21 +1,60 @@
-# MPG Handwheel
+# MPG Handwheel — um volante por eixo
+
+**Mudou em 2026-10-16:** a chave que escolhia o eixo saiu. Agora sao
+**dois volantes**, um pra cada eixo, e os dois ficam armados juntos — quem
+escolhe o eixo e' a mao do operador.
 
 ## Hardware
-- Encoder diferencial (A/B/-A/-B), so A/B ligados
-- Software encoder no LinuxCNC (`loadrt encoder` no custom.hal)
-- Escala: 0.01mm por click
+- Encoder diferencial (A/B/-A/-B), so' A/B ligados
+- Software encoder no LinuxCNC (`loadrt encoder num_chan=2` no custom.hal):
+  `encoder.0` = volante do X, `encoder.1` = volante do Z
+- Escala: vem do widget JogIncrement (0.01 / 0.1 / 1 mm por click)
+- `x4-mode 0`: 1 count por detente, nao 4 — assim 1 clique anda exatamente
+  o incremento escolhido
 
 ## Pinagem
-| GPIO | I/O | Funcao | DB15 Pino |
-|------|-----|--------|-----------|
-| GPIO.030 | IN | Fase A | 10 |
-| GPIO.031 | IN | Fase B | 7 |
-| GPIO.027 | IN | Chave Enable | - |
-| GPIO.025 | IN | Chave X/Z | - |
 
-## Chaves
-- **Enable** (GPIO.027): liga/desliga MPG
-- **X/Z** (GPIO.025): OFF = eixo X, ON = eixo Z
+| GPIO | I/O | Funcao | Onde |
+|------|-----|--------|------|
+| GPIO.030 | IN | Volante do X - fase A | DB15 pino 10 |
+| GPIO.031 | IN | Volante do X - fase B | DB15 pino 7 |
+| GPIO.028 | IN | Volante do Z - fase A | P1 pino 8 |
+| GPIO.029 | IN | Volante do Z - fase B | P1 pino 9 |
+| GPIO.027 | IN | Botao MPG (pulso) | arma/desarma os dois |
+
+## Botao MPG (era chave de manter)
+
+Virou botao momentaneo. O componente `toggle` guarda o estado. Esse estado
+e' so' nosso — nao existe em lugar nenhum do LinuxCNC — entao ele nunca
+desencontra de nada (diferente dos botoes de modo e do refrigerante, ver
+[[07 - Botoes de Modo e Refrigerante]]).
+
+```
+GPIO.027 -> toggle.mpg -> mpg-enabled -> joint.0/1.jog-enable
+                                      -> axis.x/z.jog-enable
+```
+
+Os sinais `axis-select-x` / `axis-select-z` sao do tempo da chave de eixo e
+ficaram **sem ninguem escrevendo** (valem FALSE). Eles so' alimentam
+`halui.axis.x/z.select`, que serve pro `halui.axis.selected.plus/minus` —
+e isso ninguem usa aqui: os botoes de jog do PLC vao direto em
+`halui.axis.x.plus` / `.minus`.
+
+## Funcao dupla em AUTO
+
+| volante | em AUTO | fora do AUTO |
+|---|---|---|
+| X | rapid override (1% por click) | jog do X |
+| Z | **feed override** (1% por click) | jog do Z |
+
+O feed override era de um encoder pequeno (FYSETC EC11, GPIO.016/026) que
+saiu do painel em 2026-10-16.
+
+A troca de funcao e' feita pelo `count-enable` ligado em
+`halui.mode.is-auto`. **Medido no sim:** girar o volante fora do AUTO nao
+mexe no override, e voltar pro AUTO **nao da' salto** — o halui acompanha
+as contagens mesmo com o count-enable desligado, entao nao acumula o que
+foi girado em jog. Dentro do AUTO cada click e' exatamente 1%.
 
 ## Interface ProbeBasic
 - Widget `MpgButton` em `mpg_button.py` (indicador visual read-only)
@@ -23,4 +62,5 @@
 - Conexao: `net mpg-enabled => qtpyvcp.mpg-indicator.in`
 
 ## Status
-Funcionando desde 2026-04-06.
+Um volante desde 2026-04-06; dois volantes desde 2026-10-16.
+**Os dois volantes nao foram testados na maquina ainda.**

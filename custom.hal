@@ -1,46 +1,57 @@
 # Custom HAL - Dino Evo Torno CNC
-# MPG Handwheel via software encoder + chaves seletoras
+# Painel de operacao: botoes de pulso + dois volantes (MPG)
 
 # =============================================
-#  MPG HANDWHEEL - Software Encoder + Chaves
+#  PAINEL DE OPERACAO — todas as entradas num lugar so'
 # =============================================
-# Firmware so tem 1 encoder hardware (usado pelo spindle).
-# MPG usa componente 'encoder' (software) via GPIOs livres.
+# Painel refeito em 2026-10-16: sairam a chave seletora de modo e a chave
+# de eixo do MPG. Agora e' tudo botao momentaneo, e cada eixo tem o seu
+# proprio volante.
 #
-# Fiacao DB15:
-#   Encoder A     -> GPIO.030 (DB15 pino 10)
-#   Encoder B     -> GPIO.031 (DB15 pino 7)
-#   Chave Enable  -> GPIO.027 (liga/desliga MPG)
-#   Chave X/Z     -> GPIO.025 (seleciona eixo)
-#   +5V           -> DB15 pino 15
-#   GND           -> DB15 pino 14
-#   Chaves ligam pino ao GND quando ativadas (pull-up interno)
+#   GPIO.020  Cycle Start        (ja existia)
+#   GPIO.021  Pause              (ja existia)
+#   GPIO.022  Reset              (ja existia: estop clear + liga maquina)
+#   GPIO.023  REFRIGERANTE       toque alterna liga/desliga
+#   GPIO.024  AUTO               toque entra em AUTO
+#   GPIO.025  MANUAL             toque entra em MANUAL + abre o EDITAR
+#   GPIO.027  MPG liga/desliga   toque arma/desarma os dois volantes
+#   GPIO.030  volante do X - A   (DB15 pino 10)
+#   GPIO.031  volante do X - B   (DB15 pino 7)
+#   GPIO.028  volante do Z - A   (P1 pino 8)
+#   GPIO.029  volante do Z - B   (P1 pino 9)
+#   GPIO.014  fim de curso (home compartilhado)
+#   GPIO.015  E-Stop
+#
+# Botoes ligam o pino ao GND (pull-up interno), por isso tudo le por
+# `.in_not`.
+#
+# O encoder pequeno de feed override (FYSETC EC11, GPIO.016 e GPIO.026)
+# saiu do painel: quem faz feed override agora e' o volante do Z, em AUTO.
+# GPIOs livres na placa hoje: 016, 026, 032 e 033.
 
 # --- Componentes ---
+# encoder: 0 = volante do X, 1 = volante do Z (os dois em software; o
+# encoder de hardware do firmware e' do spindle).
 loadrt encoder num_chan=2
-loadrt not names=not.0,not.axis-sel,not.is-auto,not.prog-run,not.paused,not.quer-auto,not.quer-refrig
-loadrt and2 names=and2.jog-x,and2.jog-z,and2.modo-livre,and2.modo-ok,and2.refrig-ok,and2.cycle-start,and2.cycle-run,and2.cycle-resume,and2.cycle-blocked,and2.estop
-# Botoes de pulso do painel (modo e refrigerante): 'toggle' transforma o
-# toque momentaneo num nivel que fica — e' esse nivel que faz o papel que a
-# chave seletora fazia. Ver as secoes la' embaixo.
-loadrt toggle names=toggle.modo,toggle.refrig
+loadrt not names=not.0,not.is-auto,not.prog-run,not.paused,not.quer-refrig
+loadrt and2 names=and2.manual-livre,and2.manual-ok,and2.refrig-ok,and2.cycle-start,and2.cycle-run,and2.cycle-resume,and2.cycle-blocked,and2.estop
+# Botoes de pulso que precisam LEMBRAR um estado (liga/desliga): o 'toggle'
+# transforma o toque momentaneo num nivel que fica ate o proximo toque.
+# AUTO e MANUAL nao usam toggle — sao comando direto, cada um no seu pino.
+loadrt toggle names=toggle.mpg,toggle.refrig
 
 addf encoder.update-counters servo-thread
 addf encoder.capture-position servo-thread
 addf not.0 servo-thread
-addf not.axis-sel servo-thread
 addf not.is-auto servo-thread
 addf not.prog-run servo-thread
 addf not.paused servo-thread
-addf not.quer-auto servo-thread
 addf not.quer-refrig servo-thread
-addf and2.modo-livre servo-thread
-addf and2.modo-ok servo-thread
+addf and2.manual-livre servo-thread
+addf and2.manual-ok servo-thread
 addf and2.refrig-ok servo-thread
-addf toggle.modo servo-thread
+addf toggle.mpg servo-thread
 addf toggle.refrig servo-thread
-addf and2.jog-x servo-thread
-addf and2.jog-z servo-thread
 addf and2.cycle-start servo-thread
 addf and2.cycle-run servo-thread
 addf and2.cycle-resume servo-thread
@@ -59,96 +70,99 @@ net estop-user-ok     => and2.estop.in1
 net estop-all-ok      <= and2.estop.out
 net estop-all-ok      => iocontrol.0.emc-enable-in
 
-# --- Software encoder MPG ---
-# x4-mode 0: 1 count por clique (detente) do volante, em vez de 4.
-# Assim 1 clique = exatamente o incremento escolhido no JogIncrement
+# =============================================
+#  VOLANTES (MPG): um por eixo
+# =============================================
+# A chave que escolhia o eixo saiu (2026-10-16): agora sao dois volantes,
+# cada um ligado direto no seu eixo. Os dois ficam armados juntos — quem
+# escolhe o eixo e' a mao do operador, nao mais uma chave.
+#
+# x4-mode 0: 1 count por clique (detente) do volante, em vez de 4. Assim
+# 1 clique = exatamente o incremento escolhido no JogIncrement
 # (0.01/0.1/1 mm) -> avanco por volta ~4x menor (mais fino).
 setp encoder.0.x4-mode 0
 setp encoder.0.counter-mode 0
+setp encoder.1.x4-mode 0
+setp encoder.1.counter-mode 0
 
-net mpg-a encoder.0.phase-A <= hm2_7i92.0.gpio.030.in
-net mpg-b encoder.0.phase-B <= hm2_7i92.0.gpio.031.in
+net mpgx-a encoder.0.phase-A <= hm2_7i92.0.gpio.030.in
+net mpgx-b encoder.0.phase-B <= hm2_7i92.0.gpio.031.in
+net mpgz-a encoder.1.phase-A <= hm2_7i92.0.gpio.028.in
+net mpgz-b encoder.1.phase-B <= hm2_7i92.0.gpio.029.in
 
-# Counts para ambos os joints (jog-enable controla qual move)
-net mpg-counts encoder.0.counts => joint.0.jog-counts joint.1.jog-counts
-net mpg-counts                  => axis.x.jog-counts  axis.z.jog-counts
+# Cada volante so' alimenta o SEU eixo (antes os dois joints recebiam as
+# contagens do unico volante e a chave de eixo decidia quem andava).
+net mpgx-counts encoder.0.counts => joint.0.jog-counts axis.x.jog-counts
+net mpgz-counts encoder.1.counts => joint.1.jog-counts axis.z.jog-counts
 
 # Escala (mm por click): dinamica, vinda do widget JogIncrement (aba CUSTOMS).
 # Os 4 pins jog-scale sao dirigidos por qtpyvcp.jog-increment.scale no postgui
 # (ver probe_basic_postgui_fix.hal). NAO usar setp aqui: conflitaria com o net.
 # Default (0.01mm) e o estado inicial publicado pelo widget ao subir a GUI.
 
-# --- Chave Enable: ON (GND) = MPG ativo ---
-net mpg-enabled <= hm2_7i92.0.gpio.027.in_not
+# --- Botao MPG (pulso): arma/desarma os dois volantes ---
+# Era uma chave de manter; virou botao momentaneo. O 'toggle' guarda o
+# estado, e como esse estado e' so' nosso (nao existe em lugar nenhum do
+# LinuxCNC) ele nunca desencontra de nada.
+net btn-mpg-raw  toggle.mpg.in <= hm2_7i92.0.gpio.027.in_not
+setp toggle.mpg.debounce 30
+net mpg-enabled  <= toggle.mpg.out
 
-# --- Chave Eixo: OFF = X, ON (GND) = Z ---
-net axis-is-z <= hm2_7i92.0.gpio.025.in_not
-net axis-is-z => not.axis-sel.in
-net axis-is-x <= not.axis-sel.out
+# Os dois eixos ficam habilitados juntos.
+net mpg-enabled => joint.0.jog-enable axis.x.jog-enable
+net mpg-enabled => joint.1.jog-enable axis.z.jog-enable
 
-# --- Combinar: jog-enable = MPG ligado AND eixo selecionado ---
-net mpg-enabled => and2.jog-x.in0 and2.jog-z.in0
-net axis-is-x   => and2.jog-x.in1
-net axis-is-z   => and2.jog-z.in1
-
-# Saida dos AND drive os sinais axis-select (ja existem no Dino_Evo.hal)
-net axis-select-x <= and2.jog-x.out
-net axis-select-z <= and2.jog-z.out
-
-# jog-enable conectado via sinais axis-select
-net axis-select-x => joint.0.jog-enable axis.x.jog-enable
-net axis-select-z => joint.1.jog-enable axis.z.jog-enable
+# Os sinais axis-select-x / axis-select-z sao do tempo da chave de eixo e
+# ficam agora SEM ninguem escrevendo (valem FALSE). Eles so' alimentam
+# halui.axis.x/z.select, que serve pro halui.axis.selected.plus/minus — e
+# isso ninguem usa nesta maquina: os botoes de jog do PLC vao direto em
+# halui.axis.x.plus / .minus (ver probe_basic_postgui_fix.hal). Os nets
+# deles estao no Dino_Evo.hal, que carrega antes deste arquivo, por isso
+# nao da' pra simplesmente apontar o mpg-enabled pros mesmos pinos.
 
 # =============================================
-#  BOTAO DE MODO (pulso): AUTO <-> MANUAL
+#  BOTOES DE MODO: AUTO e MANUAL (um pra cada)
 # =============================================
-# O seletor AUTO/MDI/JOG saiu do painel (2026-10-16). No lugar ficou um
-# botao momentaneo: cada toque alterna AUTO <-> MANUAL. O MDI nao tem mais
-# botao fisico — continua na tela, e a entrada dele virou o refrigerante.
+# O seletor AUTO/MDI/JOG saiu do painel (2026-10-16). No lugar ficaram dois
+# botoes momentaneos, um pra cada modo. Como sao dois, nao precisa de
+# 'toggle' nenhum: cada botao e' um comando direto, e o halui atende esses
+# pinos na BORDA de subida (conferido no sim) — o toque E' o comando.
 #
-#   GPIO.024 -> GND = toque no botao de MODO
+#   GPIO.024 -> GND = AUTO
+#   GPIO.025 -> GND = MANUAL
 #
-# O 'toggle' transforma o toque num NIVEL que fica ligado ate o proximo
-# toque. Esse nivel faz exatamente o papel da posicao da chave que saiu:
-# dali pra frente o resto do arquivo nao mudou.
+# Nao ha mais botao fisico de MDI. O MDI continua na tela: digitar na caixa
+# MDI ja troca o modo sozinho.
+
+# --- AUTO: direto, sem travas ---
+# Nao precisa de trava: pedir AUTO com um programa rodando ja' e' o modo
+# vigente, entao o halui nao faz nada.
+net btn-auto  halui.mode.auto  <= hm2_7i92.0.gpio.024.in_not
+
+# --- MANUAL: ignorado com programa rodando ou pausado ---
+# Decisao do operador (2026-10-16): um esbarrao no botao nao pode derrubar
+# o ciclo. Para parar: PAUSA no painel ou PARAR na tela.
 #
-# O toque e' IGNORADO com programa RODANDO ou PAUSADO (decisao do operador,
-# 2026-10-16): um esbarrao no botao nao derruba o ciclo. Para parar, PAUSA
-# no painel ou PARAR na tela. Bloquear a ENTRADA do toggle, e nao a saida,
-# evita pedido represado: nada dispara sozinho quando o programa acaba.
+# A trava e' na ENTRADA, antes de virar comando — assim nao sobra pedido
+# represado pra disparar sozinho quando o programa acabar.
 #
 # O interlock antigo — que parava o programa quando a chave saia do AUTO —
-# foi embora junto com a chave: sem chave nao existe "posicao fora do AUTO"
-# pra detectar, e com a entrada bloqueada o nivel nem muda durante o ciclo.
-#
-# Por que NAO usar o toggle2nist (que leria o modo de verdade e nunca
-# desencontraria): medido no banco de teste, o toggle2.9.10 alterna nas
-# DUAS bordas do botao — apertar e soltar da' dois comandos, que se anulam.
-# O desenho dele serve para uma entrada de NIVEL, nao para um botao
-# momentaneo, e como ele persegue o estado ele brigaria com o M8/M9 do
-# programa e com os botoes da tela.
-#
-# Preco deste desenho: se o modo for trocado PELA TELA, o nivel fica
-# desencontrado e o primeiro toque seguinte vira no-op (o segundo ja
-# acerta). Nao trava nada e nao briga com ninguem — medido no sim: segurar
-# halui.mode.manual em TRUE nao impede a tela de ir pra MDI nem pro AUTO,
-# porque o halui atende esses pinos por BORDA.
-net btn-modo-raw     <= hm2_7i92.0.gpio.024.in_not
-net btn-modo-raw     => and2.modo-livre.in0
+# foi embora junto com a chave: sem chave nao existe "posicao fora do
+# AUTO" pra detectar. O Cycle Start fisico continua so' valendo em AUTO,
+# agora olhando halui.mode.is-auto (o modo de verdade).
+net btn-manual-raw   <= hm2_7i92.0.gpio.025.in_not
+net btn-manual-raw   => and2.manual-livre.in0
 net prog-running     halui.program.is-running => not.prog-run.in
-net not-running      not.prog-run.out         => and2.modo-livre.in1
-net modo-livre       and2.modo-livre.out      => and2.modo-ok.in0
+net not-running      not.prog-run.out         => and2.manual-livre.in1
+net manual-livre     and2.manual-livre.out    => and2.manual-ok.in0
 net prog-paused      => not.paused.in
-net not-paused       not.paused.out           => and2.modo-ok.in1
-net btn-modo         toggle.modo.in           <= and2.modo-ok.out
-setp toggle.modo.debounce 30
+net not-paused       not.paused.out           => and2.manual-ok.in1
+net btn-manual       halui.mode.manual        <= and2.manual-ok.out
 
-# Nivel ligado = AUTO, desligado = MANUAL. Como o halui so' olha a BORDA
-# destes pinos, deixar um deles em TRUE o tempo todo nao prende o modo:
-# a tela continua podendo ir pra MDI ou pra AUTO por conta propria.
-net quer-auto        toggle.modo.out          => halui.mode.auto
-net quer-auto        => not.quer-auto.in
-net quer-manual      not.quer-auto.out        => halui.mode.manual
+# O mesmo toque abre o modo EDITAR na tela (pedido do operador: "manual
+# ativa o modo editar sempre junto"). Quem faz isso e' o customs.py, que
+# le este pino e clica na aba EDITAR — por isso o sinal vai tambem pro
+# componente dino_painel (ver probe_basic_postgui_fix.hal).
 
 # =============================================
 #  BOTAO DO REFRIGERANTE (pulso)
@@ -220,31 +234,29 @@ net btn-reset halui.estop.reset   <= hm2_7i92.0.gpio.022.in_not
 net btn-reset halui.machine.on
 
 # =============================================
-#  FEED OVERRIDE - Encoder FYSETC EC11 via Mesa GPIOs
+#  FEED OVERRIDE pelo volante do Z em modo AUTO
 # =============================================
-# GPIO.016 (P2-13) = Encoder A
-# GPIO.026 (P1-06) = Encoder B
-# Software encoder.1 (encoder.0 = MPG)
-
-setp encoder.1.x4-mode 1
-setp encoder.1.counter-mode 0
-
-net feed-enc-a encoder.1.phase-A <= hm2_7i92.0.gpio.016.in
-net feed-enc-b encoder.1.phase-B <= hm2_7i92.0.gpio.026.in
-
-# Escala: 0.01 = 1% por click
-net feed-ovr-counts  encoder.1.counts       => halui.feed-override.counts
+# O encoder pequeno que fazia isso (FYSETC EC11, GPIO.016/026) saiu do
+# painel em 2026-10-16. Agora cada volante tem funcao dupla em AUTO:
+#
+#   volante do X -> rapid override
+#   volante do Z -> feed override
+#
+# Fora do AUTO os dois voltam a ser so' jog, porque o count-enable fica
+# FALSE e o halui ignora as contagens. Escala 0.01 = 1% por click.
+net mpgz-counts      => halui.feed-override.counts
 setp halui.feed-override.scale 0.01
-setp halui.feed-override.count-enable 1
+net mode-is-auto     => halui.feed-override.count-enable
 
 # =============================================
-#  RAPID OVERRIDE via MPG em modo AUTO
+#  RAPID OVERRIDE pelo volante do X em modo AUTO
 # =============================================
-# Em AUTO: MPG roda -> ajusta rapid override (chave MPG ignorada)
-# Em JOG/MDI: MPG faz jog normalmente (override count-enable = FALSE)
-# Escala 0.01 = 1% por click
+# Em AUTO: girar o volante do X ajusta o rapid override (o botao MPG nao
+# entra nisso). Fora do AUTO o volante faz jog normal, porque o
+# count-enable fica FALSE e o halui ignora as contagens.
+# Escala 0.01 = 1% por click.
 
-net mpg-counts       => halui.rapid-override.counts
+net mpgx-counts      => halui.rapid-override.counts
 setp halui.rapid-override.scale 0.01
 net mode-is-auto     halui.mode.is-auto => halui.rapid-override.count-enable
 

@@ -58,19 +58,23 @@ DB15 pino 14 ──── GND
 ```
 DB15 pino 10 ──── I/O 30 ──── GPIO.030 ──── MPG fase A
 DB15 pino 7  ──── I/O 31 ──── GPIO.031 ──── MPG fase B
-Ponto soldado ──── GPIO.027 ──── Chave Enable
-Ponto soldado ──── GPIO.025 ──── Chave X/Z
+(a Chave Enable do 027 e a Chave X/Z do 025 sairam em 2026-10-16;
+ ver o bloco de botoes abaixo)
 ```
 
-## Botoes de Modo e Refrigerante (pontos soldados)
+## Botoes do painel e volante do Z (pontos soldados)
 
-Eram as duas posicoes da chave seletora ate 2026-10-16; agora sao dois
-botoes momentaneos. Ver [[07 - Botoes de Modo e Refrigerante]].
+Painel refeito em 2026-10-16: sairam a chave seletora de modo, a chave de
+eixo do MPG e a chave de enable do MPG. Ver
+[[07 - Botoes de Modo e Refrigerante]] e [[06 - MPG Handwheel]].
 
 ```
-Ponto soldado ──── GPIO.024 ──── Botao MODO (pulso, GND no toque)
+Ponto soldado ──── GPIO.024 ──── Botao AUTO (pulso, GND no toque)
+Ponto soldado ──── GPIO.025 ──── Botao MANUAL (pulso, GND no toque)
+Ponto soldado ──── GPIO.027 ──── Botao MPG (pulso, GND no toque)
+Ponto soldado ──── GPIO.028 ──── Volante do Z fase A (P1 pino 8)
+Ponto soldado ──── GPIO.029 ──── Volante do Z fase B (P1 pino 9)
 Ponto soldado ──── GPIO.023 ──── Botao REFRIGERANTE (pulso, GND no toque)
-Ambos soltos = JOG
 ```
 
 ## Painel Secundario (Pi 3B+)

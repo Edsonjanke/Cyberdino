@@ -1,47 +1,80 @@
-# Botao de Modo (pulso) — antes era chave seletora
+# Botoes de Modo e Refrigerante — antes era chave seletora
 
 **Mudou em 2026-10-16:** o painel de operacao foi refeito. A chave
-seletora de 3 posicoes saiu; no lugar ficou um **botao de pulso**, e a
-entrada que era do MDI virou o **liga/desliga do refrigerante**.
+seletora de 3 posicoes saiu; no lugar ficaram **botoes de pulso** — um pra
+AUTO, um pra MANUAL — e a entrada que era do MDI virou o **liga/desliga do
+refrigerante**. Ver tambem [[06 - MPG Handwheel]], que mudou junto.
 
 ## Como e' hoje
 
-| GPIO | Funcao | O que faz |
+| GPIO | Botao | O que faz |
 |---|---|---|
-| GPIO.024 | Botao de MODO (momentaneo) | cada toque alterna AUTO <-> MANUAL |
-| GPIO.023 | Botao do REFRIGERANTE (momentaneo) | cada toque liga/desliga a bomba |
+| GPIO.024 | AUTO | entra em modo AUTO |
+| GPIO.025 | MANUAL | entra em MANUAL **e abre o EDITAR na tela** |
+| GPIO.023 | REFRIGERANTE | alterna liga/desliga a bomba |
 
 Nao ha mais botao fisico de MDI. O MDI continua na tela — digitar na caixa
 MDI ja troca o modo sozinho.
 
-O componente `toggle` transforma o toque momentaneo num NIVEL que fica ate
-o proximo toque. Esse nivel faz exatamente o papel que a posicao da chave
-fazia, entao o resto do `custom.hal` nao precisou mudar.
+### AUTO e MANUAL: comando direto, sem 'toggle'
+
+Como sao **dois botoes**, um pra cada modo, nao precisa guardar estado
+nenhum: cada toque e' o comando. O halui atende esses pinos na **borda de
+subida** (medido no sim), entao botao momentaneo serve direto.
 
 ```
-GPIO.024 -> and2 (programa parado?) -> toggle.modo -> halui.mode.auto
-                                              \-> NOT -> halui.mode.manual
-GPIO.023 -> and2 (maquina ligada?)  -> toggle.refrig -> halui.flood.on
-                                              \-> NOT -> halui.flood.off
+GPIO.024 ----------------------------------> halui.mode.auto
+GPIO.025 --> and2 (nao rodando, nao pausado) -> halui.mode.manual
+                                             \-> dino_painel.manual (tela)
 ```
 
-Debounce de 30 ms (`setp toggle.*.debounce 30`, servo-thread de 1 ms).
+O AUTO nao leva trava: pedir AUTO com um programa rodando ja' e' o modo
+vigente, entao o halui nao faz nada.
 
-## O toque e' ignorado com programa rodando ou pausado
+### MANUAL e' ignorado com programa rodando ou pausado
 
 Decisao do operador (2026-10-16): um esbarrao no botao nao pode derrubar o
 ciclo. Para parar, PAUSA no painel ou PARAR na tela.
 
-O bloqueio e' na **entrada** do toggle, nao na saida — senao o pedido
-ficaria represado e dispararia sozinho no instante em que o programa
-acabasse.
+A trava e' na **entrada**, antes de virar comando — senao o pedido ficaria
+represado e dispararia sozinho no instante em que o programa acabasse.
 
 Com isso o **interlock antigo deixou de existir**. Ele parava o programa
 quando a chave saia do AUTO; sem chave nao ha "posicao fora do AUTO" pra
-detectar, e com a entrada bloqueada o nivel nem muda durante o ciclo.
-O que sobrou do tempo da chave: o Cycle Start fisico continua so' valendo
-em AUTO, mas agora olhando `halui.mode.is-auto` (o modo de verdade) em vez
-do nivel do botao.
+detectar. O Cycle Start fisico continua so' valendo em AUTO, mas agora
+olhando `halui.mode.is-auto` (o modo de verdade) em vez do nivel do botao.
+
+### MANUAL abre o EDITAR junto
+
+Pedido do operador: "manual ativa o modo editar sempre junto". O mesmo
+sinal `btn-manual` vai pro componente `dino_painel` (criado no customs.py,
+netado no `probe_basic_postgui_fix.hal`). A classe `BotaoManualAbreEdit`
+le a **borda de subida** a cada 50 ms e clica na aba EDITAR.
+
+Detalhes que valem lembrar:
+- as abas do painel direito (JOG / ZERO PECA / DRO / EDITAR) sao
+  `autoExclusive`, ou seja, um grupo de radio. Clicar na que ja' esta
+  aberta **nao** a fecha — por isso tocar MANUAL varias vezes e' seguro;
+- so' na borda: segurar o botao nao fica reabrindo;
+- **o contrario nao acontece**: apertar AUTO nao fecha o EDITAR. Fechar
+  sozinho travaria o editor com alteracao na tela ainda nao salva.
+
+### Refrigerante: esse sim usa 'toggle'
+
+Um botao so' pra duas acoes, entao precisa lembrar o estado: o `toggle`
+transforma o toque num nivel, e o nivel manda ligar ou desligar.
+
+```
+GPIO.023 --> and2 (maquina ligada?) --> toggle.refrig --> halui.flood.on
+                                                   \-> NOT -> halui.flood.off
+```
+
+Debounce de 30 ms (`setp toggle.*.debounce 30`, servo-thread de 1 ms).
+So' aceita toque com a maquina ligada: aperto com a maquina desligada nao
+faria nada na bomba e so' deixaria o nivel desencontrado.
+
+E' a MESMA bomba que o M8/M9 do programa liga — `coolant-flood` vai pro
+`ams32.cmd.00` (PLC) no postgui.
 
 ## Armadilha paga: o toggle2nist NAO serve pra botao momentaneo
 
@@ -76,12 +109,15 @@ todo enquanto o botao esta' no outro estado. Isso so' e' seguro porque o
 | `mode.manual` preso em TRUE, depois pulso no `mode.auto` | entra em AUTO |
 | `mode.manual` preso em TRUE, tela pede MDI | entra em MDI |
 
-## Preco do desenho: um toque perdido
+## Preco do desenho: um toque perdido (so' no refrigerante)
 
-Como o nivel nao le o estado real, se o modo (ou a bomba) for trocado por
-fora — INICIAR na tela forca AUTO via NML, o G-code liga a bomba com M8 —
-o nivel fica desencontrado e o **primeiro toque seguinte vira no-op**; o
-segundo ja acerta. Nao trava nada e nao briga com ninguem.
+O nivel do `toggle` nao le o estado real da bomba. Se ela for ligada ou
+desligada por fora — o G-code com M8/M9, o botao FLUIDO da tela — o nivel
+fica desencontrado e o **primeiro toque seguinte vira no-op**; o segundo
+ja acerta. Nao trava nada e nao briga com ninguem.
+
+Os botoes de modo nao tem esse problema: sao comando direto, sem estado
+guardado.
 
 ## Interface ProbeBasic
 
@@ -97,11 +133,13 @@ voltar o `mdi_mode_button` a ser clicavel.
 
 `custom.hal` nao sobe no sim (o sim usa `custom_sim.hal`). A logica foi
 conferida numa bancada do `halrun` que repete o circuito com as entradas
-soltas — 28 passos, incluindo aperta/solta de verdade, toque durante
-programa rodando e pausado, e maquina desligada. Ver
+soltas: aperta/solta de verdade, toque durante programa rodando e pausado,
+maquina desligada, e cada volante contando so' no seu eixo. O MANUAL
+abrindo o EDITAR foi testado no sim, vindo do DRO e do JOG. Ver
 [[23 - Erros e Solucoes]].
 
 ## Status
 
-Em uso desde 2026-04-06 como chave seletora; virou botao de pulso em
-2026-10-16. **Nao testado na maquina ainda.**
+Era chave seletora desde 2026-04-06. Virou botao de pulso unico em
+2026-10-16 e, no mesmo dia, dois botoes separados (AUTO e MANUAL) quando o
+painel ficou pronto. **Nao testado na maquina ainda.**
