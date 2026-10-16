@@ -75,3 +75,14 @@ modo_referenciamento.txt
 sim_modo_referenciamento.txt
 log_referenciamento.txt
 sim_log_referenciamento.txt
+
+# INI expandido: o LinuxCNC gera no boot resolvendo os #INCLUDE. Nunca
+# versionar — ja' custou uma depuracao: reiniciar apontando pro .expanded
+# congela valores velhos e o referenciamento sobe errado (ver nota 19).
+*.ini.expanded
+
+# Originais das artes do conversational. Cinco das seis sao byte a byte
+# iguais aos arquivos ja' versionados em torno_cam_ui/images/ (com outro
+# nome); a sexta e' a versao defeituosa da rosca interna, antes da
+# correcao. Nao vale 8,7 MB de duplicata.
+Imagens do conversational/
