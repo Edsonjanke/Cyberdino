@@ -77,9 +77,9 @@ se achou foi que o unico fio livre do painel ja' e' o do MANUAL
 livres nao chegam no FPGA. Medicao e detalhes em
 [[01 - Mesa 7i92 Placa Chinesa]].
 
-Decisao do operador (2026-10-16): **o RODAR DA LINHA fica so' na tela.**
-O pino `dino_painel.rodar-linha` continua existindo e testado no sim; as
-duas linhas de HAL estao comentadas, prontas pra quando houver entrada.
+**Solucao: o botao foi pro CLP**, que tem I/O sobrando (X4 -> M204 ->
+`ams32.status.04`). O lado do LinuxCNC ja' esta ligado; falta o bloco no
+ladder. Ver [[08 - PLC AMS32ES2]].
 
 ### Por que CLICAR no botao da tela, e nao repetir a logica
 

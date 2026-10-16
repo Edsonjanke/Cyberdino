@@ -44,6 +44,7 @@
 | 1 | Coolant: M100 -> Y0 (com bloqueio por alarme) |
 | 2 | Spindle: M101+M102 -> Y1/Y2 (FWD/REV) |
 | 4 | Jog: X0-X3 -> M200-M203 (debounce 100ms) |
+| **4b** | **A FAZER: X4 -> M204 (botao RODAR DA LINHA)** |
 | 5 | Alarme coolant: X5 -> M205 + Y4 buzzer |
 | 6 | Alarme lube: X6 -> M206 |
 | 7 | Falha geral: X7 -> M207 (bloqueia tudo) |
@@ -55,7 +56,7 @@
 | X | Funcao |
 |---|--------|
 | X0-X3 | Jog (X+/X-/Z+/Z-) |
-| X4 | livre |
+| X4 | **Botao RODAR DA LINHA** (2026-10-16) - FALTA O BLOCO NO LADDER |
 | X5 | Alarme coolant |
 | X6 | Alarme lube |
 | X7 | Falha geral externa |
@@ -71,3 +72,39 @@
 ## Hardware Descartado
 - BTT Octopus (impressora 3D) - nao adequado
 - Adaptador USB-RS485 - defeituoso (nao e RS-485 real)
+
+
+## Botao RODAR DA LINHA pelo CLP (2026-10-16)
+
+A placa Mesa **nao tem entrada utilizavel sobrando** (ver
+[[01 - Mesa 7i92 Placa Chinesa]]), entao o botao foi pro CLP:
+
+```
+botao -> X4 -> ladder -> M204 -> ams32.status.04 -> dino_painel.rodar-linha
+```
+
+O lado do LinuxCNC ja' esta pronto, no `probe_basic_postgui_fix.hal`:
+
+```hal
+net btn-rodar-linha <= ams32.status.04 => dino_painel.rodar-linha
+```
+
+O `customs.py` le a borda de subida e aperta o **EXEC. DA LINHA** da tela:
+arma o programa na linha (a do cursor, ou a salva no DEF. LINHA N) e deixa
+**pausado** — quem usina e' o INICIAR depois.
+
+**Falta o bloco no ladder.** Enquanto M204 nao for escrito, o sinal fica em
+FALSE e o botao nao faz nada (inofensivo). O bloco minimo:
+
+```
+LD   X4
+OUT  M204
+```
+
+**Cuidado com o tempo:** o `ams32_hal.py` le o CLP a cada **200 ms**, entao
+um toque muito rapido pode passar batido. Ou o operador segura ~0,5 s, ou o
+ladder estica o pulso — o bloco 4 (jog) ja' faz isso com temporizador de
+100 ms, da' pra copiar a ideia com 500 ms.
+
+Lembrete de sempre: **fechar o LinuxCNC antes de abrir o WPLSoft**, senao
+briga pela serial.

@@ -33,10 +33,26 @@ net cycle-blocked => qtpyvcp.cycle-start-button.blocked
 # MODO, e a classe BotaoManualAbreEdit.
 net btn-manual => dino_painel.manual
 
-# --- Botao RODAR DA LINHA do painel (DESLIGADO: sem pino) ---
-# O pino dino_painel.rodar-linha existe e funciona (testado no sim); falta
-# so' decidir a entrada fisica. Ver custom.hal, secao BOTOES FISICOS.
-# net btn-rodar-linha => dino_painel.rodar-linha
+# --- Botao RODAR DA LINHA: entra pelo CLP, nao pela Mesa ---
+# Nao sobrou entrada utilizavel na placa Mesa (ver custom.hal, secao
+# BOTOES FISICOS), entao o botao vai no CLP, que ainda tem I/O livre.
+#
+#   botao -> X4 (CLP) -> ladder -> M204 -> ams32.status.04 -> aqui
+#
+# O customs.py le a borda de subida e aperta o EXEC. DA LINHA da tela:
+# arma o programa na linha e deixa PAUSADO; quem usina e' o INICIAR.
+#
+# FALTA O LADDER: enquanto o bloco que escreve M204 nao existir, este
+# sinal fica em FALSE e o botao nao faz nada — inofensivo. O bloco e':
+#
+#     LD   X4
+#     OUT  M204
+#
+# Cuidado com o tempo: o ams32_hal.py le o CLP a cada 200 ms, entao um
+# toque muito rapido pode passar batido. Ou segura ~0,5 s, ou o ladder
+# estica o pulso (o bloco 4, do jog, ja' faz isso com temporizador de
+# 100 ms — da' pra copiar a ideia com 500 ms).
+net btn-rodar-linha <= ams32.status.04 => dino_painel.rodar-linha
 
 # --- Botoes Spindle na aba CUSTOMS (HalButton pulseOnPress 200ms) ---
 # PARA SPINDLE: drive halui.spindle.0.stop (via spindle-manual-stop, Dino_Evo.hal:355)

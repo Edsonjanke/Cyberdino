@@ -248,23 +248,26 @@ net btn-reset halui.machine.on
 # Nao precisa de trava: o _run_from_line_armed so' atua com o
 # interpretador IDLE, entao um toque no meio de um corte nao faz nada.
 #
-# >>> DESLIGADO ATE TER UM PINO <<<  (2026-10-16)
+# --- Rodar da linha: NAO entra por aqui, entra pelo CLP ---
 #
-# Medido na maquina com tools/acha_gpio.py: o botao que seria o "fio que
-# sobrou do seletor de eixo" e' a MESMA entrada do MANUAL (GPIO.025).
-# Nenhuma das entradas livres (028, 029, 032, 033) registrou nada.
+# Procuramos entrada livre nesta placa e nao ha (medido em 2026-10-16 com
+# tools/acha_gpio.py):
 #
-# E atencao com elas: em repouso essas quatro leem FALSE, enquanto toda
-# entrada que tem botao ligado (020..025, 027) le TRUE. Ou seja, as livres
-# NAO tem pull-up — botao simples ligando ao GND nao vai ser visto ali.
-# Para usar uma delas e' preciso resistor de pull-up externo (~4k7 pro
-# +5V do DB15).
+#  - o "fio que sobrou do seletor de eixo" e' a MESMA entrada do MANUAL
+#    (GPIO.025); e
+#  - os sete I/O que o firmware deixa livres (011, 012, 013, 028, 029,
+#    032, 033) sao todos entrada, todos leem 0 em repouso (sem pull-up) e
+#    NENHUM reagiu a +5V nos pontos acessiveis, em tres tentativas — com
+#    teste de controle no mesmo instante funcionando (o AUTO registrou).
+#    Ou seja, os pontos soldados nao chegam no FPGA.
 #
-# Se tivesse ficado no 028 o botao dispararia SOZINHO no boot: com o pino
-# em FALSE, o `.in_not` fica TRUE e a interface veria borda de subida.
-# Por isso esta linha fica comentada ate haver pino de verdade:
+# Entao o botao foi pro CLP, que tem I/O sobrando:
+#     botao -> X4 -> ladder -> M204 -> ams32.status.04
+# A ligacao esta no probe_basic_postgui_fix.hal (o ams32 so' existe la').
 #
-# net btn-rodar-linha  <= hm2_7i92.0.gpio.0XX.in_not
+# Se um dia for preciso botao fisico NESTA placa: sem pull-up, botao pro
+# GND nao funciona nessas sete. Ou pull-up externo (~4k7 pro +5V) usando
+# `.in_not`, ou botao no +5V usando `.in` direto, com pull-down.
 
 # =============================================
 #  OVERRIDES EM AUTO: cada volante ajusta um
