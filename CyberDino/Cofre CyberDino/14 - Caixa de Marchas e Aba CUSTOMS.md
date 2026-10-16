@@ -151,3 +151,33 @@ Programas vindo de torno Fanuc/Mazak usam `G18 G83` para furar em Z. No LinuxCNC
 - [[11 - HAL Spindle VFD 9600]] — cadeia completa do PWM
 - [[12 - ProbeBasic Interface Custom]] — outras customizacoes da UI
 - [[20 - Parametros VFD 9600]] — codigos de aceleracao/desaceleracao do inversor
+
+
+## Grupo SPINDLE: texto cortado pelo fim da aba (2026-10-16)
+
+**Sintoma:** "PARA SPINDLE" e "LIGA M4 (CCW)" apareciam cortados ao meio na
+aba CUSTOMS.
+
+**Causa:** nao era falta de largura — os botoes tinham 504px para um texto
+de 125px. A coluna do meio (REFERENCIAMENTO + MACROS MDI + SPINDLE) pedia
+mais altura do que a aba tem. Medido: a aba da' **639px**, e o grupo
+SPINDLE pedia ~318 (100+70+70 de botao, 24+24 de espacamento, 15+15 de
+margem) mas recebeu **186**. O Qt espreme abaixo do minimo e o texto sai
+cortado, sem erro nenhum.
+
+**Correcao:** os dois LIGA passaram a dividir uma linha, e as folgas
+diminuiram:
+
+| | antes | agora |
+|---|---|---|
+| PARA SPINDLE | 100px, linha inteira | 70px, linha inteira |
+| LIGA M3 / LIGA M4 | 70px cada, uma por linha | 62px, lado a lado |
+| margens / espacamento | 15 / 24 | 8 / 10 |
+| **altura pedida** | **318px** | **158px** |
+
+Cabe nos 186 com folga, e o PARA SPINDLE continua sendo o maior.
+
+**Licao:** texto cortado na vertical quase nunca e' fonte grande demais —
+e' layout pedindo mais altura do que a pagina tem. Antes de mexer em
+fonte, medir `widget.height()` contra a soma dos minimos. O diagnostico
+que resolveu isso mede os dois e tira foto do grupo.
