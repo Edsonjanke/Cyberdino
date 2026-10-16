@@ -21,12 +21,27 @@ que menos mudou — um volante da' dezenas de trocas, um botao da' duas
 Nao escreve nada em lugar nenhum: so' le pinos.
 """
 
+import os
 import sys
 import time
 
 import hal
 
 INTERVALO = 0.005          # 200 Hz: pega detente de volante sem perder borda
+
+
+def liga_na_hal():
+    """Cria um componente proprio — sem isso o hal.get_value NAO funciona.
+
+    O modulo hal do LinuxCNC responde "Cannot call before creating
+    component" a qualquer leitura feita por um processo que nao se
+    registrou na HAL. O erro e' silencioso pra quem so' tenta ler pinos
+    num try/except: parece que nenhum pino existe. Foi o que aconteceu na
+    primeira versao deste script."""
+    nome = "achagpio%d" % os.getpid()
+    comp = hal.component(nome)
+    comp.ready()
+    return comp
 
 
 def pinos_gpio():
@@ -122,10 +137,25 @@ def main():
     argumentos = [a for a in sys.argv[1:] if not a.startswith("--")]
     segundos = float(argumentos[0]) if argumentos else 15.0
 
+    try:
+        comp = liga_na_hal()
+    except Exception as e:
+        print("Nao consegui entrar na HAL: %s" % e)
+        print("O LinuxCNC esta rodando? (este script le a sessao em andamento)")
+        return 1
+    try:
+        return _rodar(guiado, segundos)
+    finally:
+        try:
+            comp.exit()
+        except Exception:
+            pass
+
+
+def _rodar(guiado, segundos):
     nomes = pinos_gpio()
     if not nomes:
-        print("Nao achei pinos de GPIO. O LinuxCNC esta rodando?")
-        print("(este script le a HAL da sessao em andamento)")
+        print("Nao achei pinos de GPIO. O firmware desta placa expoe GPIO?")
         return 1
 
     if guiado:

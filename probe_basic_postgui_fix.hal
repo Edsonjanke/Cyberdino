@@ -33,10 +33,10 @@ net cycle-blocked => qtpyvcp.cycle-start-button.blocked
 # MODO, e a classe BotaoManualAbreEdit.
 net btn-manual => dino_painel.manual
 
-# --- Botao RODAR DA LINHA do painel ---
-# Aperta o EXEC. DA LINHA da tela (arma na linha e deixa pausado).
-# Ver custom.hal, secao BOTOES FISICOS.
-net btn-rodar-linha => dino_painel.rodar-linha
+# --- Botao RODAR DA LINHA do painel (DESLIGADO: sem pino) ---
+# O pino dino_painel.rodar-linha existe e funciona (testado no sim); falta
+# so' decidir a entrada fisica. Ver custom.hal, secao BOTOES FISICOS.
+# net btn-rodar-linha => dino_painel.rodar-linha
 
 # --- Botoes Spindle na aba CUSTOMS (HalButton pulseOnPress 200ms) ---
 # PARA SPINDLE: drive halui.spindle.0.stop (via spindle-manual-stop, Dino_Evo.hal:355)

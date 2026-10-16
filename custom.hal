@@ -11,7 +11,6 @@
 #   GPIO.020  Cycle Start        (ja existia)
 #   GPIO.021  Pause              (ja existia)
 #   GPIO.022  Reset              (ja existia: estop clear + liga maquina)
-#   GPIO.028  RODAR DA LINHA     (pino a conferir — ver a secao dele)
 #   GPIO.023  REFRIGERANTE       toque alterna liga/desliga
 #   GPIO.024  AUTO               toque entra em AUTO
 #   GPIO.025  MANUAL             toque entra em MANUAL + abre o EDITAR
@@ -32,8 +31,9 @@
 # mexia no feed override antes desta reforma (o comentario antigo chamava
 # de "FYSETC EC11"). Ele continua no mesmo par de pinos; o que mudou e' que
 # agora tambem faz jog do Z, e o feed override passou a valer so' em AUTO.
-# GPIOs livres na placa hoje: 029, 032 e 033 (a 028 passou a ser o
-# RODAR DA LINHA, ver a secao dos botoes fisicos).
+# GPIOs livres na placa hoje: 028, 029, 032 e 033 — mas sem pull-up
+# (leem FALSE em repouso), entao botao ligado ao GND nao funciona nelas
+# sem resistor externo.
 
 # --- Componentes ---
 # encoder: 0 = volante do X, 1 = volante do Z (os dois em software; o
@@ -248,14 +248,23 @@ net btn-reset halui.machine.on
 # Nao precisa de trava: o _run_from_line_armed so' atua com o
 # interpretador IDLE, entao um toque no meio de um corte nao faz nada.
 #
-# >>> CONFERIR O PINO <<<  Este e' o unico numero deste arquivo que nao foi
-# verificado na maquina. Com o LinuxCNC rodando:
-#     python3 tools/acha_gpio.py
-# aperte o botao e veja qual entrada muda; se nao for a 028, troque so'
-# esta linha. Entrada sem fio nao causa problema nenhum: fica em TRUE pelo
-# pull-up, entao o `.in_not` da' FALSE e o botao simplesmente nao dispara.
-# Use so' pino que o firmware expoe como GPIO livre: 028, 029, 032 ou 033.
-net btn-rodar-linha  <= hm2_7i92.0.gpio.028.in_not
+# >>> DESLIGADO ATE TER UM PINO <<<  (2026-10-16)
+#
+# Medido na maquina com tools/acha_gpio.py: o botao que seria o "fio que
+# sobrou do seletor de eixo" e' a MESMA entrada do MANUAL (GPIO.025).
+# Nenhuma das entradas livres (028, 029, 032, 033) registrou nada.
+#
+# E atencao com elas: em repouso essas quatro leem FALSE, enquanto toda
+# entrada que tem botao ligado (020..025, 027) le TRUE. Ou seja, as livres
+# NAO tem pull-up — botao simples ligando ao GND nao vai ser visto ali.
+# Para usar uma delas e' preciso resistor de pull-up externo (~4k7 pro
+# +5V do DB15).
+#
+# Se tivesse ficado no 028 o botao dispararia SOZINHO no boot: com o pino
+# em FALSE, o `.in_not` fica TRUE e a interface veria borda de subida.
+# Por isso esta linha fica comentada ate haver pino de verdade:
+#
+# net btn-rodar-linha  <= hm2_7i92.0.gpio.0XX.in_not
 
 # =============================================
 #  OVERRIDES EM AUTO: cada volante ajusta um
