@@ -12,7 +12,8 @@ refrigerante**. Ver tambem [[06 - MPG Handwheel]], que mudou junto.
 | GPIO.024 | AUTO | entra em modo AUTO |
 | GPIO.025 | MANUAL | entra em MANUAL **e abre o EDITAR na tela** |
 | GPIO.023 | REFRIGERANTE | alterna liga/desliga a bomba |
-| GPIO.028 | RODAR DA LINHA | aperta o EXEC. DA LINHA (pino **a conferir**) |
+(o RODAR DA LINHA ficou **so' na tela** — nao sobrou entrada na placa,
+ver [[01 - Mesa 7i92 Placa Chinesa]])
 
 Nao ha mais botao fisico de MDI. O MDI continua na tela — digitar na caixa
 MDI ja troca o modo sozinho.
@@ -70,11 +71,15 @@ depois.
 Nao precisa de trava: o `_run_from_line_armed` so' atua com o
 interpretador IDLE, entao um toque no meio de um corte nao faz nada.
 
-**O pino ainda nao foi conferido na maquina.** E' o unico numero do
-`custom.hal` nessa situacao, e esta marcado no arquivo. Entrada sem fio
-nao causa problema: fica em TRUE pelo pull-up, o `.in_not` da' FALSE e o
-botao simplesmente nao dispara. Use so' pino que o firmware expoe como
-GPIO livre: **029, 032 ou 033** (a 028 e' o palpite atual).
+**Nao foi ligado: nao sobrou entrada na placa.** Procuramos uma, e o que
+se achou foi que o unico fio livre do painel ja' e' o do MANUAL
+(GPIO.025), e que os pontos soldados dos sete I/O que o firmware deixa
+livres nao chegam no FPGA. Medicao e detalhes em
+[[01 - Mesa 7i92 Placa Chinesa]].
+
+Decisao do operador (2026-10-16): **o RODAR DA LINHA fica so' na tela.**
+O pino `dino_painel.rodar-linha` continua existindo e testado no sim; as
+duas linhas de HAL estao comentadas, prontas pra quando houver entrada.
 
 ### Por que CLICAR no botao da tela, e nao repetir a logica
 
