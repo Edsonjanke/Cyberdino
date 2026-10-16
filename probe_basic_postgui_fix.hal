@@ -123,11 +123,21 @@ net z-pos-fb         => ams32.pos-cmd-z
 # Modo teleop usa halui.axis.*, nao halui.joint.*
 sets jog-speed 4500
 
+# Mapa dos quatro botoes de jog do CLP. NAO segue a ordem dos M: o que
+# vale e' o que o botao faz na maquina, conferido com o eixo andando.
+#
+#   M200 (status.00) -> X+
+#   M201 (status.01) -> Z+      <- trocado com o M203 em 2026-10-16
+#   M202 (status.02) -> Z-
+#   M203 (status.03) -> X-      <- trocado com o M201 em 2026-10-16
+#
+# Antes desta troca o M201 dava X- e o M203 dava Z+, e os dois botoes
+# estavam invertidos no painel. O M202 ja' vinha invertido de antes (o
+# botao rotulado "Z+" gera Z-), e isso continua valendo.
 net jog-x-pos  <=  ams32.status.00
-net jog-x-neg  <=  ams32.status.01
-# Z invertido: botao "Z+" (M202) gera jog-z-neg; "Z-" (M203) gera jog-z-pos
-net jog-z-pos  <=  ams32.status.03
+net jog-z-pos  <=  ams32.status.01
 net jog-z-neg  <=  ams32.status.02
+net jog-x-neg  <=  ams32.status.03
 
 # Alarme servos X/Z (HLTNC T3D) -> M207 (ladder bloco 7) -> E-stop
 # Ladder AMS32 agrega X7 OR /X10 OR /X11 em M207 (= ams32.status.07).
