@@ -158,3 +158,35 @@ python3 tools/acha_gpio.py        # 15 s; aperte/gire o que quer achar
 Ele lista so' as entradas que mudaram. Volante aparece como **dois** pinos
 com contagem parecida (fases A e B); botao aparece como **um** pino com 2
 trocas por aperto.
+
+### `halrun -U` derruba a HAL do LinuxCNC que esta aberto
+**Problema (2026-10-16, com a maquina ligada):** para validar o
+`custom.hal` num `halrun` e' preciso uma sessao de realtime limpa, e o
+`halrun -U` que isso exige **matou a HAL da sessao em andamento**. Os
+processos `linuxcncsvr` e `probe_basic_lathe` continuaram na tela, mas
+sem HAL nenhuma por tras.
+
+**O que salvou:** o `salva_posicao.py` recebe SIGTERM e gravou a posicao
+final normalmente (`motivo: encerramento`) — nada de referencia se perdeu.
+Mas nao da' pra contar com isso.
+
+**Solucao:** `tools/valida_hal.sh`, que **recusa rodar** se achar um
+`linuxcncsvr` no ar:
+
+```bash
+tools/valida_hal.sh custom.hal
+```
+
+Ele tambem acusa linha solta (nem comentario nem comando) com o numero da
+linha, antes mesmo de tentar carregar.
+
+### `hal.get_value` nao funciona sem criar um componente
+Qualquer processo Python que leia pinos precisa de
+`hal.component("algumnome").ready()` antes. Sem isso **toda** leitura
+levanta `RuntimeError: Cannot call before creating component`.
+
+E' traicoeiro quando se descobre os pinos por tentativa dentro de
+try/except: o erro vira "nenhum pino existe", e a ferramenta diz que nao
+achou nada em vez de dizer que nao conseguiu entrar na HAL. Foi o que
+aconteceu com a primeira versao do `tools/acha_gpio.py` — e o teste com
+HAL de mentira nao pegou, porque o dublê nao exigia o componente.
