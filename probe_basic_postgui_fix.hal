@@ -21,8 +21,15 @@ net cycle-hours qtpyvcp.timerhours.in <= time.0.hours
 net spindle-fb-rpm-abs-filtered => qtpyvcp.spindle-encoder-rpm.in
 
 # --- Indicador MPG na interface ---
-# MpgButton customizado: pin .in controla checked, mouse bloqueado
+# MpgButton customizado: pin .in controla checked, mouse bloqueado.
+# Desde 2026-10-16 o sinal e' simplesmente "a maquina esta em manual",
+# que e' quando os volantes estao vivos.
 net mpg-enabled => qtpyvcp.mpg-indicator.in
+
+# --- Botao de PASSO do painel (GPIO.027) ---
+# Cada toque passa pro proximo incremento de jog. O customs.py clica no
+# proximo botao da fileira de incrementos da tela.
+net btn-passo => dino_painel.passo
 
 # --- Aviso botao fisico: cycle-start fora de AUTO mostra mensagem na tela ---
 net cycle-blocked => qtpyvcp.cycle-start-button.blocked

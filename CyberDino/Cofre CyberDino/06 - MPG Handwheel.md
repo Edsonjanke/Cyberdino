@@ -22,17 +22,47 @@ escolhe o eixo e' a mao do operador.
 | GPIO.026 | IN | Volante do Z - fase B | P1 pino 6 |
 | GPIO.027 | IN | Botao MPG (pulso) | arma/desarma os dois |
 
-## Botao MPG (era chave de manter)
+## Os volantes ficam vivos o tempo todo em MANUAL
 
-Virou botao momentaneo. O componente `toggle` guarda o estado. Esse estado
-e' so' nosso — nao existe em lugar nenhum do LinuxCNC — entao ele nunca
-desencontra de nada (diferente dos botoes de modo e do refrigerante, ver
-[[07 - Botoes de Modo e Refrigerante]]).
+**Mudou em 2026-10-16:** nao ha mais botao de armar. Estar em manual E' a
+condicao:
 
 ```
-GPIO.027 -> toggle.mpg -> mpg-enabled -> joint.0/1.jog-enable
-                                      -> axis.x/z.jog-enable
+halui.mode.is-manual -> mpg-enabled -> joint.0/1.jog-enable
+                                    -> axis.x/z.jog-enable
 ```
+
+O sinal continua se chamando `mpg-enabled` porque e' o nome que o
+indicador MPG da tela consome; hoje ele quer dizer "estamos em manual".
+
+**Duas consequencias que valem lembrar:** em manual o volante esta sempre
+vivo, entao um esbarrao move o eixo; e em AUTO ele nao jogga mais — la' os
+dois viram ajuste de override.
+
+## O botao do GPIO.027 virou seletor de PASSO
+
+Cada toque passa pro proximo incremento do volante:
+
+```
+0.005 -> 0.01 -> 0.05 -> 0.1 mm por clique -> volta pro 0.005
+```
+
+Quem troca e' o `customs.py` (`BotoesDoPainel._proximo_passo`), clicando
+no proximo botao do seletor — o mesmo caminho do dedo do operador, entao a
+tela e o botao nunca desencontram.
+
+**Armadilha paga:** existem DOIS seletores de incremento, e o obvio e' o
+errado.
+
+| widget | onde | o que faz |
+|---|---|---|
+| `jogincrement` | tela principal | incremento generico do LinuxCNC (1mm, .1, .05, .01, **CONT**) — nao mexe na escala do volante |
+| `jog_increment` | aba CUSTOMS | **este** — 0.005/0.01/0.05/0.1 mm por clique, publica `qtpyvcp.jog-increment.scale` -> `jog-scale` dos joints |
+
+A primeira versao clicava no da tela principal. No sim a tela mostrava um
+valor e o `jog-increment.scale` do HAL ficava noutro — e o ciclo ainda
+passava pelo CONT, onde o volante nao anda. O teste so' pegou porque lia o
+pino do HAL alem do texto do botao.
 
 Os sinais `axis-select-x` / `axis-select-z` sao do tempo da chave de eixo e
 ficaram **sem ninguem escrevendo** (valem FALSE). Eles so' alimentam

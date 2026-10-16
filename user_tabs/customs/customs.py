@@ -140,18 +140,22 @@ except _hal.error as e:
 #                   em si quem faz e' o halui, direto no HAL.
 #   rodar-linha  -> aperta o EXEC. DA LINHA (arma o programa na linha e
 #                   deixa pausado; quem usina e' o INICIAR depois).
+#   passo        -> passa pro proximo incremento de jog (1 / .5 / .1 /
+#                   .05 / .01 mm). E' o botao que antes armava o MPG.
 #
 # Os pinos sao criados em escopo de modulo pra ja existirem quando o
 # probe_basic_postgui_fix.hal for lido.
 _hal_painel = None
 _hal_pin_manual = None
 _hal_pin_rodar_linha = None
+_hal_pin_passo = None
 
 try:
     _hal_painel = _hal.component('dino_painel')
     _hal_pin_manual = _hal_painel.newpin('manual', _hal.HAL_BIT, _hal.HAL_IN)
     _hal_pin_rodar_linha = _hal_painel.newpin('rodar-linha', _hal.HAL_BIT,
                                               _hal.HAL_IN)
+    _hal_pin_passo = _hal_painel.newpin('passo', _hal.HAL_BIT, _hal.HAL_IN)
     _hal_painel.ready()
     atexit.register(lambda: _hal_painel.exit() if _hal_painel else None)
 except _hal.error as e:
@@ -176,7 +180,8 @@ class BotoesDoPainel:
 
     def _acoes(self):
         return (("manual", _hal_pin_manual, self._abrir_edit),
-                ("rodar-linha", _hal_pin_rodar_linha, self._exec_da_linha))
+                ("rodar-linha", _hal_pin_rodar_linha, self._exec_da_linha),
+                ("passo", _hal_pin_passo, self._proximo_passo))
 
     def _poll(self):
         for nome, pino, acao in self._acoes():
@@ -235,6 +240,50 @@ class BotoesDoPainel:
             return
         botao.click()
         LOG.info("RODAR DA LINHA pelo painel")
+
+
+    @staticmethod
+    def _proximo_passo():
+        """Passa pro proximo passo do VOLANTE, como se tivesse clicado.
+
+        O alvo e' o `jog_increment` da aba CUSTOMS — o widget customizado
+        do mpg_button.py, com 0.005 / 0.01 / 0.05 / 0.1 mm por clique do
+        volante. E' ele que publica `qtpyvcp.jog-increment.scale`, que vai
+        pros jog-scale dos joints.
+
+        NAO e' o `jogincrement` da tela principal: aquele e' o incremento
+        generico do LinuxCNC (inclui CONT, jog continuo) e nao mexe na
+        escala do volante. Clicar nele deixava a tela mostrando um valor e
+        o volante andando outro — foi o que o teste no sim mostrou.
+
+        Clicar no botao e' o mesmo caminho do dedo do operador: a
+        preferencia e' gravada e o pino HAL publicado pelo proprio widget,
+        sem precisarmos saber como.
+
+        Da' a volta no fim da fileira: do mais grosso volta pro mais fino.
+        """
+        from qtpy.QtWidgets import QAbstractButton
+        fileira = None
+        for top in QApplication.topLevelWidgets():
+            fileira = fileira or top.findChild(QWidget, "jog_increment")
+        if fileira is None:
+            LOG.warning("PASSO: seletor de incremento do volante nao encontrado")
+            return
+        botoes = [b for b in fileira.findChildren(QAbstractButton)
+                  if b.isCheckable()]
+        if not botoes:
+            LOG.warning("PASSO: seletor de incremento vazio")
+            return
+        atual = next((i for i, b in enumerate(botoes) if b.isChecked()), -1)
+        proximo = botoes[(atual + 1) % len(botoes)]
+        proximo.setChecked(True)      # o grupo e' exclusivo: dispara idToggled
+        LOG.info("PASSO do painel: volante agora anda %s por clique",
+                 proximo.text())
+        try:
+            getPlugin('notifications').captureMessage(
+                'info', u"Passo do volante: %s" % proximo.text())
+        except Exception:
+            pass
 
 
 _painel_botoes = None

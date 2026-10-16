@@ -14,7 +14,7 @@
 #   GPIO.023  REFRIGERANTE       toque alterna liga/desliga
 #   GPIO.024  AUTO               toque entra em AUTO
 #   GPIO.025  MANUAL             toque entra em MANUAL + abre o EDITAR
-#   GPIO.027  MPG liga/desliga   toque arma/desarma os dois volantes
+#   GPIO.027  PASSO              toque passa pro proximo incremento
 #   GPIO.030  volante do X - A   (DB15 pino 10)
 #   GPIO.031  volante do X - B   (DB15 pino 7)
 #   GPIO.016  volante do Z - A   (P2 pino 13)
@@ -44,7 +44,7 @@ loadrt and2 names=and2.manual-livre,and2.manual-ok,and2.refrig-ok,and2.rodar-liv
 # Botoes de pulso que precisam LEMBRAR um estado (liga/desliga): o 'toggle'
 # transforma o toque momentaneo num nivel que fica ate o proximo toque.
 # AUTO e MANUAL nao usam toggle — sao comando direto, cada um no seu pino.
-loadrt toggle names=toggle.mpg,toggle.refrig
+loadrt toggle names=toggle.refrig
 
 addf encoder.update-counters servo-thread
 addf encoder.capture-position servo-thread
@@ -57,7 +57,6 @@ addf not.rodar servo-thread
 addf and2.manual-livre servo-thread
 addf and2.manual-ok servo-thread
 addf and2.refrig-ok servo-thread
-addf toggle.mpg servo-thread
 addf toggle.refrig servo-thread
 addf and2.rodar-livre servo-thread
 addf and2.btn-rodar servo-thread
@@ -110,13 +109,19 @@ net mpgz-counts encoder.1.counts => joint.1.jog-counts axis.z.jog-counts
 # (ver probe_basic_postgui_fix.hal). NAO usar setp aqui: conflitaria com o net.
 # Default (0.01mm) e o estado inicial publicado pelo widget ao subir a GUI.
 
-# --- Botao MPG (pulso): arma/desarma os dois volantes ---
-# Era uma chave de manter; virou botao momentaneo. O 'toggle' guarda o
-# estado, e como esse estado e' so' nosso (nao existe em lugar nenhum do
-# LinuxCNC) ele nunca desencontra de nada.
-net btn-mpg-raw  toggle.mpg.in <= hm2_7i92.0.gpio.027.in_not
-setp toggle.mpg.debounce 30
-net mpg-enabled  <= toggle.mpg.out
+# --- Volantes vivos sempre que a maquina estiver em MANUAL ---
+# Decisao do operador (2026-10-16): nao ha mais botao de armar. Estar em
+# manual E' a condicao — e o botao que armava virou seletor de passo (logo
+# abaixo).
+#
+# O sinal continua se chamando `mpg-enabled` porque e' o nome que o
+# indicador MPG da tela consome (postgui); hoje ele quer dizer
+# simplesmente "estamos em manual".
+#
+# Consequencia a ter em conta: em manual o volante esta SEMPRE vivo, entao
+# um esbarrao nele move o eixo. E em AUTO ele nao jogga mais — la' os dois
+# viram ajuste de override (ver a secao dos overrides).
+net mpg-enabled  halui.mode.is-manual
 
 # Os dois eixos ficam habilitados juntos.
 net mpg-enabled => joint.0.jog-enable axis.x.jog-enable
@@ -269,6 +274,15 @@ net btn-rodar-linha  <= and2.btn-rodar.out
 # PAUSE de sempre
 net btn-pause-raw  => and2.btn-pausa.in0
 net btn-pause      halui.program.pause  <= and2.btn-pausa.out
+
+# --- Botao de PASSO (GPIO.027): era o de armar o MPG ---
+# Cada toque passa pro proximo incremento de jog (1 / .5 / .1 / .05 /
+# .01 mm). Quem faz a troca e' o customs.py: ele clica no proximo botao da
+# fileira de incrementos da tela, que e' o mesmo caminho do dedo do
+# operador — entao a tela e o botao nunca desencontram.
+#
+# Sem 'toggle' aqui: nao ha estado a guardar, o toque e' o comando.
+net btn-passo  <= hm2_7i92.0.gpio.027.in_not
 
 # --- Reset: GPIO.022 -> estop reset + machine on ---
 net btn-reset halui.estop.reset   <= hm2_7i92.0.gpio.022.in_not
