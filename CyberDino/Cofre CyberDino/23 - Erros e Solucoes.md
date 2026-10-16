@@ -134,3 +134,27 @@ Os pinos de comando (`halui.mode.auto`, `halui.flood.off`, ...) so' agem na
 sim, com `halui.flood.off` preso em TRUE um `flood.on` depois liga a bomba
 do mesmo jeito, e com `halui.mode.manual` preso a tela ainda vai pra MDI.
 E' o que torna seguro mandar nivel continuo nesses pinos.
+
+### Volante do Z ficou mudo depois de remapear o pino
+**Problema:** na reforma do painel (2026-10-16) o volante do Z foi
+configurado nos GPIO.028/029 e simplesmente **nao fez nada** — sem erro,
+sem aviso, HAL carregando normal. Entrada de GPIO sem fio nao reclama:
+fica parada em TRUE pelo pull-up.
+
+**Causa:** o volante do Z sempre esteve no **GPIO.016/026**. O comentario
+do `custom.hal` chamava esse par de "encoder FYSETC EC11 de feed
+override", como se fosse um botaozinho separado do painel, e a reforma foi
+desenhada em cima dessa descricao em vez da fiacao de verdade. O sintoma
+que entregou: *"antes ele tava funcionando pra aumentar ou diminuir o
+feed"* — era exatamente o que o 016/026 fazia.
+
+**Licao:** comentario de arquivo nao e' fiacao. Para saber onde um botao
+ou volante esta ligado, com o LinuxCNC rodando:
+
+```bash
+python3 tools/acha_gpio.py        # 15 s; aperte/gire o que quer achar
+```
+
+Ele lista so' as entradas que mudaram. Volante aparece como **dois** pinos
+com contagem parecida (fases A e B); botao aparece como **um** pino com 2
+trocas por aperto.

@@ -17,17 +17,19 @@
 #   GPIO.027  MPG liga/desliga   toque arma/desarma os dois volantes
 #   GPIO.030  volante do X - A   (DB15 pino 10)
 #   GPIO.031  volante do X - B   (DB15 pino 7)
-#   GPIO.028  volante do Z - A   (P1 pino 8)
-#   GPIO.029  volante do Z - B   (P1 pino 9)
+#   GPIO.016  volante do Z - A   (P2 pino 13)
+#   GPIO.026  volante do Z - B   (P1 pino 6)
 #   GPIO.014  fim de curso (home compartilhado)
 #   GPIO.015  E-Stop
 #
 # Botoes ligam o pino ao GND (pull-up interno), por isso tudo le por
 # `.in_not`.
 #
-# O encoder pequeno de feed override (FYSETC EC11, GPIO.016 e GPIO.026)
-# saiu do painel: quem faz feed override agora e' o volante do Z, em AUTO.
-# GPIOs livres na placa hoje: 016, 026, 032 e 033.
+# O volante do Z E' o encoder que ja' estava no GPIO.016/026 — era ele que
+# mexia no feed override antes desta reforma (o comentario antigo chamava
+# de "FYSETC EC11"). Ele continua no mesmo par de pinos; o que mudou e' que
+# agora tambem faz jog do Z, e o feed override passou a valer so' em AUTO.
+# GPIOs livres na placa hoje: 028, 029, 032 e 033.
 
 # --- Componentes ---
 # encoder: 0 = volante do X, 1 = volante do Z (os dois em software; o
@@ -87,8 +89,8 @@ setp encoder.1.counter-mode 0
 
 net mpgx-a encoder.0.phase-A <= hm2_7i92.0.gpio.030.in
 net mpgx-b encoder.0.phase-B <= hm2_7i92.0.gpio.031.in
-net mpgz-a encoder.1.phase-A <= hm2_7i92.0.gpio.028.in
-net mpgz-b encoder.1.phase-B <= hm2_7i92.0.gpio.029.in
+net mpgz-a encoder.1.phase-A <= hm2_7i92.0.gpio.016.in
+net mpgz-b encoder.1.phase-B <= hm2_7i92.0.gpio.026.in
 
 # Cada volante so' alimenta o SEU eixo (antes os dois joints recebiam as
 # contagens do unico volante e a chave de eixo decidia quem andava).
@@ -236,8 +238,9 @@ net btn-reset halui.machine.on
 # =============================================
 #  FEED OVERRIDE pelo volante do Z em modo AUTO
 # =============================================
-# O encoder pequeno que fazia isso (FYSETC EC11, GPIO.016/026) saiu do
-# painel em 2026-10-16. Agora cada volante tem funcao dupla em AUTO:
+# O volante do Z ja' fazia isso antes da reforma, pelos mesmos
+# GPIO.016/026 — so' que valia em qualquer modo. Agora cada volante tem funcao dupla em
+# AUTO:
 #
 #   volante do X -> rapid override
 #   volante do Z -> feed override

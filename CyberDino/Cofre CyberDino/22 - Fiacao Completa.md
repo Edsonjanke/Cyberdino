@@ -72,8 +72,8 @@ eixo do MPG e a chave de enable do MPG. Ver
 Ponto soldado ──── GPIO.024 ──── Botao AUTO (pulso, GND no toque)
 Ponto soldado ──── GPIO.025 ──── Botao MANUAL (pulso, GND no toque)
 Ponto soldado ──── GPIO.027 ──── Botao MPG (pulso, GND no toque)
-Ponto soldado ──── GPIO.028 ──── Volante do Z fase A (P1 pino 8)
-Ponto soldado ──── GPIO.029 ──── Volante do Z fase B (P1 pino 9)
+Ponto soldado ──── GPIO.016 ──── Volante do Z fase A (P2 pino 13)
+Ponto soldado ──── GPIO.026 ──── Volante do Z fase B (P1 pino 6)
 Ponto soldado ──── GPIO.023 ──── Botao REFRIGERANTE (pulso, GND no toque)
 ```
 

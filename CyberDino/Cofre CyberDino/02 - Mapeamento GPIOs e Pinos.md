@@ -22,19 +22,26 @@
 | GPIO.024 | IN | Botao AUTO | pulso |
 | GPIO.025 | IN | Botao MANUAL | pulso (abre o EDITAR junto) |
 | GPIO.027 | IN | Botao MPG | pulso, arma/desarma os dois volantes |
-| GPIO.028 | IN | Volante do Z - fase A | P1 pino 8 |
-| GPIO.029 | IN | Volante do Z - fase B | P1 pino 9 |
+| GPIO.016 | IN | Volante do Z - fase A | P2 pino 13 |
+| GPIO.026 | IN | Volante do Z - fase B | P1 pino 6 |
 | GPIO.030 | IN | Volante do X - fase A | DB15 pino 10 |
 | GPIO.031 | IN | Volante do X - fase B | DB15 pino 7 |
 
 Painel refeito em **2026-10-16**: sairam a chave seletora de modo
-(024/023), a chave de eixo do MPG (025), a chave de enable do MPG (027) e
-o encoder de feed override (016/026). No lugar, so' botoes de pulso e um
-volante por eixo.
+(024/023), a chave de eixo do MPG (025) e a chave de enable do MPG (027).
+No lugar, so' botoes de pulso e um volante por eixo.
 
-**GPIOs livres hoje: 016, 026, 032 e 033** (P1 pinos 12 e 13 para os dois
-ultimos). Conferido com
-`mesaflash --device 7i92 --addr 10.10.10.10 --readhmid`.
+O par **016/026 sempre foi o volante do Z** — era o que mexia no feed
+override. O `custom.hal` antigo chamava de "encoder FYSETC EC11", como se
+fosse um botaozinho a parte, e isso ja' custou uma viagem a' maquina: o
+volante foi remapeado pra 028/029, onde nao ha fio nenhum, e ficou mudo.
+
+**GPIOs livres hoje: 028, 029, 032 e 033** (P1 pinos 8, 9, 12 e 13).
+Conferido com `mesaflash --device 7i92 --addr 10.10.10.10 --readhmid`.
+
+Na duvida sobre em que pino esta alguma coisa, **nao deduza**: com o
+LinuxCNC rodando, `python3 tools/acha_gpio.py` mostra quais entradas mudam
+enquanto voce aperta o botao ou gira o volante.
 
 ## DB25 (P2) - Step/Dir + PWM
 

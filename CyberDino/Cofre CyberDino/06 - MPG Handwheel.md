@@ -18,8 +18,8 @@ escolhe o eixo e' a mao do operador.
 |------|-----|--------|------|
 | GPIO.030 | IN | Volante do X - fase A | DB15 pino 10 |
 | GPIO.031 | IN | Volante do X - fase B | DB15 pino 7 |
-| GPIO.028 | IN | Volante do Z - fase A | P1 pino 8 |
-| GPIO.029 | IN | Volante do Z - fase B | P1 pino 9 |
+| GPIO.016 | IN | Volante do Z - fase A | P2 pino 13 |
+| GPIO.026 | IN | Volante do Z - fase B | P1 pino 6 |
 | GPIO.027 | IN | Botao MPG (pulso) | arma/desarma os dois |
 
 ## Botao MPG (era chave de manter)
@@ -47,8 +47,11 @@ e isso ninguem usa aqui: os botoes de jog do PLC vao direto em
 | X | rapid override (1% por click) | jog do X |
 | Z | **feed override** (1% por click) | jog do Z |
 
-O feed override era de um encoder pequeno (FYSETC EC11, GPIO.016/026) que
-saiu do painel em 2026-10-16.
+**O volante do Z sempre esteve no GPIO.016/026.** Era ele que mexia no
+feed override antes da reforma — o comentario antigo do `custom.hal`
+chamava esse par de "encoder FYSETC EC11", como se fosse um botaozinho
+separado, e nao era. O que mudou em 2026-10-16: alem do feed override ele
+passou a fazer jog do Z, e o feed override passou a valer so' em AUTO.
 
 A troca de funcao e' feita pelo `count-enable` ligado em
 `halui.mode.is-auto`. **Medido no sim:** girar o volante fora do AUTO nao
