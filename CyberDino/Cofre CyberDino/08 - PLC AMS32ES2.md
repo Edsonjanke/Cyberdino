@@ -44,7 +44,7 @@
 | 1 | Coolant: M100 -> Y0 (com bloqueio por alarme) |
 | 2 | Spindle: M101+M102 -> Y1/Y2 (FWD/REV) |
 | 4 | Jog: X0-X3 -> M200-M203 (debounce 100ms) |
-| **4b** | **A FAZER: X4 -> M204 (botao RODAR DA LINHA)** |
+
 | 5 | Alarme coolant: X5 -> M205 + Y4 buzzer |
 | 6 | Alarme lube: X6 -> M206 |
 | 7 | Falha geral: X7 -> M207 (bloqueia tudo) |
@@ -56,7 +56,7 @@
 | X | Funcao |
 |---|--------|
 | X0-X3 | Jog (X+/X-/Z+/Z-) |
-| X4 | **Botao RODAR DA LINHA** (2026-10-16) - FALTA O BLOCO NO LADDER |
+| X4 | livre (era candidato pro RODAR DA LINHA; ver abaixo) |
 | X5 | Alarme coolant |
 | X6 | Alarme lube |
 | X7 | Falha geral externa |
@@ -74,7 +74,12 @@
 - Adaptador USB-RS485 - defeituoso (nao e RS-485 real)
 
 
-## Botao RODAR DA LINHA pelo CLP (2026-10-16)
+## Botao RODAR DA LINHA pelo CLP — PLANO B, nao usado (2026-10-16)
+
+**Nao foi por aqui.** O operador preferiu nao mexer no ladder agora, e a
+funcao virou o segundo uso do botao de PAUSE (ver
+[[07 - Botoes de Modo e Refrigerante]]). Fica registrado porque o caminho
+esta' pronto e serve se um dia quiserem botao proprio.
 
 A placa Mesa **nao tem entrada utilizavel sobrando** (ver
 [[01 - Mesa 7i92 Placa Chinesa]]), entao o botao foi pro CLP:
@@ -83,11 +88,14 @@ A placa Mesa **nao tem entrada utilizavel sobrando** (ver
 botao -> X4 -> ladder -> M204 -> ams32.status.04 -> dino_painel.rodar-linha
 ```
 
-O lado do LinuxCNC ja' esta pronto, no `probe_basic_postgui_fix.hal`:
+O lado do LinuxCNC seria, no `probe_basic_postgui_fix.hal`:
 
 ```hal
 net btn-rodar-linha <= ams32.status.04 => dino_painel.rodar-linha
 ```
+
+(hoje esse sinal vem do botao de PAUSE, pelo `custom.hal` — trocar a
+fonte e' uma linha.)
 
 O `customs.py` le a borda de subida e aperta o **EXEC. DA LINHA** da tela:
 arma o programa na linha (a do cursor, ou a salva no DEF. LINHA N) e deixa

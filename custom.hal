@@ -39,8 +39,8 @@
 # encoder: 0 = volante do X, 1 = volante do Z (os dois em software; o
 # encoder de hardware do firmware e' do spindle).
 loadrt encoder num_chan=2
-loadrt not names=not.0,not.is-auto,not.prog-run,not.paused,not.quer-refrig
-loadrt and2 names=and2.manual-livre,and2.manual-ok,and2.refrig-ok,and2.cycle-start,and2.cycle-run,and2.cycle-resume,and2.cycle-blocked,and2.estop
+loadrt not names=not.0,not.is-auto,not.prog-run,not.paused,not.quer-refrig,not.rodar
+loadrt and2 names=and2.manual-livre,and2.manual-ok,and2.refrig-ok,and2.rodar-livre,and2.btn-rodar,and2.btn-pausa,and2.cycle-start,and2.cycle-run,and2.cycle-resume,and2.cycle-blocked,and2.estop
 # Botoes de pulso que precisam LEMBRAR um estado (liga/desliga): o 'toggle'
 # transforma o toque momentaneo num nivel que fica ate o proximo toque.
 # AUTO e MANUAL nao usam toggle — sao comando direto, cada um no seu pino.
@@ -53,11 +53,15 @@ addf not.is-auto servo-thread
 addf not.prog-run servo-thread
 addf not.paused servo-thread
 addf not.quer-refrig servo-thread
+addf not.rodar servo-thread
 addf and2.manual-livre servo-thread
 addf and2.manual-ok servo-thread
 addf and2.refrig-ok servo-thread
 addf toggle.mpg servo-thread
 addf toggle.refrig servo-thread
+addf and2.rodar-livre servo-thread
+addf and2.btn-rodar servo-thread
+addf and2.btn-pausa servo-thread
 addf and2.cycle-start servo-thread
 addf and2.cycle-run servo-thread
 addf and2.cycle-resume servo-thread
@@ -231,24 +235,46 @@ net mode-is-auto         => not.is-auto.in
 net not-auto             not.is-auto.out => and2.cycle-blocked.in1
 net cycle-blocked        <= and2.cycle-blocked.out
 
-# --- Pause: GPIO.021 -> halui.program.pause ---
-# Botao so pausa. Para continuar, apertar Cycle Start (GPIO.020)
-net btn-pause  halui.program.pause  <= hm2_7i92.0.gpio.021.in_not
+# --- Pause (GPIO.021): botao de DUPLA FUNCAO ---
+# Decisao do operador (2026-10-16): como nao sobrou entrada na placa pro
+# RODAR DA LINHA, o proprio botao de PAUSE faz as duas coisas, escolhidas
+# pelo estado da maquina:
+#
+#   em AUTO e com o programa PARADO  -> RODAR DA LINHA
+#   em qualquer outro caso           -> PAUSE (como sempre foi)
+#
+# "Parado" aqui e' o halui.program.is-idle, que e' nem rodando nem
+# pausado. E' o que impede as duas funcoes de se cruzarem: com programa
+# rodando so' pausa; pausado tambem so' pausa (e pausar ja-pausado nao faz
+# nada). Ou seja, o botao nunca rearma o programa no meio de um trabalho.
+# Para continuar depois do pause, Cycle Start (GPIO.020), como antes.
+#
+# Depois de armar, o interp sai de IDLE na mesma hora, entao um segundo
+# toque ja' cai no lado do pause: nao da' pra armar duas vezes seguidas.
+net btn-pause-raw  <= hm2_7i92.0.gpio.021.in_not
+
+# De que lado o botao esta' agora
+net mode-is-auto   => and2.rodar-livre.in0
+net prog-idle      => and2.rodar-livre.in1
+net modo-rodar     and2.rodar-livre.out => and2.btn-rodar.in1
+net modo-rodar     => not.rodar.in
+net modo-pausa     not.rodar.out        => and2.btn-pausa.in1
+
+# RODAR DA LINHA: aperta o EXEC. DA LINHA da tela (arma na linha e deixa
+# pausado; quem usina e' o INICIAR). Quem faz isso e' o customs.py, que le
+# este sinal pelo componente dino_painel — ver o postgui.
+net btn-pause-raw    => and2.btn-rodar.in0
+net btn-rodar-linha  <= and2.btn-rodar.out
+
+# PAUSE de sempre
+net btn-pause-raw  => and2.btn-pausa.in0
+net btn-pause      halui.program.pause  <= and2.btn-pausa.out
 
 # --- Reset: GPIO.022 -> estop reset + machine on ---
 net btn-reset halui.estop.reset   <= hm2_7i92.0.gpio.022.in_not
 net btn-reset halui.machine.on
 
-# --- Rodar da linha: aproveita o fio que era do seletor de eixo do MPG ---
-# Aperta o EXEC. DA LINHA da tela: arma o programa na linha (a do cursor,
-# ou a salva no DEF. LINHA N) e deixa PAUSADO. Quem usina e' o INICIAR
-# depois. Quem faz isso e' o customs.py, que le o pino pelo componente
-# dino_painel — por isso o sinal e' netado no probe_basic_postgui_fix.hal.
-#
-# Nao precisa de trava: o _run_from_line_armed so' atua com o
-# interpretador IDLE, entao um toque no meio de um corte nao faz nada.
-#
-# --- Rodar da linha: NAO entra por aqui, entra pelo CLP ---
+# --- Por que o RODAR DA LINHA nao tem botao proprio ---
 #
 # Procuramos entrada livre nesta placa e nao ha (medido em 2026-10-16 com
 # tools/acha_gpio.py):
@@ -261,9 +287,9 @@ net btn-reset halui.machine.on
 #    teste de controle no mesmo instante funcionando (o AUTO registrou).
 #    Ou seja, os pontos soldados nao chegam no FPGA.
 #
-# Entao o botao foi pro CLP, que tem I/O sobrando:
-#     botao -> X4 -> ladder -> M204 -> ams32.status.04
-# A ligacao esta no probe_basic_postgui_fix.hal (o ams32 so' existe la').
+# Por isso a funcao virou o segundo uso do botao de PAUSE (secao acima).
+# O CLP tambem tem I/O livre (X4 -> M204) e serviria, mas exigiria um
+# bloco novo no ladder — fica como plano B.
 #
 # Se um dia for preciso botao fisico NESTA placa: sem pull-up, botao pro
 # GND nao funciona nessas sete. Ou pull-up externo (~4k7 pro +5V) usando

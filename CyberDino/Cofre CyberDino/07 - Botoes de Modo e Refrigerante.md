@@ -77,9 +77,31 @@ se achou foi que o unico fio livre do painel ja' e' o do MANUAL
 livres nao chegam no FPGA. Medicao e detalhes em
 [[01 - Mesa 7i92 Placa Chinesa]].
 
-**Solucao: o botao foi pro CLP**, que tem I/O sobrando (X4 -> M204 ->
-`ams32.status.04`). O lado do LinuxCNC ja' esta ligado; falta o bloco no
-ladder. Ver [[08 - PLC AMS32ES2]].
+**Solucao: o botao de PAUSE ganhou dupla funcao** (decisao do operador,
+2026-10-16). Nada de fiacao nova, nada de ladder:
+
+| estado da maquina | o que o botao de PAUSE faz |
+|---|---|
+| em AUTO e programa **parado** | **RODAR DA LINHA** |
+| qualquer outro caso | PAUSE, como sempre |
+
+"Parado" e' o `halui.program.is-idle` — nem rodando nem pausado. E' o que
+impede as duas funcoes de se cruzarem: com programa rodando so' pausa, e
+pausado tambem so' pausa (pausar ja-pausado nao faz nada). Entao o botao
+**nunca rearma o programa no meio de um trabalho**.
+
+E nao da' pra armar duas vezes seguidas: assim que arma, o interp sai de
+IDLE, e o toque seguinte ja' cai no lado do pause.
+
+```
+GPIO.021 ┬─ and2 (is-auto E is-idle) ──> RODAR DA LINHA (via dino_painel)
+         └─ and2 (NAO o de cima)    ──> halui.program.pause
+```
+
+Para continuar depois do pause, Cycle Start (GPIO.020), como antes.
+
+O CLP tambem tem I/O livre (X4 -> M204) e serviria, mas exigiria um bloco
+novo no ladder — fica como plano B em [[08 - PLC AMS32ES2]].
 
 ### Por que CLICAR no botao da tela, e nao repetir a logica
 
