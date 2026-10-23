@@ -9,8 +9,8 @@ refrigerante**. Ver tambem [[06 - MPG Handwheel]], que mudou junto.
 
 | GPIO | Botao | O que faz |
 |---|---|---|
-| GPIO.024 | AUTO | entra em modo AUTO |
 | GPIO.025 | MANUAL | entra em MANUAL **e abre o EDITAR na tela** |
+| GPIO.024 | AUTO | entra em AUTO **e vai pra aba PRINCIPAL** |
 | GPIO.023 | REFRIGERANTE | alterna liga/desliga a bomba |
 (o RODAR DA LINHA ficou **so' na tela** — nao sobrou entrada na placa,
 ver [[01 - Mesa 7i92 Placa Chinesa]])
@@ -45,6 +45,20 @@ Com isso o **interlock antigo deixou de existir**. Ele parava o programa
 quando a chave saia do AUTO; sem chave nao ha "posicao fora do AUTO" pra
 detectar. O Cycle Start fisico continua so' valendo em AUTO, mas agora
 olhando `halui.mode.is-auto` (o modo de verdade) em vez do nivel do botao.
+
+### Cada botao de modo tambem arruma a tela
+
+| botao | modo | e na tela |
+|---|---|---|
+| AUTO | `halui.mode.auto` | vai pra aba **PRINCIPAL**, a do G-code |
+| MANUAL | `halui.mode.manual` | abre o **EDITAR** e destrava o editor |
+
+Sao espelhos: um poe a tela pra editar o programa, o outro pra olhar ele
+rodar. Os dois agem na borda de subida, pelo componente `dino_painel`.
+
+A aba do AUTO e' achada pelo **objectName** do widget (`main_tab`), nao
+pelo texto: o titulo leva o atalho ("PRINCIPAL  CTRL+1") e ja' mudou uma
+vez. Se ja' estiver nela, nao faz nada.
 
 ### MANUAL abre o EDITAR junto
 

@@ -37,6 +37,12 @@ net btn-passo => dino_painel.passo
 # O PARAR da tela faz o mesmo, por filtro de evento no proprio botao.
 net btn-reset => dino_painel.limpar-avisos
 
+# --- Botao AUTO (GPIO.024) tambem traz a tela pro PRINCIPAL ---
+# Espelho do MANUAL, que abre o EDITAR: um poe a tela pra editar o
+# programa, o outro pra olhar ele rodar. O modo em si quem troca e' o
+# halui, direto no HAL (custom.hal).
+net btn-auto => dino_painel.auto
+
 # --- Aviso botao fisico: cycle-start fora de AUTO mostra mensagem na tela ---
 net cycle-blocked => qtpyvcp.cycle-start-button.blocked
 

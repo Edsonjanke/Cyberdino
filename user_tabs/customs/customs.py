@@ -144,6 +144,9 @@ except _hal.error as e:
 #                   .05 / .01 mm). E' o botao que antes armava o MPG.
 #   limpar-avisos-> tira os avisos empilhados da tela. E' o RESET fisico
 #                   (GPIO.022), que ja' faz estop-reset + liga maquina.
+#   auto         -> vai pra aba PRINCIPAL, a que mostra o G-code. E' o
+#                   espelho do manual: um poe pra editar, o outro poe pra
+#                   olhar o programa rodar.
 #
 # Os pinos sao criados em escopo de modulo pra ja existirem quando o
 # probe_basic_postgui_fix.hal for lido.
@@ -152,6 +155,7 @@ _hal_pin_manual = None
 _hal_pin_rodar_linha = None
 _hal_pin_passo = None
 _hal_pin_limpar = None
+_hal_pin_auto = None
 
 try:
     _hal_painel = _hal.component('dino_painel')
@@ -161,6 +165,7 @@ try:
     _hal_pin_passo = _hal_painel.newpin('passo', _hal.HAL_BIT, _hal.HAL_IN)
     _hal_pin_limpar = _hal_painel.newpin('limpar-avisos', _hal.HAL_BIT,
                                          _hal.HAL_IN)
+    _hal_pin_auto = _hal_painel.newpin('auto', _hal.HAL_BIT, _hal.HAL_IN)
     _hal_painel.ready()
     atexit.register(lambda: _hal_painel.exit() if _hal_painel else None)
 except _hal.error as e:
@@ -187,7 +192,8 @@ class BotoesDoPainel:
         return (("manual", _hal_pin_manual, self._abrir_edit),
                 ("rodar-linha", _hal_pin_rodar_linha, self._exec_da_linha),
                 ("passo", _hal_pin_passo, self._proximo_passo),
-                ("limpar-avisos", _hal_pin_limpar, _limpar_avisos))
+                ("limpar-avisos", _hal_pin_limpar, _limpar_avisos),
+                ("auto", _hal_pin_auto, self._tela_principal))
 
     def _poll(self):
         for nome, pino, acao in self._acoes():
@@ -247,6 +253,31 @@ class BotoesDoPainel:
         botao.click()
         LOG.info("RODAR DA LINHA pelo painel")
 
+
+    @staticmethod
+    def _tela_principal():
+        """AUTO no painel -> vai pra aba PRINCIPAL, a do G-code.
+
+        E' o espelho do MANUAL, que abre o EDITAR: um poe a tela pra
+        editar o programa, o outro pra olhar ele rodar.
+
+        Acha a aba pelo objectName do widget (`main_tab`), nao pelo texto:
+        o titulo leva o atalho ("PRINCIPAL  CTRL+1") e ja' mudou uma vez.
+        """
+        from qtpy.QtWidgets import QTabWidget
+        abas = None
+        for top in QApplication.topLevelWidgets():
+            abas = abas or top.findChild(QTabWidget, "tabWidget")
+        if abas is None:
+            LOG.warning("AUTO: tabWidget nao encontrado")
+            return
+        for i in range(abas.count()):
+            if abas.widget(i).objectName() == "main_tab":
+                if abas.currentIndex() != i:
+                    abas.setCurrentIndex(i)
+                    LOG.info("AUTO no painel: aba PRINCIPAL")
+                return
+        LOG.warning("AUTO: aba PRINCIPAL (main_tab) nao esta na barra")
 
     @staticmethod
     def _proximo_passo():
