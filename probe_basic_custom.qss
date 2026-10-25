@@ -1,103 +1,127 @@
 /* ==========================================================================
-   Tema Fanuc/industrial - CyberDino v2
-   Grafite neutro flat + semantica IEC (verde=iniciar, vermelho=parar,
-   ambar=hold/funcao ativa) + acento ciano p/ selecao + DRO verde-sobre-preto.
-   Paleta:
-     fundo janela  #242729   paineis  #2E3234   borda painel #4A5055
-     botao corpo   #5A6268   hover    #474D52   borda botao  #141617
-     acento ciano  #00838F   (hover-checked #0097A7, foco input #00ACC1)
-     verde START   #157A30   (pressed #23C24E)
-     vermelho STOP #C62828   (pressed #E53935)
-     ambar HOLD    #FFB300   (texto preto)
-     DRO           fundo #0D0F0E, digitos #00E676, borda #5A6268
+   Paleta "Teal industrial" (2026-10-25, linuxcnc-paleta-teal-industrial.md):
+   fundos escuros com botões cinza e destaque teal, como a interface original.
+   O âmbar saiu de tudo; só o alerta SM/MIN continua laranja.
+   Tokens:
+     fundo   #101215  janela, barra de abas e espaço entre painéis
+     painel  #1A1E24  fundo de cada painel/caixa
+     borda   #2E343C  contorno (2 px nos botões, 1 px nos painéis)
+     visor   #0B0D10  DRO, editor, preview, campos numéricos e listas
+     botao   #5A6268  hover #68717A, pressionado #4A5157, borda hover #3A414B
+     ativo   #00838F  botão ligado, aba ativa, sliders (ligado+hover #0096A3)
+     texto   #FFFFFF  texto-2 #A9B0B5 (rótulos, títulos, unidades)
+     iniciar #2FBF5A  INICIAR e LIGAR, texto #08130B
+     parar   #C62828  PARAR e E-STOP, texto branco
+     dro     #3DDC84  números do DRO e valores em destaque
+   Abas REFERENCIAR e FERRAMENTAS: fundo cinza #939695 (o da imagem do torno),
+   cartões #4B5158, caixas #3A4047, campos #2C3137.
+   Fontes: Barlow Condensed (SemiBold no texto, Bold no ativo e nos números
+   grandes), em fonts/, carregadas e postas em caixa alta pelo customs.py.
+   Os tamanhos em pt são 8% menores que os da Bebas Kai, que era mais estreita.
    ========================================================================== */
 
 QMainWindow {
-    background: #242729
+    background: #101215
 }
 
 QsciScintilla {
-    qproperty-backgroundcolor: #D9DADB;
-    qproperty-marginbackgroundcolor: #D9DADB;
+    qproperty-backgroundcolor: #0B0D10;
+    qproperty-marginbackgroundcolor: #0B0D10;
+    color: #FFFFFF;
 }
 
 QStatusBar {
-	color: white;
-	font-family: "Bebas Kai";
-    font-size: 12pt;
+	color: #FFFFFF;
+	font-family: "Barlow Condensed SemiBold";
+    font-size: 11pt;
 }
 
 QPushButton, VCPSettingsPushButton, SubCallButton, QComboBox[editable="false"],
 QComboBox[editable="true"]::drop-down {
-    color: white;
-    border-color: #141617;
+    color: #FFFFFF;
+    border-color: #2E343C;
     border-style: solid;
-    border-radius: 5px;
+    border-radius: 4px;
     border-width: 2px;
     background: #5A6268;
 }
 
 QComboBox QAbstractItemView {
-    background: #2E3234;
-    border: 2px solid #141617;
+    background: #5A6268;
+    border: 2px solid #2E343C;
 }
 
 QPushButton {
-    font-family: "Bebas Kai";
-    font-size: 15pt;
+    font-family: "Barlow Condensed SemiBold";
+    font-size: 14pt;
 }
 
+/* desabilitado: #5A6268 a 60% sobre o painel (QSS nao tem opacidade) */
 QPushButton:disabled {
-    border-color: #2A2D2F;
-    color: rgb(200, 205, 208);
+    border-color: #2E343C;
+    background: #434950;
+    color: #A9B0B5;
 }
 
 QPushButton:hover {
-    background: #474D52;
+    background: #68717A;
+    border-color: #3A414B;
 }
 
 QPushButton:pressed {
-    background: #00838F;
+    background: #4A5157;
 }
 
 QPushButton:checked[option="true"] {
     background: #00838F;
+    color: #FFFFFF;
+    border-color: #00838F;
 }
 
 QPushButton:checked {
     background: #00838F;
+    color: #FFFFFF;
+    border-color: #00838F;
+}
+
+QPushButton:checked:hover {
+    background: #0096A3;
+    border-color: #0096A3;
 }
 
 /* ---- Semantica IEC ------------------------------------------------------ */
 
 /* LIGAR (power): verde quando ligado */
 QPushButton[actionName="machine.power.toggle"]:checked {
-    background: #157A30;
-    color: white;
+    background: #2FBF5A;
+    border-color: #2FBF5A;
+    color: #08130B;
 }
 
 QPushButton[actionName="machine.power.toggle"]:pressed {
-    background: #23C24E;
+    background: #28A84F;
 }
 
 /* INICIAR (cycle start): verde sempre */
 SafeCycleStart {
-    background: #157A30;
-    color: white;
+    background: #2FBF5A;
+    border-color: #2FBF5A;
+    color: #08130B;
 }
 
 SafeCycleStart:hover {
-    background: #23A94C;
+    background: #3ACB65;
 }
 
 SafeCycleStart:pressed {
-    background: #23C24E;
+    background: #28A84F;
 }
 
 /* PARAR (program.abort): vermelho */
 QPushButton[actionName="program.abort"] {
     background: #C62828;
-    color: white;
+    border-color: #C62828;
+    color: #FFFFFF;
 }
 
 QPushButton[actionName="program.abort"]:hover {
@@ -108,10 +132,11 @@ QPushButton[actionName="program.abort"]:pressed {
     background: #E53935;
 }
 
-/* FEED HOLD: ambar quando ativo (texto preto p/ contraste) */
+/* FEED HOLD (PAUSA) ligado: teal como todo botao ligado (o ambar saiu) */
 QPushButton#feed_hold_button:checked {
-    background: #FFB300;
-    color: black;
+    background: #00838F;
+    border-color: #00838F;
+    color: #FFFFFF;
 }
 
 /* E-STOP: base com borda vermelha (o estado acionado ja vem da rule no .ui) */
@@ -147,43 +172,43 @@ QPushButton[actionName="program.abort"]:disabled {
 VCPLineEdit,
 QLineEdit {
     border-style: transparent;
-    border-color: rgb(134, 136, 138);
-    border-width: 2px;
-    border-radius: 5px;
-    color: black;
-    background: white;
-    selection-color: white;
+    border-color: #2E343C;
+    border-width: 1px;
+    border-radius: 4px;
+    color: #FFFFFF;
+    background: #0B0D10;
+    selection-color: #FFFFFF;
     selection-background-color: #00838F;
-    font: 15pt "Bebas Kai";
+    font: 14pt "Barlow Condensed SemiBold";
     padding-right: 2px;
 }
 
 QLineEdit:focus {
     border-style: solid;
     border-width: 3px;
-    border-color: #00ACC1;
+    border-color: #00838F;
 }
 
 .QFrame {
-    background-color: #2E3234;
+    background-color: #1A1E24;
     border-style: solid;
-    border-color: #4A5055;
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 6px;
+    border-radius: 4px;
 }
 
 DROWidget {
-    color: #00E676;
-    border-color: #5A6268;
+    color: #3DDC84;
+    border-color: #2E343C;
     border-style: solid;
     border-width: 1px;
     border-radius: 4px;
-    background-color: #0D0F0E;
+    background-color: #0B0D10;
 }
 
 QGroupBox {
-    border: 1px solid #4A5055;
-    border-radius: 5px;
+    border: 1px solid #2E343C;
+    border-radius: 4px;
     margin-top: 1ex;
     font-size: 16pt;
 }
@@ -192,32 +217,37 @@ QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top left;
     padding: 0 3px;
-    color: white;
+    color: #FFFFFF;
 }
 
 GcodeBackplot {
-    border-color: #141617;
+    border-color: #2E343C;
     border-style: solid;
-    border-width: 2px;
+    border-width: 1px;
     border-radius: 4px;
-    background-color: black;
+    background-color: #0B0D10;
     margin: 10px;
-    font: 12pt "Bebas Kai";
+    font: 11pt "Barlow Condensed SemiBold";
 }
 
 GcodeEditor {
-    background-color: #2E3234;
-    border-color: #141617;
+    background-color: #1A1E24;
+    border-color: #2E343C;
     border-style: solid;
-    border-width: 2px;
+    border-width: 1px;
     border-radius: 4px;
     padding: 2px;
-    font: 12pt "Bebas Kai";
+    font: 11pt "Barlow Condensed SemiBold";
 }
 
 GcodeTextEdit {
-    background-color: #000000;
-    color: #FFFFFF;
+    background-color: #0B0D10;
+    color: #FFD600;
+    /* margem dos números de linha, escura (sobrepõe as cores do .ui) */
+    qproperty-marginBackground: #1A1E24;
+    qproperty-marginColor: #A9B0B5;
+    qproperty-marginCurrentLineBackground: #1E3A3D;
+    qproperty-marginCurrentLineColor: #FFFFFF;
 }
 
 QScrollArea {
@@ -225,7 +255,7 @@ QScrollArea {
 }
 
 QScrollBar {
-    background: #2E3234;
+    background: #1A1E24;
 }
 
 QScrollBar:horizontal {
@@ -238,7 +268,7 @@ QScrollBar:vertical {
 
 QScrollBar::handle {
     background: #4A5055;
-    border: 2px solid #2E3234;
+    border: 1px solid #2E343C;
     border-radius: 4px;
 }
 
@@ -253,23 +283,23 @@ QScrollBar::handle:vertical {
 }
 
 QScrollBar::add-line:horizontal {
-    border: 4px solid #2E3234;
-    background: #2E3234;
+    border: 4px solid #2E343C;
+    background: #1A1E24;
 }
 
 QScrollBar::sub-line:horizontal {
-    border: 4px solid #2E3234;
-    background: #2E3234;
+    border: 4px solid #2E343C;
+    background: #1A1E24;
 }
 
 QScrollBar::add-line:vertical {
-    border: 4px solid #2E3234;
-    background: #2E3234;
+    border: 4px solid #2E343C;
+    background: #1A1E24;
 }
 
 QScrollBar::sub-line:vertical {
-    border: 4px solid #2E3234;
-    background: #2E3234;
+    border: 4px solid #2E343C;
+    background: #1A1E24;
 }
 
 /*===========================================================================*/
@@ -277,7 +307,7 @@ QScrollBar::sub-line:vertical {
 /*===========================================================================*/
 
 QTabWidget {
-    background: #2E3234;
+    background: #1A1E24;
 }
 
 QTabWidget::pane {
@@ -291,10 +321,10 @@ QTabWidget::tab-bar {
 QTabBar::tab {
     margin-top: 2px;
     margin-bottom: 2px;
-    color: white;
-    background: #33383B;
+    color: #A9B0B5;
+    background: #1A1E24;
     border-style: solid;
-    border-color: #141617;
+    border-color: #2E343C;
     border-top-width: 2px;
     border-bottom-width: 2px;
     border-right-width: 1px;
@@ -305,11 +335,15 @@ QTabBar::tab {
 }
 
 QTabBar::tab:selected, QTabBar::tab:hover {
-    background: #3E4448;
+    background: #00838F;
+    color: #FFFFFF;
+    border-color: #00838F;
 }
 
 QTabBar::tab:selected {
     background: #00838F;
+    color: #FFFFFF;
+    border-color: #00838F;
 }
 
 QTabBar::tab:first {
@@ -358,16 +392,16 @@ JogIncrementWidget {
 /*===========================================================================*/
 
 QMenuBar {
-    background-color: #2E3234;
+    background-color: #1A1E24;
     padding: 1px;
-    border: 0px solid black;
-    color: white;
-    font-family: "Bebas Kai";
-    font-size: 12pt;
+    border: 0px solid #2E343C;
+    color: #FFFFFF;
+    font-family: "Barlow Condensed SemiBold";
+    font-size: 11pt;
 }
 
 QMenuBar:focus {
-    border: 1px solid #00ACC1;
+    border: 1px solid #00838F;
 }
 
 QMenuBar::item {
@@ -377,27 +411,28 @@ QMenuBar::item {
 
 QMenuBar::item:selected {
     padding: 3px;
-    background: #474D52;
-    border: 0px solid #454545;
+    background: #00838F;
+    border: 0px solid #00838F;
+    color: #FFFFFF;
 }
 
 QMenuBar::item:pressed {
     padding: 3px;
-    border: 0px solid #454545;
-    background-color: #00838F;
-    color: #F0F0F0;
+    border: 0px solid #2E343C;
+    background-color: #4A5157;
+    color: #FFFFFF;
     margin-bottom: 0px;
     padding-bottom: 0px;
 }
 
 QMessageBox {
-    color: white;
-    background-color: #2E3234;
+    color: #FFFFFF;
+    background-color: #1A1E24;
 }
 
 QMessageBox QLabel {
-    font: 14pt "Bebas Kai";
-    color: white;
+    font: 13pt "Barlow Condensed SemiBold";
+    color: #FFFFFF;
 }
 
 QMessageBox QLabel[text] {
@@ -411,19 +446,19 @@ QMessageBox QLabel[text] {
 QMessageBox QPushButton {
     min-height: 40px;
     max-height: 40px;
-    font: 14pt "Bebas Kai";
+    font: 13pt "Barlow Condensed SemiBold";
     padding-left: 20px;
     padding-right: 20px;
     margin-top: 10px;
 }
 
 QDialog {
-    background-color: #2E3234;
+    background-color: #1A1E24;
 }
 
 QDialog QLabel {
-    font: 13pt "Bebas Kai";
-    color: white;
+    font: 12pt "Barlow Condensed SemiBold";
+    color: #FFFFFF;
 }
 
 /*===========================================================================*/
@@ -431,12 +466,12 @@ QDialog QLabel {
 /*===========================================================================*/
 
 QMenu {
-    border: 0px solid #454545;
-    background-color: #5A6268;
-    color: white;
+    border: 0px solid #2E343C;
+    background-color: #0B0D10;
+    color: #FFFFFF;
     margin: 0px;
-    font-family: "Bebas Kai";
-    font-size: 11pt;
+    font-family: "Barlow Condensed SemiBold";
+    font-size: 10pt;
 }
 
 QMenu::separator {
@@ -455,12 +490,13 @@ QMenu::icon {
 
 QMenu::item {
     padding: 4px 24px 4px 24px;
-    border: 1px transparent #454545;  /* reserve space for selection border */
+    border: 1px transparent #2E343C;  /* reserve space for selection border */
 }
 
 QMenu::item:selected {
     background: #00838F;
-    border: 0px solid #454545;
+    border: 0px solid #00838F;
+    color: #FFFFFF;
 }
 
 QMenu::indicator {
@@ -474,34 +510,96 @@ QMenu::indicator {
 /*===========================================================================*/
 
 QHeaderView {
-    font: 14pt "Bebas Kai";
-    background-color: #5A6268;
-    color: white;
+    font: 13pt "Barlow Condensed SemiBold";
+    background-color: #0B0D10;
+    color: #FFFFFF;
     border: none;
 }
 
 ToolTable, OffsetTable {
-    border-top: 8px #2E3234;
-    border-left: 4px #2E3234;
-    border-bottom: 5px #2E3234;
-    border-right: 4px #2E3234;
-    border-radius: 5px;
-    border-color: #2E3234;
+    border-top: 8px #2E343C;
+    border-left: 4px #2E343C;
+    border-bottom: 5px #2E343C;
+    border-right: 4px #2E343C;
+    border-radius: 4px;
+    border-color: #2E343C;
     border-style: solid;
-    background-color: #2E3234;
-    gridline-color: #1F2224;
-    alternate-background-color: #34393C;
-    color: white;
-    font: 15pt "Bebas Kai";
+    background-color: #1A1E24;
+    gridline-color: #2E343C;
+    alternate-background-color: #121519;
+    color: #FFFFFF;
+    font: 14pt "Barlow Condensed SemiBold";
     selection-background-color: #00838F;
-    selection-color: white;
+    selection-color: #FFFFFF;
+}
+
+/* Aba REFERENCIAR: fundo no mesmo cinza da imagem do torno do widget de
+   toque (LatheToolTouchOff, retangulo #939695 no QML dele), pra imagem nao
+   parecer um bloco cinza solto. Os cartoes escuros continuam por cima. */
+QWidget#touch_off_tab {
+    background-color: #939695;
+}
+
+/* Sobre esse cinza os cartoes e botoes da aba usam uma escala mais clara
+   (cartao #4B5158, caixa #3A4047, campo #2C3137, botao #5A6268), aplicada
+   nos estilos de cada widget no .ui. O ZERAR FERRAM. nao tem fundo proprio
+   e pegaria o botao escuro global, por isso a regra dele fica aqui. */
+QWidget#touch_off_tab QPushButton#m01_break_button_20 {
+    background: #5A6268;
+    border: 2px solid #2E343C;
+}
+
+QWidget#touch_off_tab QPushButton#m01_break_button_20:hover {
+    background: #68717A;
+    border-color: #3A414B;
+}
+
+QWidget#touch_off_tab QPushButton#m01_break_button_20:pressed {
+    background: #4A5157;
+}
+
+/* Aba FERRAMENTAS: mesmo cinza e mesma escala clara da REFERENCIAR, pro
+   desenho da pastilha (preto sobre transparente) aparecer. Os botoes da
+   tabela so' tem fonte no estilo proprio, entao a cor vem daqui. */
+QWidget#tooling_tab {
+    background-color: #939695;
+}
+
+QWidget#tooling_tab QPushButton {
+    background: #5A6268;
+    border: 2px solid #2E343C;
+}
+
+QWidget#tooling_tab QPushButton:hover {
+    background: #68717A;
+    border-color: #3A414B;
+}
+
+QWidget#tooling_tab QPushButton:pressed {
+    background: #4A5157;
+}
+
+/* MDI dessas duas abas no tom de caixa da escala clara */
+QWidget#touch_off_tab MDIEntry,
+QWidget#tooling_tab MDIEntry {
+    background: #3A4047;
+    border-color: #5A6066;
+}
+
+/* Listas e tabelas em geral (arquivos, dialogos, historico do MDI): sem
+   isto a linha alternada usa a cor clara padrao do Qt e o texto claro some.
+   As regras proprias de cada widget continuam valendo por cima. */
+QAbstractItemView {
+    alternate-background-color: #121519;
+    selection-background-color: #00838F;
+    selection-color: #FFFFFF;
 }
 
 QToolTip {
-    background-color: #2E3234;
-    color: white;
-    border: 2px solid #4A5055;
-    font: 15pt "Bebas Kai";
+    background-color: #1A1E24;
+    color: #FFFFFF;
+    border: 1px solid #2E343C;
+    font: 14pt "Barlow Condensed SemiBold";
     padding: 5px;
     }
 
@@ -511,22 +609,22 @@ QFileDialog {
 }
 
 QFileDialog QLabel {
-    font: 15pt "Bebas Kai";
+    font: 14pt "Barlow Condensed SemiBold";
     padding-left: 8px;
 }
 
 QFileDialog QComboBox {
-    color: white;
-    font: 13pt "Bebas Kai";
+    color: #FFFFFF;
+    font: 12pt "Barlow Condensed SemiBold";
     margin: 8px;
     min-height: 40px;
     max-height: 40px;
     min-width: 200px;
     icon-size: 16px 16px;
     /* Override global styles to prevent bleed-through */
-    border-color: #141617;
+    border-color: #2E343C;
     border-style: solid;
-    border-radius: 5px;
+    border-radius: 4px;
     border-width: 2px;
     background: #5A6268;
     padding: 0px;
@@ -539,14 +637,14 @@ QFileDialog QComboBox::drop-down {
     subcontrol-position: top right;
     width: 40px;
     border: none;
-    border-left: 2px solid #141617;
+    border-left: 1px solid #2E343C;
     border-top-right-radius: 3px;
     border-bottom-right-radius: 3px;
     background: #5A6268;
 }
 
 QFileDialog QComboBox::drop-down:hover {
-    background: #474D52;
+    background: #68717A;
 }
 
 QFileDialog QComboBox::down-arrow {
@@ -573,26 +671,26 @@ QFileDialog QToolButton {
 }
 
 QFileDialog QToolButton:hover {
-    background: #474D52;
+    background: #68717A;
     border: 0px solid transparent;
-    border-radius: 5px;
+    border-radius: 4px;
 }
 
 QFileDialog QToolButton:pressed {
-    background: #00838F;
+    background: #4A5157;
     border: 0px solid transparent;
-    border-radius: 5px;
+    border-radius: 4px;
 }
 
 QFileDialog QPushButton,
 QFileDialog QDialogButtonBox QPushButton,
 QFileDialog QDialogButtonBox * QPushButton,
 QFileDialog QWidget#buttonBox QPushButton {
-    color: white !important;
-    font-family: "Bebas Kai" !important;
-    font-size: 15pt !important;
+    color: #FFFFFF !important;
+    font-family: "Barlow Condensed SemiBold";
+    font-size: 14pt;
     background: #5A6268 !important;
-    border: 2px solid #141617 !important;
+    border: 2px solid #2E343C !important;
     border-radius: 5px !important;
     margin: 8px !important;
     padding: 0px 10px !important;
@@ -611,24 +709,24 @@ QFileDialog QPushButton:hover,
 QFileDialog QDialogButtonBox QPushButton:hover,
 QFileDialog QDialogButtonBox * QPushButton:hover,
 QFileDialog QWidget#buttonBox QPushButton:hover {
-    background: #474D52 !important;
+    background: #68717A !important;
 }
 
 QFileDialog QPushButton:pressed,
 QFileDialog QDialogButtonBox QPushButton:pressed,
 QFileDialog QDialogButtonBox * QPushButton:pressed,
 QFileDialog QWidget#buttonBox QPushButton:pressed {
-    background: #00838F !important;
+    background: #4A5157 !important;
 }
 
 QFileDialog QSplitter::handle {
     width: 8px;
-    background: #242729;
+    background: #101215;
 }
 
 QFileDialog QSplitter {
     margin: 10px;
-    border: 1px solid #4A5055 !important;
+    border: 1px solid #2E343C !important;
 }
 
 QFileDialog QTreeView::item,
@@ -646,26 +744,28 @@ QFileDialog QTreeView#sidebar::item {
 
 QFileDialog QTreeView#sidebar::item:selected {
     background: #00838F;
-    color: white;
+    color: #FFFFFF;
+    border-color: #00838F;
 }
 
 QFileDialog QTreeView#sidebar::item:hover {
-    background: #474D52;
-    color: white;
+    background: #68717A;
+    color: #FFFFFF;
 }
 
 QFileDialog QTreeView::item:selected,
 QFileDialog QListView::item:selected,
 QFileDialog QTableView::item:selected {
     background: #00838F;
-    color: white;
+    color: #FFFFFF;
+    border-color: #00838F;
 }
 
 QFileDialog QTreeView::item:hover,
 QFileDialog QListView::item:hover,
 QFileDialog QTableView::item:hover {
-    background: #474D52;
-    color: white;
+    background: #68717A;
+    color: #FFFFFF;
 }
 
 QFileDialog QAbstractScrollArea,
@@ -690,19 +790,141 @@ QFileDialog .QFrame {
 
 /* Header styling - consistent with FileSystemTable */
 QFileDialog QHeaderView {
-    background-color: #5A6268;
-    color: white;
+    background-color: #0B0D10;
+    color: #FFFFFF;
     border: none;
     border-radius: none;
-    font: 13pt "Bebas Kai";
+    font: 12pt "Barlow Condensed SemiBold";
 }
 
 QFileDialog QHeaderView::section {
-    background-color: #5A6268;
-    color: white;
+    background-color: #0B0D10;
+    color: #FFFFFF;
     border: none;
-    border-right: 1px solid #4A5055;
-    border-bottom: 1px solid #4A5055;
+    border-right: 1px solid #2E343C;
+    border-bottom: 1px solid #2E343C;
     padding: 4px;
-    font: 13pt "Bebas Kai";
+    font: 12pt "Barlow Condensed SemiBold";
+}
+
+/* ==========================================================================
+   Tela de simulação (backplot da aba PRINCIPAL), redesenho 2026-10-25
+   Especificação: linuxcnc-tela-simulacao-moderna.md. Paleta própria desta
+   tela, só vale dentro de vtk_control_buttons e do vtkbackplot.
+     fundo-preview #0B0D10  superficie #1A1E24  botao #5A6268
+     borda #2E343C  divisoria #2E343C  texto #FFFFFF  texto-2 #A9B0B5
+     texto-3 #A9B0B5  ativo #00838F / fundo #00838F / texto #FFFFFF
+     avanco #4C8DFF  rapido #FF5A5F
+   Fontes: Barlow Condensed (SemiBold normal, Bold ativo), em fonts/,
+   carregadas pelo customs.py. O SemiBold do Google Fonts tem nome de família
+   próprio, "Barlow Condensed SemiBold". Se o arquivo faltar, o customs.py
+   troca o nome pela DejaVu Sans Condensed.
+   ========================================================================== */
+
+QWidget#vtk_control_buttons {
+    background: #1A1E24;
+    border-right: 1px solid #2E343C;
+}
+
+QWidget#vtk_control_buttons QPushButton {
+    background: #5A6268;
+    border: 2px solid #2E343C;
+    border-radius: 4px;
+    color: #FFFFFF;
+    font-family: "Barlow Condensed SemiBold";
+    font-size: 17px;
+    /* peso normal de propósito: no Qt 5 o 600 do QSS vira Bold e o SemiBold
+       sai engrossado à força; o SemiBold vem pelo nome da família */
+    font-weight: normal;
+    /* 44 + 2 px de borda em cima e embaixo = 48 px de botão */
+    min-height: 44px;
+    max-height: 44px;
+    padding: 0px 14px;
+    text-align: left;
+}
+
+QWidget#vtk_control_buttons QPushButton:hover {
+    background: #68717A;
+    border-color: #3A414B;
+}
+
+QWidget#vtk_control_buttons QPushButton:pressed {
+    background: #4A5157;
+    border-color: #2E343C;
+}
+
+QWidget#vtk_control_buttons QPushButton:checked {
+    background: #00838F;
+    border-color: #00838F;
+    color: #FFFFFF;
+    font-family: "Barlow Condensed";
+    font-weight: bold;
+}
+
+QWidget#vtk_control_buttons QPushButton:disabled {
+    color: #4A515B;
+}
+
+QWidget#vtk_control_buttons QLabel[simTitulo="true"] {
+    background: transparent;
+    color: #A9B0B5;
+    font-family: "Barlow Condensed SemiBold";
+    font-size: 12px;
+    font-weight: normal;
+    margin-top: 14px;
+    qproperty-indent: 0;
+}
+
+/* o primeiro título não leva o espaço de separação de grupo */
+QWidget#vtk_control_buttons QLabel#label_30 {
+    margin-top: 0px;
+}
+
+QWidget#sim_zoom_row {
+    background: transparent;
+}
+
+/* ZOOM + e ZOOM - dividem a largura: menos folga lateral */
+QWidget#sim_zoom_row QPushButton {
+    padding: 0px 8px;
+}
+
+/* Chave da torre. FRNT POST e REAR POST não são exclusivos na interface
+   (cada um só dispara a vista), então nenhum lado fica aceso; o lado
+   apertado acende enquanto o dedo está nele. */
+QWidget#sim_torre_chave {
+    background: #5A6268;
+    border: 1px solid #2E343C;
+    border-radius: 5px;
+}
+
+QWidget#sim_torre_chave QPushButton {
+    background: transparent;
+    border: none;
+    border-radius: 3px;
+    color: #FFFFFF;
+    min-height: 48px;
+    max-height: 48px;
+    padding: 0px 2px;
+    text-align: center;
+}
+
+QWidget#sim_torre_chave QPushButton:hover {
+    color: #FFFFFF;
+}
+
+QWidget#sim_torre_chave QPushButton:pressed {
+    background: #FFFFFF;
+    color: #101215;
+    font-family: "Barlow Condensed";
+    font-weight: bold;
+}
+
+/* Cores do desenho. O customs.py repassa traverse/feed/arcfeed para o
+   path_colors do backplot, que senão ignora essas propriedades. */
+QWidget#vtkbackplot {
+    qproperty-backgroundColor: #0B0D10;
+    qproperty-traverseColor: #FF5A5F;
+    qproperty-feedColor: #4C8DFF;
+    qproperty-arcfeedColor: #4C8DFF;
 }

@@ -57,34 +57,34 @@ OPS = [
 
 _OP_BTN_QSS = """
 QPushButton {
-    background: #2E3234; color: #E6E6E6; border: 1px solid #3A3F43;
-    border-radius: 4px; padding: 8px; font: 14pt "Bebas Kai"; min-height: 44px;
+    background: #5A6268; color: #FFFFFF; border: 2px solid #2E343C;
+    border-radius: 4px; padding: 8px; font: 13pt "Barlow Condensed SemiBold"; min-height: 44px;
 }
-QPushButton:checked { background: #00838F; color: white; }
+QPushButton:checked { background: #00838F; color: #FFFFFF; border-color: #00838F; }
 """
 
 _ACT_QSS = """
 QPushButton {
-    background: #2E3234; color: #E6E6E6; border: 1px solid #3A3F43;
-    border-radius: 4px; padding: 8px; font: 14pt "Bebas Kai"; min-height: 46px;
+    background: #5A6268; color: #FFFFFF; border: 2px solid #2E343C;
+    border-radius: 4px; padding: 8px; font: 13pt "Barlow Condensed SemiBold"; min-height: 46px;
 }
-QPushButton:pressed { background: #3E4448; }
+QPushButton:pressed { background: #4A5157; }
 """
 
 _PRIMARY_QSS = """
 QPushButton {
     background: #157A30; color: white; border: 1px solid #0c5c22;
-    border-radius: 4px; padding: 8px; font: 15pt "Bebas Kai"; min-height: 52px;
+    border-radius: 4px; padding: 8px; font: 14pt "Barlow Condensed SemiBold"; min-height: 52px;
 }
 QPushButton:pressed { background: #157a30; }
 """
 
-_HEAD_QSS = 'QLabel { color: #26C6DA; font: 15pt "Bebas Kai"; }'
-_HINT_QSS = 'QLabel { color: #FFB300; font: 10pt "Bebas Kai"; }'
+_HEAD_QSS = 'QLabel { color: #A9B0B5; font: 14pt "Barlow Condensed SemiBold"; }'
+_HINT_QSS = 'QLabel { color: #A9B0B5; font: 9pt "Barlow Condensed SemiBold"; }'
 # Mesmas cores do editor de G-code da pagina principal (regra GcodeTextEdit
 # do probe_basic_custom.qss: fundo preto, texto branco).
-_PREVIEW_QSS = ('QPlainTextEdit { background:#000000; color:#FFFFFF;'
-                ' border:1px solid #3A3F43; border-radius:4px;'
+_PREVIEW_QSS = ('QPlainTextEdit { background:#0B0D10; color:#FFFFFF;'
+                ' border:1px solid #2E343C; border-radius:4px;'
                 ' font-family:"DejaVu Sans Mono", monospace; font-size:11pt; }')
 
 
@@ -110,7 +110,7 @@ class UserTab(QWidget):
         self._chrome_cache = None
         self._tabw_cache = None
         self._tabw_max_h = None             # teto original (restaurado ao sair)
-        self.setStyleSheet("QWidget { background: #242729; }")
+        self.setStyleSheet("QWidget { background: #101215; }")
 
         self._queue = []          # lista de (label, params_dict)
         self._preview_mode = "current"   # 'current' | 'queue'
@@ -223,8 +223,8 @@ class UserTab(QWidget):
 
         self._queue_list = QListWidget()
         self._queue_list.setStyleSheet(
-            'QListWidget { background:#1E2224; color:#E6E6E6;'
-            ' border:1px solid #3A3F43; border-radius:4px; font: 12pt "Bebas Kai"; }')
+            'QListWidget { background:#1A1E24; color:#FFFFFF;'
+            ' border:1px solid #2E343C; border-radius:4px; font: 11pt "Barlow Condensed SemiBold"; }')
         # Some quando a fila esta vazia (caso normal: uma operacao so) para o
         # G-code ocupar o espaco; reaparece do tamanho do conteudo ao ADICIONAR.
         self._queue_list.setVisible(False)

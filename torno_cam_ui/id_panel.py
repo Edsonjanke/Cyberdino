@@ -62,7 +62,7 @@ TOGGLES = [
     ("finishOnly",     65.55, 57.36, u"SOMENTE ACABAMENTO", "#ffd600"),
 ]
 
-_LABEL_QSS = 'QLabel { color: #9BB0B5; font: 10pt "Bebas Kai"; }'
+_LABEL_QSS = 'QLabel { color: #A9B0B5; font: 9pt "Barlow Condensed SemiBold"; }'
 
 
 class IDForm(QWidget):
@@ -134,7 +134,7 @@ class IDForm(QWidget):
     # ── faixa com o que nao esta no desenho ─────────────────────────────
     def _build_strip(self):
         box = QFrame()
-        box.setStyleSheet('QFrame { background: #242729; border: 1px solid #3A3F43;'
+        box.setStyleSheet('QFrame { background: #1A1E24; border: 1px solid #2E343C;'
                           ' border-radius: 4px; }')
         grid = QGridLayout(box)
         grid.setContentsMargins(8, 6, 8, 6)

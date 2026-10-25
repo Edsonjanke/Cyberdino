@@ -59,7 +59,7 @@
        </property>
        <property name="styleSheet">
         <string notr="true">MDIButton {
-   	font: 15pt &quot;Bebas Kai&quot;;
+   	font: 14pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
        </property>
        <property name="text">
@@ -109,11 +109,11 @@
        <property name="styleSheet">
         <string notr="true">QLabel{
     border-style: solid;
-    border-color: rgb(235, 235, 235);
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: rgb(238, 238, 236);
-	font: 18pt &quot;Bebas Kai&quot;;
+    border-radius: 4px;
+    color: #FFFFFF;
+	font: 17pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
        </property>
        <property name="text">
@@ -146,8 +146,8 @@
        </property>
        <property name="font">
         <font>
-         <family>Bebas Kai</family>
-         <pointsize>17</pointsize>
+         <family>Barlow Condensed SemiBold</family>
+         <pointsize>16</pointsize>
          <weight>50</weight>
          <italic>false</italic>
          <bold>false</bold>
@@ -156,13 +156,13 @@
        <property name="styleSheet">
         <string notr="true">QLineEdit{
     border-style: transparant;
-    border-color: rgb(235, 235, 235);
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
+    border-radius: 4px;
+    color: #FFFFFF;
+    background: #0B0D10;
     padding-right: 2px;
-    font: 17pt &quot;Bebas Kai&quot;;
+    font: 16pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
        </property>
        <property name="alignment">
@@ -193,12 +193,12 @@
        <property name="styleSheet">
         <string notr="true">QLabel{
     border-style: transparent;
-    border-color: rgb(235, 235, 235);
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
-	font: 17pt &quot;Bebas Kai&quot;;
+    border-radius: 4px;
+    color: #FFFFFF;
+    background: #0B0D10;
+	font: 16pt &quot;Barlow Condensed SemiBold&quot;;
     padding-right: 2px;
 }
 
@@ -256,12 +256,12 @@ QLabel[style=&quot;homing&quot;]{
        <property name="styleSheet">
         <string notr="true">StatusLabel{
     border-style: transparant;
-    border-color: rgb(235, 235, 235);
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
-	font: 17pt &quot;Bebas Kai&quot;;
+    border-radius: 4px;
+    color: #FFFFFF;
+    background: #0B0D10;
+	font: 16pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
        </property>
        <property name="alignment">
@@ -295,12 +295,12 @@ QLabel[style=&quot;homing&quot;]{
        <property name="styleSheet">
         <string notr="true">StatusLabel{
     border-style: transparant;
-    border-color: rgb(235, 235, 235);
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
-	font: 17pt &quot;Bebas Kai&quot;;
+    border-radius: 4px;
+    color: #FFFFFF;
+    background: #0B0D10;
+	font: 16pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
        </property>
        <property name="alignment">
@@ -334,12 +334,12 @@ QLabel[style=&quot;homing&quot;]{
        <property name="styleSheet">
         <string notr="true">StatusLabel{
     border-style: transparant;
-    border-color: rgb(235, 235, 235);
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
-	font: 17pt &quot;Bebas Kai&quot;;
+    border-radius: 4px;
+    color: #FFFFFF;
+    background: #0B0D10;
+	font: 16pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
        </property>
        <property name="alignment">
@@ -385,7 +385,7 @@ QLabel[style=&quot;homing&quot;]{
        </property>
        <property name="styleSheet">
         <string notr="true">MDIButton {
-   	font: 15pt &quot;Bebas Kai&quot;;
+   	font: 14pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
        </property>
        <property name="text">
@@ -429,11 +429,11 @@ QLabel[style=&quot;homing&quot;]{
        <property name="styleSheet">
         <string notr="true">QLabel{
     border-style: solid;
-    border-color: rgb(235, 235, 235);
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: rgb(238, 238, 236);
-	font: 18pt &quot;Bebas Kai&quot;;
+    border-radius: 4px;
+    color: #FFFFFF;
+	font: 17pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
        </property>
        <property name="text">
@@ -466,8 +466,8 @@ QLabel[style=&quot;homing&quot;]{
        </property>
        <property name="font">
         <font>
-         <family>Bebas Kai</family>
-         <pointsize>17</pointsize>
+         <family>Barlow Condensed SemiBold</family>
+         <pointsize>16</pointsize>
          <weight>50</weight>
          <italic>false</italic>
          <bold>false</bold>
@@ -476,13 +476,13 @@ QLabel[style=&quot;homing&quot;]{
        <property name="styleSheet">
         <string notr="true">QLineEdit{
     border-style: transparant;
-    border-color: rgb(235, 235, 235);
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
+    border-radius: 4px;
+    color: #FFFFFF;
+    background: #0B0D10;
     padding-right: 2px;
-    font: 17pt &quot;Bebas Kai&quot;;
+    font: 16pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
        </property>
        <property name="alignment">
@@ -516,12 +516,12 @@ QLabel[style=&quot;homing&quot;]{
        <property name="styleSheet">
         <string notr="true">QLabel{
     border-style: transparent;
-    border-color: rgb(235, 235, 235);
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
-	font: 17pt &quot;Bebas Kai&quot;;
+    border-radius: 4px;
+    color: #FFFFFF;
+    background: #0B0D10;
+	font: 16pt &quot;Barlow Condensed SemiBold&quot;;
     padding-right: 2px;
 }
 
@@ -579,12 +579,12 @@ QLabel[style=&quot;homing&quot;]{
        <property name="styleSheet">
         <string notr="true">StatusLabel{
     border-style: transparant;
-    border-color: rgb(235, 235, 235);
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
-	font: 17pt &quot;Bebas Kai&quot;;
+    border-radius: 4px;
+    color: #FFFFFF;
+    background: #0B0D10;
+	font: 16pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
        </property>
        <property name="alignment">
@@ -618,12 +618,12 @@ QLabel[style=&quot;homing&quot;]{
        <property name="styleSheet">
         <string notr="true">StatusLabel{
     border-style: transparant;
-    border-color: rgb(235, 235, 235);
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
-	font: 17pt &quot;Bebas Kai&quot;;
+    border-radius: 4px;
+    color: #FFFFFF;
+    background: #0B0D10;
+	font: 16pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
        </property>
        <property name="alignment">
@@ -657,12 +657,12 @@ QLabel[style=&quot;homing&quot;]{
        <property name="styleSheet">
         <string notr="true">StatusLabel{
     border-style: transparant;
-    border-color: rgb(235, 235, 235);
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: black;
-    background: rgb(235, 235, 235);
-	font: 17pt &quot;Bebas Kai&quot;;
+    border-radius: 4px;
+    color: #FFFFFF;
+    background: #0B0D10;
+	font: 16pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
        </property>
        <property name="alignment">

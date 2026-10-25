@@ -8,6 +8,10 @@ windows:
 application:
   kwargs:
     stylesheet: {{ file.dir }}/probe_basic_custom.qss
+    # Barlow Condensed e JetBrains Mono (fonts/). Tem que carregar aqui, na
+    # criacao da aplicacao: se carregar depois da janela montada, os widgets
+    # ja medidos ficam presos na fonte de reserva (larga) e o texto corta.
+    custom_fonts: {{ file.dir }}/fonts
 
 data_plugins:
   tooltable:

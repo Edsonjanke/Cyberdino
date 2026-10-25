@@ -27,7 +27,7 @@ CONTAINER_AR = 3500.0 / 1756.0
 # Fonte dos valores: a mesma condensada que o resto da interface usa (DROs,
 # botoes) e que combina com os rotulos desenhados nas imagens. Sendo estreita,
 # cabe um numero MUITO maior na mesma caixa que uma monoespacada.
-NUM_FONT = "Bebas Kai"
+NUM_FONT = "Barlow Condensed SemiBold"
 
 # Fracao do maior tamanho que caberia na caixa. 1.0 = numero encostando na
 # folga minima. Ajustado com o usuario olhando a maquina: 0.80 -> 0.60.
@@ -130,7 +130,7 @@ class OverlayEdit(QLineEdit):
     def restyle(self, font_px):
         # A fonte VAI NA FOLHA DE ESTILO DO WIDGET, nao so em setFont():
         # o tema do ProbeBasic tem uma regra de aplicacao
-        #     VCPLineEdit, QLineEdit { font: 15pt "Bebas Kai"; }
+        #     VCPLineEdit, QLineEdit { font: 14pt "Barlow Condensed SemiBold"; }
         # e folha de estilo da aplicacao SOBREPOE setFont(). Era por isso que o
         # numero saia em 15pt (~20px) na maquina, ignorando o tamanho calculado.
         # A folha do proprio widget tem precedencia sobre a da aplicacao.
@@ -174,7 +174,7 @@ QCheckBox {{
     padding: 3px 10px;
     spacing: 8px;
     background: rgba(0, 0, 0, 140);
-    font-family: "Bebas Kai";
+    font-family: "Barlow Condensed SemiBold";
     font-size: {f}px;
     font-weight: bold;
 }}

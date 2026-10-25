@@ -74,6 +74,184 @@ GcodeTextEdit.replaceText = _patched_replaceText
 GcodeTextEdit.replaceAllText = _patched_replaceAllText
 
 
+# Escala do percurso no backplot (2026-10-25). O gcodemodule do LinuxCNC
+# entrega as coordenadas ao canon SEMPRE em polegada, seja o programa G20 ou
+# G21 (conferido no container: X10 em G21 chega como 0.3937). O VTKCanon do
+# qtpyvcp 5.1.2 so' converte quando o programa e' G20; em G21 deixava em
+# polegada, e o percurso saia 25,4 vezes menor que a ferramenta e os eixos,
+# que sao desenhados em mm. Aqui o fator passa a depender so' da maquina.
+# Vale pro backplot em Python, o padrao; o [VTK] CPP_BACKPLOT do INI esta
+# desligado nesta maquina.
+from qtpyvcp.widgets.display_widgets.vtk_backplot.vtk_canon import VTKCanon
+
+
+def _fator_canon_para_maquina(self):
+    return 25.4 if self._datasource.isMachineMetric() else 1.0
+
+
+VTKCanon._program_to_machine_length_factor = _fator_canon_para_maquina
+
+
+# Ferramenta no backplot (2026-10-25): no lugar da pastilha branca, uma
+# bolinha vermelha com anel em volta, como no desenho da tela de simulação.
+# A bolinha fica na ponta da ferramenta, o mesmo ponto em que a pastilha do
+# qtpyvcp encostava: (-xoffset, 0, -zoffset) no plano XZ, ou a origem na T0.
+# A primeira ferramenta e' criada antes deste modulo carregar; o
+# _wire_auto_clear_backplot chama update_tool() pra refazer com a bolinha.
+from qtpyvcp.widgets.display_widgets.vtk_backplot import tool_actor as _tool_actor_mod
+
+BOLINHA_RAIO_MM = 0.7
+ANEL_RAIO_MM = 1.4
+TRACO_MM = 1.6                       # traco que sai do anel pro lado da pastilha
+COR_BOLINHA = (0xFF, 0x5A, 0x5F)     # rapido da paleta
+COR_ANEL = (0x8C, 0x32, 0x36)        # o mesmo vermelho apagado, sobre o fundo escuro
+
+_original_toolbit_init = _tool_actor_mod.ToolBitActor.__init__
+
+
+def _direcao_da_pastilha(actor, cx, cz):
+    """Para que lado fica o corpo da pastilha, olhando da ponta.
+
+    Usa o centro da geometria que o proprio qtpyvcp montou para a pastilha
+    (antes de trocarmos pela bolinha): da ponta ate' esse centro e' a
+    direcao do corpo, para qualquer orientacao da tabela. None se a
+    geometria for simetrica em volta da ponta (T0 ou orientacao 0)."""
+    try:
+        mapper = actor.GetMapper()
+        if mapper is None:
+            return None
+        mapper.Update()
+        dados = mapper.GetInput()
+        pontos = dados.GetPoints() if dados is not None else None
+        if pontos is None or pontos.GetNumberOfPoints() == 0:
+            return None
+        n = pontos.GetNumberOfPoints()
+        sx = sum(pontos.GetPoint(i)[0] for i in range(n)) / n
+        sz = sum(pontos.GetPoint(i)[2] for i in range(n)) / n
+        dx, dz = sx - cx, sz - cz
+        norma = (dx * dx + dz * dz) ** 0.5
+        if norma < 1e-6:
+            return None
+        return dx / norma, dz / norma
+    except Exception:
+        return None
+
+
+def _geometria_bolinha(cx, cz, raio, raio_anel, direcao=None, traco=0.0):
+    import vtk
+    bolinha = vtk.vtkRegularPolygonSource()
+    bolinha.SetNumberOfSides(48)
+    bolinha.SetRadius(raio)
+    bolinha.SetCenter(cx, 0.0, cz)
+    bolinha.SetNormal(0.0, 1.0, 0.0)
+    bolinha.GeneratePolylineOff()     # so' o disco, sem contorno
+    anel = vtk.vtkRegularPolygonSource()
+    anel.SetNumberOfSides(64)
+    anel.SetRadius(raio_anel)
+    anel.SetCenter(cx, 0.0, cz)
+    anel.SetNormal(0.0, 1.0, 0.0)
+    anel.GeneratePolygonOff()
+    anel.GeneratePolylineOn()
+    junta = vtk.vtkAppendPolyData()
+    junta.AddInputConnection(bolinha.GetOutputPort())
+    junta.AddInputConnection(anel.GetOutputPort())
+    if direcao is not None and traco > 0:
+        dx, dz = direcao
+        linha = vtk.vtkLineSource()
+        linha.SetPoint1(cx + dx * raio_anel, 0.0, cz + dz * raio_anel)
+        linha.SetPoint2(cx + dx * (raio_anel + traco), 0.0, cz + dz * (raio_anel + traco))
+        junta.AddInputConnection(linha.GetOutputPort())
+    junta.Update()
+    dados = vtk.vtkPolyData()
+    dados.DeepCopy(junta.GetOutput())
+    cores = vtk.vtkUnsignedCharArray()
+    cores.SetNumberOfComponents(3)
+    cores.SetName('cores')
+    # vtkPolyData guarda as linhas antes dos poligonos: anel, depois bolinha
+    for _ in range(dados.GetNumberOfLines()):
+        cores.InsertNextTuple3(*COR_ANEL)
+    for _ in range(dados.GetNumberOfPolys()):
+        cores.InsertNextTuple3(*COR_BOLINHA)
+    dados.GetCellData().SetScalars(cores)
+    return dados
+
+
+def _toolbit_bolinha(self, datasource):
+    _original_toolbit_init(self, datasource)
+    try:
+        if not datasource.isMachineLathe():
+            return
+        import vtk
+        escala = 1.0 if datasource.isMachineMetric() else 1.0 / 25.4
+        tool = getattr(self, 'tool', None)
+        if tool is None or getattr(tool, 'id', 0) in (0, -1):
+            cx = cz = 0.0
+        else:
+            cx = -float(getattr(tool, 'xoffset', 0.0) or 0.0)
+            cz = -float(getattr(tool, 'zoffset', 0.0) or 0.0)
+        direcao = _direcao_da_pastilha(self, cx, cz)
+        mapper = vtk.vtkPolyDataMapper()
+        mapper.SetInputData(_geometria_bolinha(cx, cz, BOLINHA_RAIO_MM * escala,
+                                               ANEL_RAIO_MM * escala,
+                                               direcao, TRACO_MM * escala))
+        mapper.SetScalarModeToUseCellData()
+        mapper.SetColorModeToDirectScalars()
+        mapper.ScalarVisibilityOn()
+        self.SetMapper(mapper)
+        prop = self.GetProperty()
+        prop.SetAmbient(1.0)          # cor chapada, sem sombreado da luz
+        prop.SetDiffuse(0.0)
+        prop.SetSpecular(0.0)
+        prop.SetLineWidth(2.0)
+        prop.SetBackfaceCulling(0)    # aparece de frente e de tras (torre traseira)
+    except Exception as e:
+        LOG.warning("Backplot: bolinha da ferramenta nao aplicada: %s", e)
+
+
+_tool_actor_mod.ToolBitActor.__init__ = _toolbit_bolinha
+
+
+# Fontes da tela (2026-10-25): Barlow Condensed e JetBrains Mono, baixadas
+# do Google Fonts (licença OFL, junto em fonts/). Ficam na pasta do config
+# pra irem pro torno no git pull, sem instalar nada no sistema. Quem carrega
+# e' o custom_fonts do custom_config.yml, na criação da aplicação: aqui, no
+# import da aba, ja' e' tarde, porque a janela principal ja' foi montada e os
+# widgets medidos com a fonte de reserva ficam presos nela (texto largo e
+# cortado, visto no sim). Esta funcao so' carrega se o yml nao tiver
+# carregado. O SemiBold do Google Fonts vem como família própria ("Barlow
+# Condensed SemiBold"), e e' por esse nome que o .qss o usa. Se alguma
+# faltar, o nome cai na DejaVu equivalente, que tem largura parecida.
+def _carregar_fontes_do_config():
+    from qtpy.QtGui import QFont, QFontDatabase
+    ja_tem = set(QFontDatabase().families())
+    if {'Barlow Condensed', 'Barlow Condensed SemiBold'} <= ja_tem:
+        LOG.info("Fontes do config: ja carregadas pelo custom_config.yml")
+        return
+    pasta = os.path.join(
+        os.environ.get('CONFIG_DIR') or os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        'fonts')
+    carregadas = set()
+    arquivos = sorted(os.listdir(pasta)) if os.path.isdir(pasta) else []
+    for nome in arquivos:
+        if not nome.lower().endswith(('.ttf', '.otf')):
+            continue
+        fid = QFontDatabase.addApplicationFont(os.path.join(pasta, nome))
+        if fid < 0:
+            LOG.warning("Fonte nao carregada: %s", nome)
+        else:
+            carregadas.update(QFontDatabase.applicationFontFamilies(fid))
+    for familia, reserva in (('Barlow Condensed', 'DejaVu Sans Condensed'),
+                             ('Barlow Condensed SemiBold', 'DejaVu Sans Condensed'),
+                             ('JetBrains Mono', 'DejaVu Sans Mono')):
+        if familia not in carregadas:
+            QFont.insertSubstitution(familia, reserva)
+    LOG.info("Fontes do config: %s", ", ".join(sorted(carregadas)) or "nenhuma")
+
+
+_carregar_fontes_do_config()
+
+
 # O teclado virtual aparece ABAIXO do campo focado. Como o FindReplaceDialog
 # abre centralizado (400x200), o teclado cobre os botoes Find/Replace/Close.
 # Reposicionamos o dialog no TOPO da tela ao abrir, deixando a metade de baixo
@@ -135,9 +313,10 @@ except _hal.error as e:
 
 
 # Botoes do painel que precisam da INTERFACE, nao so' do HAL:
-#   manual       -> abre a aba EDITAR ("manual ativa o modo editar sempre
-#                   junto", pedido do operador 2026-10-16). O modo manual
-#                   em si quem faz e' o halui, direto no HAL.
+#   manual       -> abre a aba JOG do painel direito, onde fica o
+#                   INCREMENTO MPG (pedido do operador 2026-10-25; antes
+#                   abria o EDITAR, mas o editor agora e' sempre editavel).
+#                   O modo manual em si quem faz e' o halui, direto no HAL.
 #   rodar-linha  -> aperta o EXEC. DA LINHA (arma o programa na linha e
 #                   deixa pausado; quem usina e' o INICIAR depois).
 #   passo        -> passa pro proximo incremento de jog (1 / .5 / .1 /
@@ -145,8 +324,8 @@ except _hal.error as e:
 #   limpar-avisos-> tira os avisos empilhados da tela. E' o RESET fisico
 #                   (GPIO.022), que ja' faz estop-reset + liga maquina.
 #   auto         -> vai pra aba PRINCIPAL, a que mostra o G-code. E' o
-#                   espelho do manual: um poe pra editar, o outro poe pra
-#                   olhar o programa rodar.
+#                   espelho do manual: um poe pra jogar com o volante, o
+#                   outro poe pra olhar o programa rodar.
 #
 # Os pinos sao criados em escopo de modulo pra ja existirem quando o
 # probe_basic_postgui_fix.hal for lido.
@@ -189,7 +368,7 @@ class BotoesDoPainel:
         self._timer.start(50)
 
     def _acoes(self):
-        return (("manual", _hal_pin_manual, self._abrir_edit),
+        return (("manual", _hal_pin_manual, self._abrir_jog),
                 ("rodar-linha", _hal_pin_rodar_linha, self._exec_da_linha),
                 ("passo", _hal_pin_passo, self._proximo_passo),
                 ("limpar-avisos", _hal_pin_limpar, _limpar_avisos),
@@ -219,23 +398,20 @@ class BotoesDoPainel:
         return None
 
     @classmethod
-    def _abrir_edit(cls):
-        """Abre a aba EDITAR e, com ela, destrava o editor.
+    def _abrir_jog(cls):
+        """Abre a aba JOG do painel direito, a do INCREMENTO MPG.
 
         Se ja' estiver aberta nao faz nada. As abas do painel direito sao
         autoExclusive, entao clicar na que ja' esta aberta nao a fecha —
-        mas tambem nao custa nada evitar o clique.
-
-        Nao existe o inverso: apertar AUTO nao fecha o EDITAR. Fechar
-        sozinho travaria o editor com alteracao na tela ainda nao salva."""
-        aba = cls._achar("edit_tab")
+        mas tambem nao custa nada evitar o clique."""
+        aba = cls._achar("jog_tab")
         if aba is None:
-            LOG.warning("MANUAL: aba EDITAR nao encontrada")
+            LOG.warning("MANUAL: aba JOG nao encontrada")
             return
         if aba.isChecked():
             return
         aba.click()
-        LOG.info("MANUAL no painel: aba EDITAR aberta")
+        LOG.info("MANUAL no painel: aba JOG aberta")
 
     @classmethod
     def _exec_da_linha(cls):
@@ -258,8 +434,8 @@ class BotoesDoPainel:
     def _tela_principal():
         """AUTO no painel -> vai pra aba PRINCIPAL, a do G-code.
 
-        E' o espelho do MANUAL, que abre o EDITAR: um poe a tela pra
-        editar o programa, o outro pra olhar ele rodar.
+        E' o espelho do MANUAL, que abre o JOG: um poe a tela pra
+        jogar com o volante, o outro pra olhar o programa rodar.
 
         Acha a aba pelo objectName do widget (`main_tab`), nao pelo texto:
         o titulo leva o atalho ("PRINCIPAL  CTRL+1") e ja' mudou uma vez.
@@ -283,7 +459,8 @@ class BotoesDoPainel:
     def _proximo_passo():
         """Passa pro proximo passo do VOLANTE, como se tivesse clicado.
 
-        O alvo e' o `jog_increment` da aba CUSTOMS — o widget customizado
+        O alvo e' o `jog_increment` da aba JOG do painel direito (antes
+        morava na aba CUSTOMS) — o widget customizado
         do mpg_button.py, com 0.005 / 0.01 / 0.05 / 0.1 mm por clique do
         volante. E' ele que publica `qtpyvcp.jog-increment.scale`, que vai
         pros jog-scale dos joints.
@@ -683,10 +860,17 @@ def _find_button(name):
     return None
 
 
+# Decisão do operador em 2026-10-25: o editor de G-code fica sempre
+# editável, sem depender da aba EDIT. Para voltar a travar o editor fora
+# da aba EDIT, ponha False aqui.
+_EDITOR_SEMPRE_EDITAVEL = True
+
+
 def _wire_gcode_top_buttons():
     """Conecta os botoes 'RUN FROM LINE' e 'SET LINE N' aos metodos do editor
-    de G-code. O editor comeca READ-ONLY: so fica editavel no modo EDIT
-    (ver _wire_edit_mode). SAVE/FIND/COPY/PASTE agora moram na aba EDIT.
+    de G-code. Com _EDITOR_SEMPRE_EDITAVEL desligado, o editor comeca
+    READ-ONLY e so fica editavel no modo EDIT (ver _wire_edit_mode).
+    SAVE/FIND/COPY/PASTE agora moram na aba EDIT.
 
     SET LINE N e RUN FROM LINE (de baixo) moram nos user_buttons (widget
     carregado por uic.loadUi), entao sao achados por _find_button/allWidgets,
@@ -701,7 +885,8 @@ def _wire_gcode_top_buttons():
         return
 
     # Comeca travado; o modo EDIT destrava (evita edicao acidental).
-    editor.EditorReadOnly(True)
+    # Com _EDITOR_SEMPRE_EDITAVEL ligado, já começa destravado.
+    editor.EditorReadOnly(not _EDITOR_SEMPRE_EDITAVEL)
 
     run_btn = _find_button("run_from_here_top_btn")
     set_n_btn = _find_button("set_line_n_top_btn")
@@ -728,9 +913,11 @@ def _wire_gcode_top_buttons():
 # edicao de G-code. Para voltar a bloquear, ponha True aqui.
 #
 # O que isso significa, medido no proprio config:
-#   R        -> Executar Programa  ... e R e' raio de arco (G2 X.. Z.. R5),
-#               plano do ciclo (G81 R2), degressao do G76. Digitar um raio
-#               DISPARA O PROGRAMA e a maquina anda.
+#   R        -> era Executar Programa; o atalho saiu do .ui em 2026-10-25
+#               (R e' raio de arco, plano do ciclo, degressao do G76, e
+#               digitar um raio disparava o programa)
+#   setas    -> jog pelo teclado; desligado em 2026-10-25, ver
+#               _wire_sem_jog_teclado
 #   O        -> Abrir arquivo      ... e o e' a letra das sub-rotinas
 #   F1/F2    -> E-STOP / liga maquina
 #   F7/F8    -> neblina / refrigerante
@@ -820,7 +1007,10 @@ def _wire_edit_mode():
                     "o programa, cuidado ao digitar raio de arco")
 
     # Gate: aba EDIT aceso -> destrava; apagado -> trava.
-    if edit_tab is not None:
+    # Com _EDITOR_SEMPRE_EDITAVEL ligado não tem gate: o editor nunca trava.
+    if _EDITOR_SEMPRE_EDITAVEL:
+        editor.EditorReadOnly(False)
+    elif edit_tab is not None:
         def _on_edit_toggled(checked, ed=editor):
             ed.EditorReadOnly(not checked)
         edit_tab.toggled.connect(_on_edit_toggled)
@@ -935,6 +1125,28 @@ def _wire_auto_clear_backplot():
                 break
     except Exception:
         pass
+
+    # Cores do percurso (2026-10-25, tela de simulação). O VTKBackPlot monta
+    # o path_colors no __init__, antes do .qss aplicar traverseColor,
+    # feedColor e arcfeedColor; sem este repasse as propriedades ficam
+    # guardadas no widget e o desenho continua com as cores de fábrica.
+    # O ensurePolished garante que o .qss já foi aplicado.
+    try:
+        backplot.ensurePolished()
+        backplot.path_colors.update({
+            'traverse': backplot.traverseColor,
+            'feed': backplot.feedColor,
+            'arcfeed': backplot.arcfeedColor,
+        })
+    except Exception as e:
+        LOG.warning("Backplot: cores do percurso nao aplicadas: %s", e)
+
+    # Refaz a ferramenta ja' com a bolinha vermelha (ver _toolbit_bolinha):
+    # a primeira foi criada antes do remendo existir.
+    try:
+        backplot.update_tool()
+    except Exception as e:
+        LOG.warning("Backplot: ferramenta nao refeita: %s", e)
 
     # Auto-enquadrar nos PROGRAM EXTENTS, mas SO quando o programa e' outro.
     #
@@ -1226,11 +1438,13 @@ class _WearAdjustDialog(object):
 
 
 def _wire_tool_wear_info():
-    """Botoes 'D-X n' / 'D-Z n' (embaixo do campo T): mostram o desgaste
+    """Botoes 'X n' / 'Z n' (embaixo do campo T): mostram o desgaste
     da ferramenta ATIVA e, ao clicar, abrem um dialogo pra SOMAR um ajuste ao
     desgaste (atalho, sem ir na aba FERRAMENTAS). Mesma semantica incremental
     da tabela: X digitado em DIAMETRO (convertido pra raio no model); Z direto.
-    Leitura do tool_wear.json (wear em RAIO; X exibido x2 em G7)."""
+    Leitura do tool_wear.json (wear em RAIO; X exibido x2 em G7).
+    Cor do numero pela propriedade dinamica 'sinal': branco em zero, verde
+    em positivo, vermelho em negativo (regras no styleSheet de cada botao)."""
     btn_x = btn_z = None
     for top in QApplication.topLevelWidgets():
         btn_x = btn_x or top.findChild(QPushButton, "desg_x_btn")
@@ -1254,6 +1468,24 @@ def _wire_tool_wear_info():
         except Exception:
             return 0
 
+    def _mostra(btn, eixo, valor):
+        # Arredonda primeiro: o sinal tem que seguir o valor que aparece na tela
+        # (com 4 casas, 0.00001 vira zero, e -0.0 nunca pode virar "-0.0000").
+        v = round(float(valor), 4)
+        if v == 0.0:
+            v = 0.0
+            sinal = 'zero'
+        elif v > 0.0:
+            sinal = 'pos'
+        else:
+            sinal = 'neg'
+        btn.setText("{} {:.4f}".format(eixo, v))
+        # Repolir o widget custa caro; so quando a cor realmente muda.
+        if btn.property("sinal") != sinal:
+            btn.setProperty("sinal", sinal)
+            btn.style().unpolish(btn)
+            btn.style().polish(btn)
+
     def refresh(*_a, **_k):
         tnum = _cur_tool()
         w = _load_wear().get(str(tnum), {}) if tnum else {}
@@ -1263,9 +1495,9 @@ def _wire_tool_wear_info():
         gcodes = STATUS.gcodes.value or ()
         xw = xr if "G8" in gcodes else xr * 2.0
         if btn_x is not None:
-            btn_x.setText("D-X {:.4f}".format(xw))
+            _mostra(btn_x, 'X', xw)
         if btn_z is not None:
-            btn_z.setText("D-Z {:.4f}".format(zr))
+            _mostra(btn_z, 'Z', zr)
 
     # Dialogo unico, reutilizado (nao-modal -> teclado virtual funciona).
     dialog = _WearAdjustDialog(btn_x or btn_z)
@@ -1392,7 +1624,7 @@ def _wire_jog_continuous():
     cont.setAutoExclusive(True)    # mutuamente exclusivo com os incrementos
     cont.setFocusPolicy(Qt.NoFocus)
     cont.setMinimumSize(50, 42)
-    cont.setStyleSheet('QPushButton { font: 15pt "Bebas Kai"; }')
+    cont.setStyleSheet('QPushButton { font: 14pt "Barlow Condensed SemiBold"; }')
     lay.insertWidget(0, cont)
     try:
         jw.placeLed()              # estiliza o LED do CONT igual aos demais
@@ -1428,10 +1660,11 @@ def _wire_atalhos_abas():
     from qtpy.QtGui import QKeySequence
     from qtpy.QtWidgets import QShortcut, QTabWidget, QTabBar
 
-    # #B3E5FC: 8.8:1 na aba normal e 3.3:1 na selecionada (fundo ciano) —
+    # #A9B0B5 (texto-2 da paleta teal, 2026-10-25): legivel na aba normal e
+    # na selecionada (fundo teal #00838F). Antes era #B3E5FC: 8.8:1 na aba normal e 3.3:1 na selecionada (fundo ciano) —
     # o melhor equilibrio entre os azuis do tema para as duas situacoes.
-    ETIQUETA_QSS = ('QLabel { color: #B3E5FC; background: transparent;'
-                    ' font: 11pt "Bebas Kai"; padding-left: 6px; }')
+    ETIQUETA_QSS = ('QLabel { color: #A9B0B5; background: transparent;'
+                    ' font: 10pt "Barlow Condensed SemiBold"; padding-left: 6px; }')
 
     tabs = None
     for w in QApplication.allWidgets():
@@ -1756,7 +1989,7 @@ def _wire_procurar_gcode():
         except Exception:
             pass
 
-    def procurar(termo):
+    def procurar(termo, avisar_linha=True):
         termo = (termo or "").strip()
         if not termo:
             return
@@ -1779,10 +2012,13 @@ def _wire_procurar_gcode():
         num = janela.findChild(QWidget, "run_from_line_Num")
         if num is not None and hasattr(num, "setText"):
             num.setText(str(linha))
-        _avisar(u"'%s': linha %d  (%d de %d)" % (termo, linha, i + 1, len(linhas)))
+        if avisar_linha:
+            _avisar(u"'%s': linha %d  (%d de %d)" % (termo, linha, i + 1, len(linhas)))
 
     if btn_m30 is not None:
-        btn_m30.clicked.connect(lambda: procurar("M30"))
+        # sem o aviso "linha N": o editor já rola até o M30 (2026-10-25).
+        # Se não houver M30 no programa, o aviso de "não achei" continua.
+        btn_m30.clicked.connect(lambda: procurar("M30", avisar_linha=False))
     if btn_texto is not None and campo is not None:
         btn_texto.clicked.connect(lambda: procurar(campo.text()))
     if campo is not None:
@@ -1898,6 +2134,56 @@ def _wire_reset_limpa_mensagens():
     LOG.info("RESET (PARAR) tambem limpa os avisos da tela")
 
 
+def _wire_sem_jog_teclado():
+    """Desliga o jog pelas setas do teclado (e PageUp/PageDown).
+
+    Decisão do operador em 2026-10-25: a máquina só anda pelos botões do
+    painel e pelo volante, nunca pelo teclado, para não mover sem querer.
+
+    O jog por teclado do qtpyvcp vem do INI ([DISPLAY] KEYBOARD_JOG = true,
+    com KEYBOARD_JOG_SAFETY_OFF = true, ou seja, sem precisar de Ctrl). O INI
+    não se edita em casa, então o desligamento fica aqui: o VCPMainWindow lê
+    o INI uma vez e guarda em _keyboard_jog; com "false" o keyPressEvent e o
+    keyReleaseEvent dele ignoram as setas."""
+    from qtpyvcp.widgets.form_widgets.main_window import VCPMainWindow
+    for top in QApplication.topLevelWidgets():
+        if isinstance(top, VCPMainWindow):
+            top._keyboard_jog = "false"
+            LOG.info("Jog pelo teclado desligado (setas nao movem a maquina)")
+            return
+    LOG.warning("Jog pelo teclado: VCPMainWindow nao encontrado, setas "
+                "continuam movendo a maquina")
+
+
+def _caixa_alta_na_barlow():
+    """Caixa alta em todo texto da Barlow Condensed (2026-10-25).
+
+    A Bebas Kai, fonte antiga do tema, só tem maiúsculas: tudo na tela saía
+    em caixa alta sem ninguém pedir. A Barlow tem minúsculas, então textos
+    como "Peças" ou o "procurar..." do campo de busca apareciam misturados.
+    O QSS não tem text-transform; a capitalização vai na fonte de cada
+    widget e sobrevive aos repolish do qtpyvcp, porque o QSS só troca
+    família, tamanho e peso. Editores de texto ficam de fora: o G-code
+    aparece como está no arquivo."""
+    from qtpy.QtGui import QFont
+    from qtpy.QtWidgets import QPlainTextEdit, QTextEdit
+    n = 0
+    for w in QApplication.allWidgets():
+        try:
+            if isinstance(w, (QPlainTextEdit, QTextEdit)):
+                continue
+            w.ensurePolished()
+            f = w.font()
+            if f.family().startswith('Barlow Condensed') \
+                    and f.capitalization() != QFont.AllUppercase:
+                f.setCapitalization(QFont.AllUppercase)
+                w.setFont(f)
+                n += 1
+        except RuntimeError:
+            continue          # widget C++ ja destruido
+    LOG.info("Caixa alta: %d widgets com Barlow", n)
+
+
 class UserTab(QWidget):
     def __init__(self, parent=None):
         super(UserTab, self).__init__(parent)
@@ -1922,3 +2208,8 @@ class UserTab(QWidget):
         QTimer.singleShot(0, _wire_procurar_gcode)
         QTimer.singleShot(0, _wire_reset_limpa_mensagens)
         QTimer.singleShot(0, _start_painel_manual)
+        QTimer.singleShot(0, _wire_sem_jog_teclado)
+        # por ultimo: pega tambem os widgets criados pelos _wire_ acima; a
+        # segunda passada alcanca o que aparece depois (abas montadas tarde)
+        QTimer.singleShot(0, _caixa_alta_na_barlow)
+        QTimer.singleShot(3000, _caixa_alta_na_barlow)

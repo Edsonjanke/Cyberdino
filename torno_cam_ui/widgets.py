@@ -9,13 +9,13 @@ from qtpy.QtCore import QLocale, Qt, QTimer
 
 _SPIN_QSS = """
 QAbstractSpinBox, QComboBox, QLineEdit {
-    background: #1E2224;
-    color: #E6E6E6;
-    border: 1px solid #3A3F43;
+    background: #5A6268;
+    color: #FFFFFF;
+    border: 1px solid #2E343C;
     border-radius: 4px;
     padding: 4px 8px;
     min-height: 40px;   /* com o padding da 48px de alvo de toque */
-    font: 15pt "Bebas Kai";
+    font: 14pt "Barlow Condensed SemiBold";
 }
 QComboBox::drop-down { width: 26px; }
 """
@@ -175,7 +175,7 @@ class _DelegadoCorItem(QStyledItemDelegate):
         estilo = widget.style() if widget is not None else QApplication.style()
         estilo.drawControl(QStyle.CE_ItemViewItem, opt, painter, widget)
         linha = index.row()
-        cor = self._cores[linha] if 0 <= linha < len(self._cores) else "#E6E6E6"
+        cor = self._cores[linha] if 0 <= linha < len(self._cores) else "#FFFFFF"
         coment = self._coment[linha] if 0 <= linha < len(self._coment) else ""
         rect = estilo.subElementRect(QStyle.SE_ItemViewItemText, opt, widget)
         # na linha destacada o cinza discreto fica fraco demais sobre o azul
@@ -195,7 +195,7 @@ class ComboRoscas(QComboBox):
         from qtpy.QtGui import QBrush, QColor
         self._itens = list(itens)
         self.setStyleSheet(_SPIN_QSS)
-        cores = [it.get("cor", "#E6E6E6") for it in self._itens]
+        cores = [it.get("cor", "#FFFFFF") for it in self._itens]
         # o comentario NAO entra no texto do item: o valor guardado no estado
         # e' o "nome" da rosca, e sujar o texto quebraria roscas.buscar()
         self._preencher(cores)
@@ -221,7 +221,7 @@ class ComboRoscas(QComboBox):
         self.blockSignals(True)
         self.clear()
         self._itens = list(itens)
-        self._preencher([it.get("cor", "#E6E6E6") for it in self._itens])
+        self._preencher([it.get("cor", "#FFFFFF") for it in self._itens])
         self.setCurrentIndex(0)
         self.blockSignals(False)
         self._pintar_fechado(0)
@@ -234,7 +234,7 @@ class ComboRoscas(QComboBox):
         coment = self._coment[i] if 0 <= i < len(self._coment) else ""
         if not coment:
             return super(ComboRoscas, self).paintEvent(event)
-        cor = self._itens[i].get("cor", "#E6E6E6")
+        cor = self._itens[i].get("cor", "#FFFFFF")
         p = QStylePainter(self)
         opt = QStyleOptionComboBox()
         self.initStyleOption(opt)
@@ -248,13 +248,13 @@ class ComboRoscas(QComboBox):
     def _pintar_fechado(self, indice):
         """A caixa fechada mostra a cor da rosca escolhida. A fonte e' maior
         que a dos outros campos: a lista tem 97 roscas e e' escolhida no toque."""
-        cor = "#E6E6E6"
+        cor = "#FFFFFF"
         if 0 <= indice < len(self._itens):
             cor = self._itens[indice].get("cor", cor)
         self.setStyleSheet(
             _SPIN_QSS
-            + "\nQComboBox { color: %s; font: 20pt \"Bebas Kai\"; min-height: 46px; }"
-              "\nQComboBox QAbstractItemView { font: 20pt \"Bebas Kai\"; }" % cor)
+            + "\nQComboBox { color: %s; font: 18pt \"Barlow Condensed SemiBold\"; min-height: 46px; }"
+              "\nQComboBox QAbstractItemView { font: 18pt \"Barlow Condensed SemiBold\"; }" % cor)
 
     def committed_value(self):
         i = self.currentIndex()

@@ -19,18 +19,18 @@ INI_FILE = linuxcnc.ini(os.getenv('INI_FILE_NAME'))
 # tabela; 64pt quando em tela cheia do painel). DROLineEdit = mesmo widget
 # da coluna G54 WORK da tabela (valor identico + editavel clicando).
 _BIG_DRO_SS = """DROLineEdit {{
-    border: 1px solid #3A3F43;
-    border-radius: 6px;
-    color: #00E676;
-    background: #0D0F0E;
+    border: 1px solid #2E343C;
+    border-radius: 4px;
+    color: #3DDC84;
+    background: #0B0D10;
     padding-right: 10px;
-    font: {size} "Bebas Kai";
+    font: bold {size} "Barlow Condensed";
 }}"""
 
 # Botoes X DIA / ZERO Z do modo ampliado (MDIButton, zeram o eixo): so a
 # fonte e inline — cores/bordas vem do tema global (qss).
 _CAPTION_SS = """MDIButton {{
-    font: {size} "Bebas Kai";
+    font: {size} "Barlow Condensed SemiBold";
 }}"""
 
 

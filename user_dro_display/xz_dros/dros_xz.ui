@@ -100,10 +100,10 @@
            <property name="styleSheet">
             <string notr="true">.QFrame{
     border-style: solid;
-    border-color: rgb(176, 179,172);
+    border-color: #2E343C;
     border-width: 1px;
     border-radius: 4px;
-    background-color: rgb(90, 90, 90);
+    background-color: #0B0D10;
     padding: -5px;
 }</string>
            </property>
@@ -148,8 +148,8 @@
               </property>
               <property name="styleSheet">
                <string notr="true">QLabel{
-    color: rgb(238, 238, 236);
-	font: 16pt &quot;Bebas Kai&quot;;
+    color: #FFFFFF;
+	font: 15pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
               </property>
               <property name="text">
@@ -182,8 +182,8 @@
               </property>
               <property name="styleSheet">
                <string notr="true">QLabel{
-    color: rgb(238, 238, 236);
-	font: 16pt &quot;Bebas Kai&quot;;
+    color: #FFFFFF;
+	font: 15pt &quot;Barlow Condensed SemiBold&quot;;
     padding-left: 6px;
 }</string>
               </property>
@@ -220,8 +220,8 @@
               </property>
               <property name="styleSheet">
                <string notr="true">QLabel{
-    color: rgb(238, 238, 236);
-	font: 16pt &quot;Bebas Kai&quot;;
+    color: #FFFFFF;
+	font: 15pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
               </property>
               <property name="text">
@@ -254,8 +254,8 @@
               </property>
               <property name="styleSheet">
                <string notr="true">QLabel{
-    color: rgb(238, 238, 236);
-	font: 16pt &quot;Bebas Kai&quot;;
+    color: #FFFFFF;
+	font: 15pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
               </property>
               <property name="text">
@@ -291,8 +291,8 @@
               </property>
               <property name="styleSheet">
                <string notr="true">QLabel{
-    color: rgb(238, 238, 236);
-	font: 16pt &quot;Bebas Kai&quot;;
+    color: #FFFFFF;
+	font: 15pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
               </property>
               <property name="text">
@@ -367,7 +367,7 @@
            </property>
            <property name="styleSheet">
             <string notr="true">MDIButton {
-   	font: 16pt &quot;Bebas Kai&quot;;
+   	font: 15pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
            </property>
            <property name="text">
@@ -407,13 +407,13 @@
            <property name="styleSheet">
             <string notr="true">DROLineEdit{
     border-style: transparant;
-    border-color: #3A3F43;
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: #00E676;
-    background: #0D0F0E;
+    border-radius: 4px;
+    color: #3DDC84;
+    background: #0B0D10;
     padding-right: 2px;
-    font: 17pt &quot;Bebas Kai&quot;;
+    font: 16pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
            </property>
            <property name="alignment">
@@ -456,14 +456,14 @@
            <property name="styleSheet">
             <string notr="true">QLabel{
     border-style: transparent;
-    border-color: #3A3F43;
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: #00E676;
-    background: #0D0F0E;
+    border-radius: 4px;
+    color: #3DDC84;
+    background: #0B0D10;
 	font: 17pt;
     padding-right: 2px;
-    font: 17pt &quot;Bebas Kai&quot;;
+    font: 16pt &quot;Barlow Condensed SemiBold&quot;;
 }
 
 QLabel[style=&quot;unhomed&quot;]{
@@ -471,7 +471,7 @@ QLabel[style=&quot;unhomed&quot;]{
 }
 
 QLabel[style=&quot;homing&quot;]{
-   color: #00E676;
+   color: #3DDC84;
 }</string>
            </property>
            <property name="alignment">
@@ -514,14 +514,14 @@ QLabel[style=&quot;homing&quot;]{
            <property name="styleSheet">
             <string notr="true">DROLabel{
     border-style: transparent;
-    border-color: #3A3F43;
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: #00E676;
-    background: #0D0F0E;
+    border-radius: 4px;
+    color: #3DDC84;
+    background: #0B0D10;
 	font: 17pt;
     padding-right: 2px;
-    font: 17pt &quot;Bebas Kai&quot;;
+    font: 16pt &quot;Barlow Condensed SemiBold&quot;;
 }
 
 DROLabel[style=&quot;unhomed&quot;]{
@@ -529,7 +529,7 @@ DROLabel[style=&quot;unhomed&quot;]{
 }
 
 DROLabel[style=&quot;homing&quot;]{
-   color: #00E676;
+   color: #3DDC84;
 }</string>
            </property>
            <property name="alignment">
@@ -577,7 +577,7 @@ DROLabel[style=&quot;homing&quot;]{
            </property>
            <property name="styleSheet">
             <string notr="true">QPushButton {
-   	font: 15pt &quot;Bebas Kai&quot;;
+   	font: 14pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
            </property>
            <property name="text">
@@ -649,7 +649,7 @@ DROLabel[style=&quot;homing&quot;]{
            </property>
            <property name="styleSheet">
             <string notr="true">MDIButton {
-   	font: 17pt &quot;Bebas Kai&quot;;
+   	font: 16pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
            </property>
            <property name="text">
@@ -706,13 +706,13 @@ DROLabel[style=&quot;homing&quot;]{
            <property name="styleSheet">
             <string notr="true">DROLineEdit{
     border-style: transparant;
-    border-color: #3A3F43;
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: #00E676;
-    background: #0D0F0E;
+    border-radius: 4px;
+    color: #3DDC84;
+    background: #0B0D10;
     padding-right: 2px;
-    font: 17pt &quot;Bebas Kai&quot;;
+    font: 16pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
            </property>
            <property name="alignment">
@@ -755,14 +755,14 @@ DROLabel[style=&quot;homing&quot;]{
            <property name="styleSheet">
             <string notr="true">QLabel{
     border-style: transparent;
-    border-color: #3A3F43;
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: #00E676;
-    background: #0D0F0E;
+    border-radius: 4px;
+    color: #3DDC84;
+    background: #0B0D10;
 	font: 17pt;
     padding-right: 2px;
-    font: 17pt &quot;Bebas Kai&quot;;
+    font: 16pt &quot;Barlow Condensed SemiBold&quot;;
 }
 
 QLabel[style=&quot;unhomed&quot;]{
@@ -770,7 +770,7 @@ QLabel[style=&quot;unhomed&quot;]{
 }
 
 QLabel[style=&quot;homing&quot;]{
-   color: #00E676;
+   color: #3DDC84;
 }</string>
            </property>
            <property name="alignment">
@@ -813,14 +813,14 @@ QLabel[style=&quot;homing&quot;]{
            <property name="styleSheet">
             <string notr="true">DROLabel{
     border-style: transparent;
-    border-color: #3A3F43;
+    border-color: #2E343C;
     border-width: 1px;
-    border-radius: 5px;
-    color: #00E676;
-    background: #0D0F0E;
+    border-radius: 4px;
+    color: #3DDC84;
+    background: #0B0D10;
 	font: 17pt;
     padding-right: 2px;
-    font: 17pt &quot;Bebas Kai&quot;;
+    font: 16pt &quot;Barlow Condensed SemiBold&quot;;
 }
 
 DROLabel[style=&quot;unhomed&quot;]{
@@ -828,7 +828,7 @@ DROLabel[style=&quot;unhomed&quot;]{
 }
 
 DROLabel[style=&quot;homing&quot;]{
-   color: #00E676;
+   color: #3DDC84;
 }</string>
            </property>
            <property name="alignment">
@@ -876,7 +876,7 @@ DROLabel[style=&quot;homing&quot;]{
            </property>
            <property name="styleSheet">
             <string notr="true">QPushButton {
-   	font: 15pt &quot;Bebas Kai&quot;;
+   	font: 14pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
            </property>
            <property name="text">
@@ -930,8 +930,8 @@ DROLabel[style=&quot;homing&quot;]{
            </property>
            <property name="styleSheet">
             <string notr="true">QLabel {
-    color: #26C6DA;
-    font: 22pt &quot;Bebas Kai&quot;;
+    color: #00838F;
+    font: 20pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
            </property>
            <property name="alignment">
@@ -963,8 +963,8 @@ DROLabel[style=&quot;homing&quot;]{
             <widget class="QLabel" name="big_parts_caption">
              <property name="styleSheet">
               <string notr="true">QLabel {
-    color: #9BB0B5;
-    font: 14pt &quot;Bebas Kai&quot;;
+    color: #A9B0B5;
+    font: 13pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
              </property>
              <property name="text">
@@ -982,8 +982,8 @@ DROLabel[style=&quot;homing&quot;]{
              </property>
              <property name="styleSheet">
               <string notr="true">HalLabel {
-    color: #26C6DA;
-    font: 22pt &quot;Bebas Kai&quot;;
+    color: #00838F;
+    font: 20pt &quot;Barlow Condensed SemiBold&quot;;
     padding-right: 6px;
 }</string>
              </property>
@@ -1024,9 +1024,9 @@ DROLabel[style=&quot;homing&quot;]{
            <property name="styleSheet">
             <string notr="true">GearLabel {
     border: none;
-    color: #26C6DA;
+    color: #00838F;
     background: transparent;
-    font: 17pt "Bebas Kai";
+    font: 16pt "Barlow Condensed SemiBold";
 }</string>
            </property>
            <property name="alignment">
@@ -1069,7 +1069,7 @@ DROLabel[style=&quot;homing&quot;]{
              </property>
              <property name="styleSheet">
               <string notr="true">MDIButton {
-    font: 30pt &quot;Bebas Kai&quot;;
+    font: 28pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
              </property>
              <property name="text">
@@ -1102,12 +1102,12 @@ DROLabel[style=&quot;homing&quot;]{
              </property>
              <property name="styleSheet">
               <string notr="true">DROLineEdit {
-    border: 1px solid #3A3F43;
-    border-radius: 6px;
-    color: #00E676;
-    background: #0D0F0E;
+    border: 1px solid #2E343C;
+    border-radius: 4px;
+    color: #3DDC84;
+    background: #0B0D10;
     padding-right: 10px;
-    font: 44pt &quot;Bebas Kai&quot;;
+    font: 40pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
              </property>
              <property name="alignment">
@@ -1162,7 +1162,7 @@ DROLabel[style=&quot;homing&quot;]{
              </property>
              <property name="styleSheet">
               <string notr="true">MDIButton {
-    font: 30pt &quot;Bebas Kai&quot;;
+    font: 28pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
              </property>
              <property name="text">
@@ -1195,12 +1195,12 @@ DROLabel[style=&quot;homing&quot;]{
              </property>
              <property name="styleSheet">
               <string notr="true">DROLineEdit {
-    border: 1px solid #3A3F43;
-    border-radius: 6px;
-    color: #00E676;
-    background: #0D0F0E;
+    border: 1px solid #2E343C;
+    border-radius: 4px;
+    color: #3DDC84;
+    background: #0B0D10;
     padding-right: 10px;
-    font: 44pt &quot;Bebas Kai&quot;;
+    font: 40pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
              </property>
              <property name="alignment">
@@ -1315,7 +1315,7 @@ DROLabel[style=&quot;homing&quot;]{
            </property>
            <property name="styleSheet">
             <string notr="true">MDIButton {
-   	font: 14pt &quot;Bebas Kai&quot;;
+   	font: 13pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
            </property>
            <property name="text">
@@ -1377,7 +1377,7 @@ DROLabel[style=&quot;homing&quot;]{
            </property>
            <property name="styleSheet">
             <string notr="true">QPushButton {
-   	font: 15pt &quot;Bebas Kai&quot;;
+   	font: 14pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
            </property>
            <property name="text">

@@ -15,12 +15,12 @@
   </property>
   <property name="styleSheet">
    <string notr="true">QWidget#CUSTOMS {
-    background: rgb(46, 46, 47);
+    background: #1A1E24;
 }
 QGroupBox {
-    font: 18pt &quot;Bebas Kai&quot;;
-    color: white;
-    border: 2px solid rgb(96, 96, 97);
+    font: 17pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    border: 1px solid #2E343C;
     border-radius: 8px;
     margin-top: 18px;
     padding-top: 10px;
@@ -29,11 +29,11 @@ QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top center;
     padding: 0 10px;
-    color: #4DD0E1;
+    color: #A9B0B5;
 }
 QLabel {
-    color: white;
-    font: 14pt &quot;Bebas Kai&quot;;
+    color: #FFFFFF;
+    font: 13pt &quot;Barlow Condensed SemiBold&quot;;
 }</string>
   </property>
   <property name="sidebar" stdset="0">
@@ -79,29 +79,29 @@ QLabel {
         </property>
         <property name="styleSheet">
          <string notr="true">QComboBox {
-    font: 16pt &quot;Bebas Kai&quot;;
-    color: white;
-    background: rgb(86, 86, 87);
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
+    font: 15pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    background: #5A6268;
+    border: 2px solid #2E343C;
+    border-radius: 4px;
     padding: 6px 10px;
     min-height: 44px;
 }
 QComboBox:disabled {
-    background: rgb(50, 50, 50);
-    color: rgb(120, 120, 120);
+    background: #434950;
+    color: #A9B0B5;
     border-color: rgb(70, 70, 70);
 }
 QComboBox::drop-down {
     width: 36px;
-    border-left: 2px solid rgb(96, 96, 97);
+    border-left: 1px solid #2E343C;
 }
 QComboBox QAbstractItemView {
-    background: rgb(60, 60, 61);
-    color: white;
-    font: 16pt &quot;Bebas Kai&quot;;
+    background: #5A6268;
+    color: #FFFFFF;
+    font: 15pt &quot;Barlow Condensed SemiBold&quot;;
     selection-background-color: #00838F;
-    selection-color: black;
+    selection-color: #FFFFFF;
     outline: none;
 }</string>
         </property>
@@ -137,11 +137,11 @@ QComboBox QAbstractItemView {
         </property>
         <property name="styleSheet">
          <string notr="true">HalLabel {
-    font: 48pt &quot;Bebas Kai&quot;;
-    color: #00E676;
-    background: rgb(30, 30, 30);
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
+    font: 44pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #3DDC84;
+    background: #1A1E24;
+    border: 1px solid #2E343C;
+    border-radius: 4px;
     padding: 10px;
 }</string>
         </property>
@@ -172,11 +172,11 @@ QComboBox QAbstractItemView {
           </property>
           <property name="styleSheet">
            <string notr="true">HalQSpinBox {
-    font: 22pt &quot;Bebas Kai&quot;;
-    color: white;
-    background: rgb(50, 50, 50);
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
+    font: 20pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    background: #0B0D10;
+    border: 1px solid #2E343C;
+    border-radius: 4px;
     padding: 4px;
 }</string>
           </property>
@@ -204,11 +204,11 @@ QComboBox QAbstractItemView {
           </property>
           <property name="styleSheet">
            <string notr="true">QPushButton {
-    font: 16pt &quot;Bebas Kai&quot;;
-    color: white;
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
-    background: rgb(86, 86, 87);
+    font: 15pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    border: 2px solid #2E343C;
+    border-radius: 4px;
+    background: #5A6268;
 }
 QPushButton:pressed {
     background: rgb(60, 120, 180);
@@ -237,11 +237,11 @@ QPushButton:pressed {
         </property>
         <property name="styleSheet">
          <string notr="true">QPushButton {
-    font: 16pt &quot;Bebas Kai&quot;;
-    color: white;
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
-    background: rgb(86, 86, 87);
+    font: 15pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    border: 2px solid #2E343C;
+    border-radius: 4px;
+    background: #5A6268;
 }
 QPushButton:pressed {
     background: rgb(180, 60, 60);
@@ -262,8 +262,8 @@ QPushButton:pressed {
        <widget class="QLabel" name="parts_obs">
         <property name="styleSheet">
          <string notr="true">QLabel {
-    font: italic 12pt &quot;Bebas Kai&quot;;
-    color: rgb(180, 180, 180);
+    font: italic 11pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #A9B0B5;
     background: transparent;
     padding: 4px;
 }</string>
@@ -296,7 +296,7 @@ QPushButton:pressed {
         <item>
          <widget class="QLabel" name="referencia_estado">
           <property name="styleSheet">
-           <string notr="true">QLabel { color: #9BB0B5; font: 11pt &quot;Bebas Kai&quot;; }</string>
+           <string notr="true">QLabel { color: #A9B0B5; font: 10pt &quot;Barlow Condensed SemiBold&quot;; }</string>
           </property>
           <property name="text">
            <string>Modo: —</string>
@@ -318,7 +318,7 @@ QPushButton:pressed {
            <enum>Qt::NoFocus</enum>
           </property>
           <property name="styleSheet">
-           <string notr="true">QPushButton { font: 15pt &quot;Bebas Kai&quot;; }</string>
+           <string notr="true">QPushButton { font: 14pt &quot;Barlow Condensed SemiBold&quot;; }</string>
           </property>
           <property name="text">
            <string>REFERENCIAR NA CHAVE</string>
@@ -343,7 +343,7 @@ QPushButton:pressed {
            <enum>Qt::NoFocus</enum>
           </property>
           <property name="styleSheet">
-           <string notr="true">QPushButton { font: 13pt &quot;Bebas Kai&quot;; }</string>
+           <string notr="true">QPushButton { font: 12pt &quot;Barlow Condensed SemiBold&quot;; }</string>
           </property>
           <property name="text">
            <string>REINICIAR AGORA</string>
@@ -376,11 +376,11 @@ QPushButton:pressed {
         <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
         <property name="styleSheet">
          <string notr="true">QPushButton {
-    font: 16pt &quot;Bebas Kai&quot;;
-    color: white;
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
-    background: rgb(86, 86, 87);
+    font: 15pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    border: 2px solid #2E343C;
+    border-radius: 4px;
+    background: #5A6268;
 }
 QPushButton:pressed { background: rgb(60, 120, 180); }</string>
         </property>
@@ -394,11 +394,11 @@ QPushButton:pressed { background: rgb(60, 120, 180); }</string>
         <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
         <property name="styleSheet">
          <string notr="true">QPushButton {
-    font: 16pt &quot;Bebas Kai&quot;;
-    color: white;
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
-    background: rgb(86, 86, 87);
+    font: 15pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    border: 2px solid #2E343C;
+    border-radius: 4px;
+    background: #5A6268;
 }
 QPushButton:pressed { background: rgb(60, 120, 180); }</string>
         </property>
@@ -412,11 +412,11 @@ QPushButton:pressed { background: rgb(60, 120, 180); }</string>
         <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
         <property name="styleSheet">
          <string notr="true">QPushButton {
-    font: 16pt &quot;Bebas Kai&quot;;
-    color: white;
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
-    background: rgb(86, 86, 87);
+    font: 15pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    border: 2px solid #2E343C;
+    border-radius: 4px;
+    background: #5A6268;
 }
 QPushButton:pressed { background: rgb(60, 120, 180); }</string>
         </property>
@@ -430,11 +430,11 @@ QPushButton:pressed { background: rgb(60, 120, 180); }</string>
         <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
         <property name="styleSheet">
          <string notr="true">QPushButton {
-    font: 16pt &quot;Bebas Kai&quot;;
-    color: white;
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
-    background: rgb(86, 86, 87);
+    font: 15pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    border: 2px solid #2E343C;
+    border-radius: 4px;
+    background: #5A6268;
 }
 QPushButton:pressed { background: rgb(60, 120, 180); }</string>
         </property>
@@ -448,11 +448,11 @@ QPushButton:pressed { background: rgb(60, 120, 180); }</string>
         <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
         <property name="styleSheet">
          <string notr="true">QPushButton {
-    font: 16pt &quot;Bebas Kai&quot;;
-    color: white;
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
-    background: rgb(86, 86, 87);
+    font: 15pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    border: 2px solid #2E343C;
+    border-radius: 4px;
+    background: #5A6268;
 }
 QPushButton:pressed { background: rgb(180, 100, 60); }</string>
         </property>
@@ -466,11 +466,11 @@ QPushButton:pressed { background: rgb(180, 100, 60); }</string>
         <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
         <property name="styleSheet">
          <string notr="true">QPushButton {
-    font: 16pt &quot;Bebas Kai&quot;;
-    color: white;
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
-    background: rgb(86, 86, 87);
+    font: 15pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    border: 2px solid #2E343C;
+    border-radius: 4px;
+    background: #5A6268;
 }
 QPushButton:pressed { background: rgb(180, 100, 60); }</string>
         </property>
@@ -484,11 +484,11 @@ QPushButton:pressed { background: rgb(180, 100, 60); }</string>
         <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
         <property name="styleSheet">
          <string notr="true">QPushButton {
-    font: 16pt &quot;Bebas Kai&quot;;
-    color: white;
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
-    background: rgb(86, 86, 87);
+    font: 15pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    border: 2px solid #2E343C;
+    border-radius: 4px;
+    background: #5A6268;
 }
 QPushButton:pressed { background: rgb(180, 100, 60); }</string>
         </property>
@@ -502,11 +502,11 @@ QPushButton:pressed { background: rgb(180, 100, 60); }</string>
         <property name="minimumSize"><size><width>120</width><height>60</height></size></property>
         <property name="styleSheet">
          <string notr="true">QPushButton {
-    font: 16pt &quot;Bebas Kai&quot;;
-    color: white;
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
-    background: rgb(86, 86, 87);
+    font: 15pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    border: 2px solid #2E343C;
+    border-radius: 4px;
+    background: #5A6268;
 }
 QPushButton:pressed { background: rgb(180, 100, 60); }</string>
         </property>
@@ -539,11 +539,11 @@ QPushButton:pressed { background: rgb(180, 100, 60); }</string>
         </property>
         <property name="styleSheet">
          <string notr="true">QPushButton {
-    font: 20pt &quot;Bebas Kai&quot;;
-    color: white;
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
-    background: rgb(86, 86, 87);
+    font: 18pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    border: 2px solid #2E343C;
+    border-radius: 4px;
+    background: #5A6268;
 }
 QPushButton:pressed {
     background: rgb(180, 60, 60);
@@ -576,11 +576,11 @@ QPushButton:pressed {
         </property>
         <property name="styleSheet">
          <string notr="true">QPushButton {
-    font: 18pt &quot;Bebas Kai&quot;;
-    color: white;
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
-    background: rgb(86, 86, 87);
+    font: 17pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    border: 2px solid #2E343C;
+    border-radius: 4px;
+    background: #5A6268;
 }
 QPushButton:pressed {
     background: rgb(60, 140, 60);
@@ -610,11 +610,11 @@ QPushButton:pressed {
         </property>
         <property name="styleSheet">
          <string notr="true">QPushButton {
-    font: 18pt &quot;Bebas Kai&quot;;
-    color: white;
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
-    background: rgb(86, 86, 87);
+    font: 17pt &quot;Barlow Condensed SemiBold&quot;;
+    color: #FFFFFF;
+    border: 2px solid #2E343C;
+    border-radius: 4px;
+    background: #5A6268;
 }
 QPushButton:pressed {
     background: rgb(60, 140, 60);
@@ -643,46 +643,6 @@ QPushButton:pressed {
     </widget>
    </item>
     </layout>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="jogincrement_group">
-     <property name="title">
-      <string>INCREMENTO MPG</string>
-     </property>
-     <property name="maximumSize">
-      <size><width>320</width><height>340</height></size>
-     </property>
-     <layout class="QVBoxLayout" name="jogIncLayout">
-      <property name="leftMargin"><number>15</number></property>
-      <property name="topMargin"><number>15</number></property>
-      <property name="rightMargin"><number>15</number></property>
-      <property name="bottomMargin"><number>15</number></property>
-      <property name="spacing"><number>10</number></property>
-      <item>
-       <widget class="JogIncrement" name="jog_increment">
-        <property name="styleSheet">
-         <string notr="true">QPushButton {
-    font: 18pt &quot;Bebas Kai&quot;;
-    color: white;
-    border: 2px solid rgb(96, 96, 97);
-    border-radius: 6px;
-    background: rgb(86, 86, 87);
-}
-QPushButton:checked {
-    background: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1, stop:0 rgba(255, 165, 0, 255), stop:1 rgba(180, 100, 0, 255));
-    color: black;
-}</string>
-        </property>
-        <property name="toolTip">
-         <string>Incremento do volante (MPG): mm por clique. Vale em modo JOG.</string>
-        </property>
-        <property name="pinBaseName" stdset="0">
-         <string>jog-increment</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
    </item>
    <item>
     <spacer name="rightSpacer">

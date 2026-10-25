@@ -66,7 +66,7 @@
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-   	font: 15pt "Bebas Kai";
+   	font: 14pt "Barlow Condensed SemiBold";
 }</string>
      </property>
      <property name="text">
@@ -105,7 +105,7 @@
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-   	font: 15pt "Bebas Kai";
+   	font: 14pt "Barlow Condensed SemiBold";
 }</string>
      </property>
      <property name="text">
@@ -144,7 +144,7 @@
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-   	font: 15pt "Bebas Kai";
+   	font: 14pt "Barlow Condensed SemiBold";
 }</string>
      </property>
      <property name="text">
@@ -183,7 +183,7 @@
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-   	font: 15pt "Bebas Kai";
+   	font: 14pt "Barlow Condensed SemiBold";
 }</string>
      </property>
      <property name="text">
@@ -219,7 +219,7 @@
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-   	font: 15pt "Bebas Kai";
+   	font: 14pt "Barlow Condensed SemiBold";
 }</string>
      </property>
      <property name="text">
@@ -255,7 +255,7 @@
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-   	font: 15pt "Bebas Kai";
+   	font: 14pt "Barlow Condensed SemiBold";
 }</string>
      </property>
      <property name="text">
@@ -297,7 +297,7 @@
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton {
-   	font: 15pt "Bebas Kai";
+   	font: 14pt "Barlow Condensed SemiBold";
 }</string>
      </property>
      <property name="text">

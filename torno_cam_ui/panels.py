@@ -98,7 +98,7 @@ THREAD_FIELDS = _COMMON_HEAD + [
 ]
 
 
-_LABEL_QSS = 'QLabel { color: #9BB0B5; font: 11pt "Bebas Kai"; }'
+_LABEL_QSS = 'QLabel { color: #A9B0B5; font: 10pt "Barlow Condensed SemiBold"; }'
 
 
 class OpForm(QWidget):

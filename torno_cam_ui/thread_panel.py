@@ -78,7 +78,7 @@ VARIANTES = {
 
 TOGGLE = ("useCannedCycle", 7.96, 87.91, u"GERAR CICLO", "#4caf50")
 
-_LABEL_QSS = 'QLabel { color: #9BB0B5; font: 10pt "Bebas Kai"; }'
+_LABEL_QSS = 'QLabel { color: #A9B0B5; font: 9pt "Barlow Condensed SemiBold"; }'
 
 
 class ThreadForm(QWidget):
@@ -147,7 +147,7 @@ class ThreadForm(QWidget):
 
     def _build_strip(self):
         box = QFrame()
-        box.setStyleSheet('QFrame { background: #242729; border: 1px solid #3A3F43;'
+        box.setStyleSheet('QFrame { background: #1A1E24; border: 1px solid #2E343C;'
                           ' border-radius: 4px; }')
         grid = QGridLayout(box)
         grid.setContentsMargins(8, 6, 8, 6)
@@ -199,7 +199,7 @@ class ThreadForm(QWidget):
             grid.setColumnStretch(col, 1)
         # dica do back-tool: M4 faz rosca DIREITA nesta maquina
         dica = QLabel(u"M4 = rosca direita (torre atras do centro)")
-        dica.setStyleSheet('QLabel { color: #FFB300; font: 9pt "Bebas Kai"; }')
+        dica.setStyleSheet('QLabel { color: #A9B0B5; font: 8pt "Barlow Condensed SemiBold"; }')
         # embaixo da ULTIMA linha de campos (a faixa cresceu com o seletor de
         # tabela; fixar a linha 4 fazia a dica cair por cima dos campos)
         grid.addWidget(dica, ((len(specs) - 1) // 5) * 2 + 2, 0, 1, 5)
