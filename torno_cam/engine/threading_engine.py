@@ -22,6 +22,12 @@ class ThreadingInput:
     xEnd: Optional[float] = None
     passes: Optional[int] = None
     minorDiameter: Optional[float] = None
+    # profundidade do 1o passe no RAIO (a PROFUNDIDADE DE CORTE da tela, que
+    # e' o J do G76 em diametro, dividida por 2). None = automatico (0.2 x passo)
+    firstCutDepth: Optional[float] = None
+    # altura do filete no raio em fracao do passo (roscas.altura_filete: 0.6134
+    # externa, 0.5413 interna, 0.8 NPT). None = regra do app (0.6134 no 60 graus)
+    depthFactor: Optional[float] = None
 
 
 @dataclass
@@ -59,6 +65,8 @@ class ThreadingEngine:
 
         if inp.minorDiameter is not None and inp.minorDiameter > 0:
             working_depth = abs(inp.xStart - inp.minorDiameter) / 2
+        elif inp.depthFactor:
+            working_depth = inp.depthFactor * pitch
         elif inp.threadAngle == 60:
             working_depth = 0.6134 * pitch
         else:
@@ -104,17 +112,24 @@ class ThreadingEngine:
 
     @staticmethod
     def _calculate_passes(inp, pitch, working_depth, taper_angle):
-        roughing_passes = inp.passes if inp.passes is not None else 0
-        if roughing_passes <= 0:
-            first_pass_depth = 0.2 * pitch
-            roughing_passes = math.ceil((working_depth / first_pass_depth) ** 2)
-            roughing_passes = max(3, min(40, roughing_passes))
-
         max_depth_per_pass = 0.5 * pitch
 
         raw_depths = []
-        for n in range(1, roughing_passes + 1):
-            raw_depths.append(working_depth * math.sqrt(n / roughing_passes))
+        d1 = inp.firstCutDepth if (inp.firstCutDepth or 0) > 0 else None
+        if d1 is not None:
+            # 1o passe com a profundidade pedida e reducao de area constante:
+            # passe k em d1 x raiz(k), ate a profundidade total da rosca
+            n_passes = max(1, min(40, math.ceil((working_depth / d1) ** 2 - 1e-9)))
+            raw_depths = [min(d1 * math.sqrt(n), working_depth) for n in range(1, n_passes + 1)]
+            raw_depths[-1] = working_depth
+        else:
+            roughing_passes = inp.passes if inp.passes is not None else 0
+            if roughing_passes <= 0:
+                first_pass_depth = 0.2 * pitch
+                roughing_passes = math.ceil((working_depth / first_pass_depth) ** 2)
+                roughing_passes = max(3, min(40, roughing_passes))
+            for n in range(1, roughing_passes + 1):
+                raw_depths.append(working_depth * math.sqrt(n / roughing_passes))
 
         final_depths = []
         prev_depth = 0.0

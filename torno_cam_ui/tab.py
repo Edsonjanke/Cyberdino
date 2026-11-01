@@ -137,6 +137,13 @@ class UserTab(QWidget):
         self._debounce.setInterval(300)
         self._debounce.timeout.connect(self._regenerate)
 
+        # Valores sempre salvos com a ultima edicao (operador ou agente): cada
+        # mudanca confirmada ja grava; ao sair da aba e ao fechar o LinuxCNC
+        # grava de novo, para nao perder um valor digitado sem ENTER.
+        app = QApplication.instance()
+        if app is not None:
+            app.aboutToQuit.connect(self._persist)
+
         self._select_op(0)
         self._regenerate()
 
@@ -305,6 +312,8 @@ class UserTab(QWidget):
     def hideEvent(self, event):
         super(UserTab, self).hideEvent(event)
         self._set_imersivo(False)
+        # grava tambem o que ficou digitado sem ENTER (o collect le o campo)
+        self._persist()
 
     def _find_widget(self, name):
         """Lookup robusto: findChild na janela e, se falhar, varredura em
@@ -460,6 +469,35 @@ class UserTab(QWidget):
         self._preview_mode = "current"
         self._persist()
         self._regenerate()
+
+    def receber_do_agente(self, operacoes):
+        """Valores do ultimo programa salvo pelo agente (aba AGENTE IA), para
+        o operador assumir daqui. `operacoes` = [(op_key, params)] ja prontos
+        (torno_cam.agente.ferramentas.preparar). Cada operacao vai para o
+        formulario dela; com mais de uma, a fila recebe todas na ordem do
+        agente, e SALVAR + CARREGAR refaz o mesmo programa. A fila anterior
+        e' trocada pela do agente."""
+        chaves = [key for (_n, key, _f) in OPS]
+        primeiro = None
+        fila = []
+        for op_key, params in operacoes:
+            idx = chaves.index("THREAD_EXTERNAL" if op_key.startswith("THREAD") else op_key)
+            self._forms[idx].load(params)
+            fila.append((params.get("title") or OPS[idx][0], params))
+            if primeiro is None:
+                primeiro = idx
+        if primeiro is None:
+            return
+        self._queue = fila if len(fila) > 1 else []
+        self._refresh_queue_list()
+        self._select_op(primeiro)
+        if self._queue:
+            self._preview_mode = "queue"
+            self._regenerate()
+        self._persist()
+        n = len(fila)
+        self._status.setText(u"Valores do agente: {} {}".format(
+            n, u"operação" if n == 1 else u"operações"))
 
     def _refresh_queue_list(self):
         self._queue_list.clear()

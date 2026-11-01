@@ -1,5 +1,7 @@
 """Port de strategies/ThreadStrategy.ts (rosca)."""
 
+import math
+
 from ..nodes import ToolpathBuilder
 from ..threading_engine import ThreadingEngine, ThreadingInput
 from ..jsutil import round4, js_num
@@ -26,7 +28,11 @@ def generate_thread(p):
         springPasses=p.springPasses,
         spindleRPM=p.spindleRPM,
         minorDiameter=(p.minorDiameter if p.minorDiameter > 0 else None),
+        # PROFUNDIDADE DE CORTE da tela = J do G76, em diametro (G7); 0 = auto
+        firstCutDepth=((p.depthOfCut / 2.0) if (getattr(p, "depthOfCut", 0) or 0) > 0 else None),
         infeedAngle=p.infeedAngle or 0,
+        # altura do filete pelo perfil (a UI e o agente preenchem); 0 = app
+        depthFactor=(getattr(p, "threadDepthFactor", 0) or None),
     )
 
     result = ThreadingEngine.calculate(inp)
@@ -58,10 +64,19 @@ def generate_thread(p):
 
     if usar_ciclo:
         b.comment("G76 CICLO AUTOMATICO DE ROSCA")
-        b.rapid(x=x_clear, z=round4(p.zStart + p.clearance))
+        z_conducao = round4(p.zStart + p.clearance)
+        b.rapid(x=x_clear, z=z_conducao)
+        # Saida em rampa de um passo (L2): a rosca termina sem canal de
+        # saida e a ferramenta nao sai do fundo num G0. O LinuxCNC recusa E
+        # maior que metade da linha de conducao (GCODE-ROSCAS.md, 4.3).
+        rampa = min(result.pitch,
+                    math.floor(abs(z_conducao - p.zEnd) / 2.0 * 1000) / 1000.0)
 
         thread_depth = result.workingDepth
-        first_cut_depth = result.passes[0].depth if result.passes else thread_depth / 4
+        if inp.firstCutDepth:
+            first_cut_depth = inp.firstCutDepth      # J = o valor digitado
+        else:
+            first_cut_depth = result.passes[0].depth if result.passes else thread_depth / 4
         min_cut_depth = first_cut_depth * 0.1
 
         final_x = (round4(p.xStart - thread_depth * 2) if p.side == "EXTERNAL"
@@ -82,6 +97,7 @@ def generate_thread(p):
             # pico fica a -folga (externa) / +folga (interna) da linha atual
             peakOffset=round4(-p.clearance if p.side == "EXTERNAL"
                               else p.clearance),
+            exitTaper=rampa,
         )
     else:
         z_lead = round4(p.zStart + result.leadIn)

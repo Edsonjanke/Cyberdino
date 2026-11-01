@@ -1674,6 +1674,20 @@ def _wire_jog_continuous():
     LOG.info("Jog continuo: botao CONT adicionado")
 
 
+def _agente_por_ultimo(tabs):
+    """Aba AGENTE IA sempre por ultimo (2026-11-01, pedido do Edson).
+
+    O ProbeBasic cria as abas do usuario na ordem do os.listdir, que muda de
+    um sistema de arquivos para outro. Roda antes da numeracao dos atalhos,
+    que vale pela posicao da aba."""
+    for i in range(tabs.count()):
+        w = tabs.widget(i)
+        if w is not None and w.objectName() == "AGENTE_IA":
+            if i != tabs.count() - 1:
+                tabs.tabBar().moveTab(i, tabs.count() - 1)
+            return
+
+
 def _wire_atalhos_abas():
     """Ctrl+1 ... Ctrl+9 trocam de aba, com o atalho escrito na propria aba.
 
@@ -1712,6 +1726,7 @@ def _wire_atalhos_abas():
 
     barra = tabs.tabBar()
     janela = tabs.window()
+    _agente_por_ultimo(tabs)
     quantas = min(tabs.count(), 9)          # Ctrl+0 nao entra na sequencia
     for i in range(quantas):
         if barra.tabButton(i, QTabBar.RightSide) is not None:

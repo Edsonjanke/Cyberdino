@@ -373,3 +373,35 @@ def test_g95_na_primeira_linha_de_avanco_de_cada_operacao():
                          entradas, LinuxCNCDinoPost())
     com_g95 = [l for l in g.splitlines() if "G95 F" in l]
     assert com_g95 == ["G1 X22.533 Z-30 G95 F0.15"] * 2, g
+
+
+# ── rosca: PROFUNDIDADE DE CORTE = J do G76 (diametro, G7) ───────────────────
+_M10 = dict(pitch=1.5, xStart=10.0, xEnd=10.0, zStart=2.0, zEnd=-30.0)
+
+
+def test_profundidade_de_corte_vira_o_j_do_g76():
+    g = _gen("THREAD_EXTERNAL", useCannedCycle=True, depthOfCut=0.6, **_M10)
+    linha = [l for l in g.splitlines() if l.startswith("G76")][0]
+    assert " J0.6 " in linha and " K1.84 " in linha, linha
+
+
+def test_profundidade_de_corte_zero_fica_como_antes():
+    for ciclo in (True, False):
+        assert _gen("THREAD_EXTERNAL", useCannedCycle=ciclo, depthOfCut=0, **_M10) == \
+            _sem_chave("THREAD_EXTERNAL", ["depthOfCut"], useCannedCycle=ciclo, **_M10)
+
+
+def test_profundidade_de_corte_no_linha_a_linha():
+    g = _gen("THREAD_EXTERNAL", depthOfCut=0.6, **_M10)
+    linhas = g.splitlines()
+    i = next(k for k, l in enumerate(linhas) if l.startswith("G33"))
+    assert linhas[i - 1] == "G0 X9.4", linhas[i - 3:i + 1]     # 1o passe: 10 - 0,6
+    passes_x = [linhas[k - 1] for k, l in enumerate(linhas) if l.startswith("G33")]
+    assert passes_x[-1] == "G0 X8.16"                           # fundo da rosca
+
+
+def test_g76_com_r2_reducao_de_area_constante():
+    for j in (0, 0.6):
+        linha = [l for l in _gen("THREAD_EXTERNAL", useCannedCycle=True, depthOfCut=j,
+                                 **_M10).splitlines() if l.startswith("G76")][0]
+        assert " R2 " in linha, linha

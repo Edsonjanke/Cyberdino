@@ -86,10 +86,14 @@ class LinuxCNCDinoPost(LinuxCNCPost):
             s += " ({})".format(_ascii(_sem_parenteses(t.description)))
         return s
 
+    # Passo com 5 casas: em polegada 25.4/fios nao fecha (14 fios = 1.814286)
+    # e 3 casas acumulam erro ao longo da rosca (GCODE-ROSCAS.md, 9.1).
+    CASAS_PASSO = 5
+
     def format_thread_feed(self, node):
         # G33 = movimento sincronizado com o fuso (K = passo por volta).
         return gline("G33", word("X", node.x), word("Z", node.z),
-                     word("K", node.pitch))
+                     word("K", node.pitch, self.CASAS_PASSO))
 
     # ── Modo de trajetoria (precisao do movimento) ──────────────────────────
     # G64 P<tol>: mistura os movimentos mantendo o desvio da trajetoria dentro
@@ -264,6 +268,18 @@ class LinuxCNCDinoPost(LinuxCNCPost):
     #  2) Q vinha em decimos de grau (Fanuc). No LinuxCNC Q e' o angulo do
     #     carro em GRAUS — para fio de 60 graus usa-se 29.5.
     #  3) I tinha sinal fixo negativo, o que inverteria a rosca interna.
+    #
+    # R2 (2026-11-01, pedido do Edson): sem R o LinuxCNC usa R1, profundidade
+    # CONSTANTE em todo passe (J, 2J, 3J...), e os passes do fundo ficam os
+    # mais pesados. R2 = reducao de AREA constante, como diz a tela da rosca e
+    # como o modo linha a linha ja faz. Medido no rs274 (M10x1,5, J0.6): sem R
+    # 6 passes (9.4, 8.8, 8.2, fundo); com R2 12 passes cada vez mais finos.
+    #
+    # L2 (2026-11-01): rampa de saida com E = passo. Medido no rs274 (M10x1,5,
+    # Z-20, E1.5): o fundo vai ate Z-18.5 e a rampa sincronizada sobe ate a
+    # crista em Z-20. Nao passa do FIM Z e dispensa o canal de saida.
+    DEGRESSAO_G76 = 2.0
+
     def format_canned_thread_cycle(self, node):
         pico = getattr(node, "peakOffset", 0.0) or 0.0
         if pico == 0.0:
@@ -274,18 +290,22 @@ class LinuxCNCDinoPost(LinuxCNCPost):
         primeiro = abs(node.firstCutDepth)
         angulo = node.threadAngle or 60.0
         carro = max(0.0, angulo / 2.0 - 0.5)     # 60 graus -> 29.5
+        # L2: rampa so na saida, ao longo de E (2026-11-01, pedido do Edson)
+        rampa = getattr(node, "exitTaper", 0.0) or 0.0
 
         return gline(
             "G76",
-            word("P", node.pitch),
+            word("P", node.pitch, self.CASAS_PASSO),
             word("Z", node.finalZ),
             # x2: o engine calcula em raio e o programa esta em G7 (diametro)
             word("I", round(pico * 2.0, 4)),
             word("J", round(primeiro * 2.0, 4)),
+            word("R", self.DEGRESSAO_G76),
             word("K", round(prof * 2.0, 4)),
             word("Q", round(carro, 4)),
             word("H", node.springPasses),
-            "L0",
+            word("E", rampa, 4) if rampa > 0 else "",
+            "L2" if rampa > 0 else "L0",
         )
 
     def _format_canned_thread_cycle_bloqueado(self, node):

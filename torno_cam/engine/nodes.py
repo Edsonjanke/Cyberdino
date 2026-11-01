@@ -166,6 +166,9 @@ class CannedThreadCycle:
     # Deslocamento do pico da rosca em relacao a linha de referencia (raio).
     # Negativo = externa, positivo = interna. So o dialeto do LinuxCNC usa.
     peakOffset: float = 0.0
+    # Rampa de saida ao longo da linha de conducao (E do G76, com L2).
+    # 0 = sem rampa (L0). So o dialeto do LinuxCNC usa.
+    exitTaper: float = 0.0
     type: str = "CANNED_THREAD_CYCLE"
 
 

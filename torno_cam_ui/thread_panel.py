@@ -2,10 +2,10 @@
 """ROSCA, telas 12 (externa) e 13 (interna) do padrao novo (handoff telas de
 ciclo, 2026-11-01).
 
-Dois campos do desenho (PROFUNDIDADE DE CORTE e COMPRIMENTO DA ROSCA) ficam
-so de leitura: o engine os ignora, ele deriva a profundidade dos passes pela
-lei da raiz e as entradas por 2.5x/1.5x o passo. PASSADAS DE ACABAMENTO
-(so na interna) nao tem logica no engine: caixa desabilitada.
+PROFUNDIDADE DE CORTE e' o J do G76 (em diametro). COMPRIMENTO DA ROSCA e
+NUMERO DE PASSADAS sairam da tela: a entrada e' 2.5x/1.5x o passo e o numero
+de passes sai da profundidade. PASSADAS DE ACABAMENTO (so na interna) nao tem
+logica no engine: caixa desabilitada.
 """
 
 import math
@@ -15,9 +15,6 @@ from torno_cam.engine import roscas
 from .ciclo_form import CicloForm, celulas_config
 from .widgets import ComboRoscas
 from .panels import WCS, DIRS, COOL, SIDES, TTYPE
-
-# campos que o engine NAO usa (derivados internamente)
-IGNORADOS = ("depthOfCut", "leadInLength")
 
 TABELAS = [(u"MÉTRICA", roscas.TAB_METRICA),
            (u"POLEGADA UNC/UNF", roscas.TAB_POLEGADA),
@@ -35,14 +32,13 @@ class ThreadForm(CicloForm):
         "inicio_z":              ("zStart",       {}),
         "angulo_de_saida_taper": ("taperAngle",   dict(decimals=4)),
         "afastamento_g0":        ("clearance",    dict(minimum=0.0)),
-        "inicio_x":              ("xStart",       {}),
-        "fim_x":                 ("xEnd",         {}),
-        "comprimento_da_rosca":  ("leadInLength", dict(minimum=0.0)),
+        # 3 casas: o D1 da interna (18.376) e o cone da NPT nao cabem em 2
+        "inicio_x":              ("xStart",       dict(decimals=3)),
+        "fim_x":                 ("xEnd",         dict(decimals=3)),
         "rotacao_do_fuso_rpm":   ("spindleRPM",   dict(integer=True, minimum=1)),
-        "profundidade_de_corte": ("depthOfCut",   dict(minimum=0.0)),
+        "profundidade_de_corte": ("depthOfCut",   dict(minimum=0.0, decimals=3)),
         "rosca_polegadas":       ("tpi",          dict(minimum=0.0)),
         "passo_pol":             ("pitch",        dict(minimum=0.0)),
-        "numero_de_passadas":    ("passes",       dict(integer=True, minimum=0)),
         # "passadas_de_acabamento" (so na interna): sem logica no engine
     }
     LIGADAS = {"useCannedCycle": DICA_CICLO}
@@ -56,12 +52,11 @@ class ThreadForm(CicloForm):
         return self._lado()
 
     def _pos_init(self):
-        for chave in IGNORADOS:
-            e = self._edits.get(chave)
-            if e is not None:
-                e.setReadOnly(True)
-                e.setToolTip(u"O gerador calcula este valor sozinho: profundidade "
-                             u"pela lei da raiz e entrada de 2,5 vezes o passo.")
+        e = self._edits.get("depthOfCut")
+        if e is not None:
+            e.setToolTip(u"Profundidade do primeiro passe: sai como o J do G76, em "
+                         u"diâmetro (G7). Os passes seguintes reduzem com área "
+                         u"constante. 0 = automático.")
 
     def linhas_faixa(self):
         rosca = [
@@ -126,7 +121,8 @@ class ThreadForm(CicloForm):
         """Preenche passo, diametro e RPM a partir da tabela de roscas.
 
         No lado EXTERNO o diametro e' o nominal (M10 -> 10). No INTERNO e' o
-        furo antes de roscar (D - passo), que e' de onde a ferramenta parte.
+        D1 da porca (D - 1.0825 x passo), a crista de onde a profundidade e'
+        medida: o fundo cai no nominal. Ver roscas.extremos.
         O operador pode ajustar qualquer campo depois."""
         try:
             w = self._extra.get("rosca")
@@ -145,22 +141,12 @@ class ThreadForm(CicloForm):
                 tw.blockSignals(True)
                 tw.set_value(self.params["threadType"])
                 tw.blockSignals(False)
-            x_inicial = it["broca"] if interna else it["bitola"]
-            x_final = x_inicial
-            if it.get("conicidade"):
-                # NPT: o diametro da tabela vale na FACE (z=0) e cresce ao
-                # entrar na peca: D(z) = D0 - z/16. Os dois extremos saem do
-                # mesmo cone, sem depender de onde comeca a aproximacao.
-                z0 = self._valor("zStart", 0.0)
-                z1 = self._valor("zEnd", -it.get("comprimento", 10.0))
-                x_inicial = round(it["bitola"] - z0 * it["conicidade"], 4)
-                if interna:
-                    x_inicial = round(it["broca"] - z0 * it["conicidade"], 4)
-                x_final = round(x_inicial - (z1 - z0) * it["conicidade"], 4)
-                self._travar_ciclo(True)
-            else:
-                self._travar_ciclo(False)
-            conic = it.get("conicidade") or 0.0
+            # NPT: o diametro da tabela vale na FACE (z=0); os dois extremos
+            # saem do mesmo cone, sem depender de onde comeca a aproximacao
+            z0 = self._valor("zStart", 0.0)
+            z1 = self._valor("zEnd", -it.get("comprimento", 10.0))
+            x_inicial, x_final, angulo = roscas.extremos(it, interna, z0, z1)
+            self._travar_ciclo(bool(it.get("conicidade")))
             valores = {
                 "pitch": it["passo"],
                 "tpi": it.get("tpi", 0.0),
@@ -168,7 +154,7 @@ class ThreadForm(CicloForm):
                 "xStart": x_inicial,
                 "xEnd": x_final,
                 # angulo por lado que corresponde a conicidade da tabela
-                "taperAngle": round(math.degrees(math.atan(conic / 2.0)), 4),
+                "taperAngle": angulo,
             }
             for chave, valor in valores.items():
                 e = self._edits.get(chave)
@@ -252,5 +238,10 @@ class ThreadForm(CicloForm):
         # cone ancorado em (zStart,xStart)-(zEnd,xEnd); sem isso a entrada e a
         # saida da rosca "abrem" o cone (ver strategies/thread.py)
         params["taperTrueAngle"] = True
+        # profundidade pelo perfil: externa, interna (do D1) ou NPT
+        params["threadDepthFactor"] = roscas.altura_filete(
+            params.get("tabela"), lado in ("INTERNAL", "ID"))
+        # sem campo na tela: o numero de passes sai da profundidade de corte
+        params["passes"] = 0
         params["operationType"] = ("THREAD_INTERNAL" if lado in ("INTERNAL", "ID")
                                    else "THREAD_EXTERNAL")

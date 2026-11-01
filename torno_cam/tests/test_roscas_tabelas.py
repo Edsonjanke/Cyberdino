@@ -116,3 +116,100 @@ def test_cone_exato_da_a_conicidade_pedida():
     assert abs(1 / _conicidade_do_gcode(_gera(taperTrueAngle=True)) - 16.0) < 0.1
     frouxo = 1 / _conicidade_do_gcode(_gera())
     assert frouxo > 18.0, "sem a flag o comportamento do app deveria continuar"
+
+
+# ── conferido contra o GCODE-ROSCAS.md (01/11/2026) ─────────────────────────
+from torno_cam.agente import ferramentas as fe
+
+
+def _programa(rosca, side, z0, z1):
+    g, _ = fe.montar("t", [{"tipo": "ROSCA", "parametros": dict(
+        rosca=rosca, side=side, zStart=z0, zEnd=z1, toolNumber=1,
+        useCannedCycle=True, springPasses=2, depthOfCut=0)}], {})
+    return g.splitlines()
+
+
+def _palavra(linha, letra):
+    return float(re.search(r" %s(-?[\d.]+)" % letra, linha).group(1))
+
+
+def test_altura_do_filete_por_perfil():
+    """Secao 7: 0.6134 externa, 0.5413 interna, 0.8 na NPT (no raio)."""
+    assert R.altura_filete(R.TAB_METRICA, False) == 0.6134
+    assert R.altura_filete(R.TAB_POLEGADA, True) == 0.5413
+    assert R.altura_filete(R.TAB_NPT, False) == R.altura_filete(R.TAB_NPT, True) == 0.8
+
+
+def test_m10x15_externa_igual_ao_8_1():
+    g76 = next(l for l in _programa("M10 x 1.5", "EXTERNAL", 2, -20) if l.startswith("G76"))
+    assert _palavra(g76, "P") == 1.5 and _palavra(g76, "K") == 1.84   # fundo 8.16
+    assert _palavra(g76, "I") < 0                                     # externa
+
+
+def test_m20x15_interna_igual_ao_8_2():
+    """Crista no D1 18.376, K1.624 e fundo no nominal 20.0. Antes partia da
+    broca 18.5 com a altura da externa e o fundo ia a 20.34: porca frouxa."""
+    linhas = _programa("M20 x 1.5", "INTERNAL", 2, -18)
+    g76 = next(l for l in linhas if l.startswith("G76"))
+    x = next(_palavra(" " + l, "X") for l in reversed(linhas[:linhas.index(g76)])
+             if l.startswith("G0") and " X" in " " + l)
+    assert _palavra(g76, "I") > 0                                     # interna
+    assert round(x + _palavra(g76, "I"), 3) == 18.376                  # crista
+    assert _palavra(g76, "K") == 1.624
+    assert round(x + _palavra(g76, "I") + _palavra(g76, "K"), 3) == 20.0
+
+
+def _passes_g33(linhas):
+    return [(_palavra(l, "X"), _palavra(l, "Z")) for l in linhas if l.startswith("G33")]
+
+
+def test_npt_corta_a_altura_de_0_8_passo():
+    """Secao 9.5: NPT 1/2-14 tem h = 0.8 x 1.81429 = 1.451 no raio. Com a
+    altura da metrica (0.6134) sobrava 0.34 mm no raio: nao rosqueava."""
+    it = R.buscar('NPT 1/2" - 14')
+    h = 0.8 * 25.4 / 14
+    x, z = _passes_g33(_programa(it["nome"], "EXTERNAL", 0, -14))[-1]
+    crista = it["bitola"] - z * it["conicidade"]
+    assert abs((crista - x) / 2.0 - h) < 0.002
+    x, z = _passes_g33(_programa(it["nome"], "INTERNAL", 0, -14))[-1]
+    crista = it["menor"] + z * it["conicidade"]
+    assert abs((x - crista) / 2.0 - h) < 0.002
+
+
+def test_npt_interna_fecha_ao_entrar_na_luva():
+    """Na luva o diametro DIMINUI para dentro (a ponta do tubo vai mais
+    fundo). Antes o cone saia invertido."""
+    it = R.buscar('NPT 1/2" - 14')
+    x0, x1, ang = R.extremos(it, True, 0.0, -16.0)
+    assert abs(x0 - it["menor"]) < 1e-6 and abs(x0 - x1 - 1.0) < 1e-3 and ang < 0
+    x0, x1, ang = R.extremos(it, False, 0.0, -16.0)
+    assert abs(x1 - x0 - 1.0) < 1e-3 and ang > 0
+    # E1 - 0.8p da ASME B1.20.1: (0.77843 - 0.05714) x 25.4
+    assert abs(it["menor"] - 18.321) < 0.002
+
+
+def test_passo_em_polegada_com_5_casas():
+    """Secao 9.1: arredondar 25.4/fios acumula erro em rosca longa."""
+    g76 = next(l for l in _programa('1/2" - 13 UNC', "EXTERNAL", 2, -20) if l.startswith("G76"))
+    assert " P1.95385 " in g76
+    linhas = _programa('NPT 1/2" - 14', "EXTERNAL", 0, -14)
+    assert all(" K1.81429" in l for l in linhas if l.startswith("G33"))
+
+
+def test_g76_sai_em_rampa_de_um_passo():
+    """L2 com E = passo: o fundo vai ate FIM Z + passo e a rampa sincronizada
+    sobe ate a crista no FIM Z (medido no rs274), sem canal de saida."""
+    g76 = next(l for l in _programa("M10 x 1.5", "EXTERNAL", 2, -20) if l.startswith("G76"))
+    assert g76.endswith(" E1.5 L2"), g76
+    g76 = next(l for l in _programa('1/2" - 13 UNC', "EXTERNAL", 2, -20) if l.startswith("G76"))
+    assert " E1.9538 L2" in g76, g76
+
+
+def test_rampa_nunca_passa_de_metade_da_linha_de_conducao():
+    """O LinuxCNC recusa E maior que metade da linha de conducao: numa rosca
+    curta (Z0.5 ate Z-2 = 2.5 mm) o E fica em 1.25, nao no passo 1.5."""
+    g, _ = fe.montar("t", [{"tipo": "ROSCA", "parametros": dict(
+        rosca="M10 x 1.5", side="EXTERNAL", zStart=0, zEnd=-2, clearance=0.5,
+        toolNumber=1, useCannedCycle=True, springPasses=2, depthOfCut=0)}], {})
+    g76 = next(l for l in g.splitlines() if l.startswith("G76"))
+    assert " E1.25 L2" in g76, g76

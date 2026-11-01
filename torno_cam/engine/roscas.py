@@ -7,12 +7,15 @@ escolher no toque sem ler tabela de bolso.
 
 Ao escolher a rosca, o painel preenche:
   - passo
-  - diametro: na EXTERNA o nominal; na INTERNA o furo (broca) antes de roscar
+  - diametro: na EXTERNA o nominal; na INTERNA o diametro menor basico da
+    porca (D1 = D - 1.0825 x passo), que e' a crista de onde a profundidade
+    e' medida (GCODE-ROSCAS.md, 8.2)
   - RPM sugerido (conservador; rosca em torno retrofit nao gosta de pressa)
 
 Broca (furo antes de roscar) = D - passo. E' a regra de oficina, que da ~77%
 de altura de filete — o que se usa na pratica, porque 100% quebra macho e nao
-aumenta resistencia de forma util.
+aumenta resistencia de forma util. Fica dentro da tolerancia do D1 (6H), entao
+a rosca no torno pode partir dela: os primeiros passes so cortam o ar.
 """
 
 import math
@@ -85,23 +88,25 @@ UNIFICADA = [
 
 # ── NPT: conica, 1:16 no diametro (1.7899 graus por lado) ────────────────────
 # (nome, fios/pol, E0 = diametro primitivo na ponta do tubo [pol],
-#  L2 = comprimento util da rosca [pol], broca de referencia [pol])
-# E0 e L2 sao da ASME B1.20.1. O diametro MAIOR na ponta sai de E0 + 0.8/n
-# (altura do filete NPT = 0.8 x passo).
+#  L2 = comprimento util da rosca [pol], broca de referencia [pol],
+#  L1 = aperto a mao [pol])
+# E0, L1 e L2 sao da ASME B1.20.1. O diametro MAIOR na ponta sai de
+# E0 + 0.8/n (altura do filete NPT = 0.8 x passo). Na luva (interna) o
+# primitivo na face e' E1 = E0 + L1/16, porque o tubo entra L1 apertado a mao.
 NPT_TABELA = [
-    (u"1/16",   27,   0.27118, 0.2611, 0.2500),
-    (u"1/8",    27,   0.36351, 0.2639, 0.3390),
-    (u"1/4",    18,   0.47739, 0.4018, 0.4375),
-    (u"3/8",    18,   0.61201, 0.4078, 0.5781),
-    (u"1/2",    14,   0.75843, 0.5337, 0.7188),
-    (u"3/4",    14,   0.96768, 0.5457, 0.9219),
-    (u"1",      11.5, 1.21363, 0.6828, 1.1563),
-    (u"1.1/4",  11.5, 1.55713, 0.7068, 1.5000),
-    (u"1.1/2",  11.5, 1.79609, 0.7235, 1.7344),
-    (u"2",      11.5, 2.26902, 0.7565, 2.2188),
-    (u"2.1/2",  8,    2.71953, 1.1375, 2.6250),
-    (u"3",      8,    3.34062, 1.2000, 3.2500),
-    (u"4",      8,    4.33438, 1.3000, 4.2500),
+    (u"1/16",   27,   0.27118, 0.2611, 0.2500, 0.160),
+    (u"1/8",    27,   0.36351, 0.2639, 0.3390, 0.1615),
+    (u"1/4",    18,   0.47739, 0.4018, 0.4375, 0.2278),
+    (u"3/8",    18,   0.61201, 0.4078, 0.5781, 0.240),
+    (u"1/2",    14,   0.75843, 0.5337, 0.7188, 0.320),
+    (u"3/4",    14,   0.96768, 0.5457, 0.9219, 0.339),
+    (u"1",      11.5, 1.21363, 0.6828, 1.1563, 0.400),
+    (u"1.1/4",  11.5, 1.55713, 0.7068, 1.5000, 0.420),
+    (u"1.1/2",  11.5, 1.79609, 0.7235, 1.7344, 0.420),
+    (u"2",      11.5, 2.26902, 0.7565, 2.2188, 0.436),
+    (u"2.1/2",  8,    2.71953, 1.1375, 2.6250, 0.682),
+    (u"3",      8,    3.34062, 1.2000, 3.2500, 0.766),
+    (u"4",      8,    4.33438, 1.3000, 4.2500, 0.844),
 ]
 
 POLEGADA_MM = 25.4
@@ -112,6 +117,12 @@ TAB_METRICA, TAB_POLEGADA, TAB_NPT = "METRICA", "POLEGADA", "NPT"
 TABELAS = [(u"Metrica", TAB_METRICA),
            (u"Polegada UNC/UNF", TAB_POLEGADA),
            (u"NPT (conica)", TAB_NPT)]
+
+# Altura do filete no RAIO, em fracao do passo (GCODE-ROSCAS.md, secao 7).
+# O K do G76 e' o dobro (G7, diametro).
+ALTURA_EXTERNA = 0.6134    # ISO e unificada, externa
+ALTURA_INTERNA = 0.5413    # ISO e unificada, interna, medida a partir do D1
+ALTURA_NPT = 0.8           # NPT truncada, externa e interna
 
 # Rosca em torno retrofit: sem pressa. Vc baixo e teto apertado, porque a
 # ferramenta precisa sair do filete no fim de cada passe.
@@ -134,6 +145,37 @@ def broca(bitola, passo):
     return round(bitola - passo, 3)
 
 
+def menor_interno(bitola, passo):
+    """D1, diametro menor basico da porca: e' a crista da rosca interna.
+    Com a altura ALTURA_INTERNA o fundo cai no diametro nominal (M20x1,5:
+    18.376 + 2 x 0.812 = 20.0)."""
+    return round(bitola - 1.0825 * passo, 3)
+
+
+def altura_filete(tabela, interna):
+    """Fracao do passo que vai de profundidade (no raio)."""
+    if tabela == TAB_NPT:
+        return ALTURA_NPT
+    return ALTURA_INTERNA if interna else ALTURA_EXTERNA
+
+
+def extremos(item, interna, z_inicial, z_final):
+    """X inicial, X final e angulo por lado da rosca escolhida.
+
+    Externa parte do nominal e a interna do D1 (crista da porca). Na NPT o
+    diametro vale na FACE (Z0): no tubo cresce ao entrar na peca e na luva
+    diminui, porque a ponta do tubo e' o que vai mais fundo."""
+    x0 = item["menor"] if interna else item["bitola"]
+    c = item.get("conicidade") or 0.0
+    if not c:
+        return x0, x0, 0.0
+    sinal = 1.0 if interna else -1.0          # z negativo = dentro da peca
+    x_ini = round(x0 + sinal * z_inicial * c, 4)
+    x_fim = round(x0 + sinal * z_final * c, 4)
+    angulo = round(math.degrees(math.atan(c / 2.0)), 4)
+    return x_ini, x_fim, (-angulo if interna else angulo)
+
+
 def rpm_sugerido(bitola):
     rpm = VC_ROSCA * 1000.0 / (math.pi * max(1.0, bitola))
     return int(round(max(40.0, min(RPM_MAXIMO, rpm))))
@@ -150,6 +192,7 @@ def _itens_metricos():
                 passo=passo,
                 tipo=tipo,
                 broca=broca(bitola, passo),
+                menor=menor_interno(bitola, passo),
                 rpm=rpm_sugerido(bitola),
                 titulo=titulo(bitola, passo),
                 tabela=TAB_METRICA,
@@ -181,6 +224,7 @@ def _itens_polegada():
                 passo=passo,
                 tipo=tipo,
                 broca=round(bitola - passo, 3),
+                menor=menor_interno(bitola, passo),
                 rpm=rpm_sugerido(bitola),
                 titulo=u'Rosca %s - %g %s' % (chamada, fios, serie),
                 tabela=TAB_POLEGADA,
@@ -199,15 +243,18 @@ def _itens_npt():
     Quem calcula o X final e' o painel, que sabe o comprimento da rosca.
     """
     itens = []
-    for nome, fios, e0, l2, furo in NPT_TABELA:
+    for nome, fios, e0, l2, furo, l1 in NPT_TABELA:
         passo = round(POLEGADA_MM / fios, 4)
         maior = round((e0 + 0.8 / fios) * POLEGADA_MM, 4)   # filete NPT = 0.8p
+        # luva: crista (diametro menor) na face = E1 - 0.8p
+        menor = round((e0 + l1 / 16.0 - 0.8 / fios) * POLEGADA_MM, 4)
         itens.append(dict(
             nome=u'NPT %s" - %g' % (nome, fios),
             bitola=maior,
             passo=passo,
             tipo=CONICA,
             broca=round(furo * POLEGADA_MM, 3),
+            menor=menor,
             rpm=rpm_sugerido(maior),
             titulo=u'Rosca NPT %s" - %g' % (nome, fios),
             tabela=TAB_NPT,
@@ -222,8 +269,8 @@ def _itens_npt():
 def lista(tabela=TAB_METRICA):
     """Roscas da tabela pedida.
 
-    Cada item: dict(nome, bitola, passo, tipo, broca, rpm, titulo, tabela,
-    tpi, comentario, conicidade). Metrica vem em ordem de bitola, com o
+    Cada item: dict(nome, bitola, passo, tipo, broca, menor, rpm, titulo,
+    tabela, tpi, comentario, conicidade). Metrica vem em ordem de bitola, com o
     passo padrao antes dos finos.
     """
     if tabela == TAB_POLEGADA:

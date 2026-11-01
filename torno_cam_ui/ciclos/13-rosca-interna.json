@@ -202,24 +202,6 @@
    "fonte_valor": 34.0
   },
   {
-   "id": "numero_de_passadas",
-   "rotulo": "NÚMERO DE PASSADAS :",
-   "valor_exemplo": "0",
-   "caixa": {
-    "x": 1256.0,
-    "y": 545.0,
-    "w": 53.0,
-    "h": 42.0
-   },
-   "caixa_png": {
-    "x": 1402.9,
-    "y": 736.0,
-    "w": 67.8,
-    "h": 53.8
-   },
-   "fonte_valor": 34.0
-  },
-  {
    "id": "passadas_de_acabamento",
    "rotulo": "PASSADAS DE ACABAMENTO :",
    "valor_exemplo": "1",
@@ -233,24 +215,6 @@
     "x": 1713.9,
     "y": 736.0,
     "w": 57.6,
-    "h": 53.8
-   },
-   "fonte_valor": 34.0
-  },
-  {
-   "id": "comprimento_da_rosca",
-   "rotulo": "COMPRIMENTO DA ROSCA :",
-   "valor_exemplo": "0.00",
-   "caixa": {
-    "x": 400.0,
-    "y": 528.0,
-    "w": 152.0,
-    "h": 42.0
-   },
-   "caixa_png": {
-    "x": 307.2,
-    "y": 714.2,
-    "w": 194.6,
     "h": 53.8
    },
    "fonte_valor": 34.0
@@ -560,21 +524,6 @@
    ]
   },
   {
-   "texto": "NÚMERO DE PASSADAS :",
-   "x": 1246.0,
-   "y": 576.0,
-   "tamanho": 32.0,
-   "ancora": "end",
-   "cor": "#FFFFFF",
-   "largura": 245.6,
-   "caixa_aprox": [
-    1000.4,
-    553.0,
-    245.6,
-    23.0
-   ]
-  },
-  {
    "texto": "PASSADAS DE",
    "x": 1335.0,
    "y": 560.0,
@@ -601,21 +550,6 @@
     1335.0,
     563.0,
     152.8,
-    23.0
-   ]
-  },
-  {
-   "texto": "COMPRIMENTO DA ROSCA :",
-   "x": 400.0,
-   "y": 520.0,
-   "tamanho": 32.0,
-   "ancora": "start",
-   "cor": "#FFFFFF",
-   "largura": 271.5,
-   "caixa_aprox": [
-    400.0,
-    497.0,
-    271.5,
     23.0
    ]
   },
@@ -768,21 +702,6 @@
     955.0,
     488.2,
     173.9,
-    15.8
-   ]
-  },
-  {
-   "texto": "RECOMENDA-SE 3X O PASSO",
-   "x": 400.0,
-   "y": 592.0,
-   "tamanho": 22.0,
-   "ancora": "start",
-   "cor": "#A9B0B5",
-   "largura": 193.7,
-   "caixa_aprox": [
-    400.0,
-    576.2,
-    193.7,
     15.8
    ]
   },
