@@ -14,7 +14,9 @@ FACE = dict(
     spindleDir="CW", coolant="FLOOD", toolNumber=1, toolOffset=1,
     initialX=50.0, finalX=0.0, zStart=0.0, zEnd=0.1,
     roughingDOC=2.0, finishDOC=0.25, toolClearance=2.5, toolNoseRadius=0.8,
+    chamferSize=0.0,
     finishOnly=False, useCannedCycle=False,
+    afastamentoFinalZAbs=None, afastamentoFinalXAbs=None,
 )
 
 OD_TURN = dict(
@@ -24,9 +26,11 @@ OD_TURN = dict(
     roughingFPR=0.25, finishingFPR=0.12, speedMode="SFM",
     spindleDir="CW", coolant="FLOOD", toolNumber=1, toolOffset=1,
     initialX=50.0, finalX=38.0, zStart=2.5, zEnd=-38.0, filletRadius=0.0,
+    chamferEntry=0.0, chamferExit=0.0,
     roughingDOC=2.5, finishDOC=0.25, toolClearance=2.5, toolNoseRadius=0.8,
     useToolRadiusComp=False, useConstantSurface=True,
     finishOnly=False, useCannedCycle=False,
+    afastamentoFinalZAbs=None, afastamentoFinalXAbs=None,
 )
 
 # Furacao: roughingSFM carrega o RPM (com cssMode=False o engine usa esse
@@ -40,6 +44,7 @@ DRILL = dict(
     drillDiameter=10.0, zStart=2.0, zEnd=-25.0, peckDepth=2.0,
     dwellSeconds=0, toolClearance=2.5, drillPointAngle=118,
     useCannedCycle=False,
+    afastamentoFinalZAbs=None, afastamentoFinalXAbs=None,
 )
 
 # Rosca externa. spindleRPM define a rotacao (G97). Na maquina back-tool,
@@ -55,6 +60,7 @@ THREAD = dict(
     minorDiameter=0.0, passes=0, springPasses=2, depthOfCut=0,
     spindleRPM=800, leadInLength=0, leadOutLength=0, infeedAngle=0,
     useCannedCycle=False,
+    afastamentoFinalZAbs=None, afastamentoFinalXAbs=None,
 )
 
 ID_TURN = dict(
@@ -65,9 +71,10 @@ ID_TURN = dict(
     spindleDir="CW", coolant="FLOOD", toolNumber=2, toolOffset=2,
     mode="BASIC",
     initialX=20.0, finalX=28.0, zStart=2.5, zEnd=-30.0,
-    filletRadius=0.0, pilotEnd=0.0, faceRoughDOC=0.5,
+    filletRadius=0.0, pilotEnd=0.0, faceRoughDOC=0.5, chamferSize=0.0,
     idRoughDOC=1.5, finishDOC=0.2, toolClearance=2.0, toolNoseRadius=0.4,
     useToolRadiusComp=False, finishOnly=False, useCannedCycle=False,
+    afastamentoFinalZAbs=None, afastamentoFinalXAbs=None,
 )
 
 
@@ -83,6 +90,7 @@ CHAMFER = dict(
     x=50.0, zStart=0.0, zEnd=-2.0,
     chamferAngle=45, chamferLength=2.0,
     roughingDOC=1.0, finishDOC=0.15, toolClearance=2.5,
+    afastamentoFinalZAbs=None, afastamentoFinalXAbs=None,
 )
 
 
@@ -98,6 +106,7 @@ GROOVE = dict(
     plungeFPR=0.05, roughingDOC=1.0, finishDOC=0.15, toolClearance=2.5,
     retract=1.0, peck=5.0, edgeBreak=0.3,
     useCannedCycle=False,
+    afastamentoFinalZAbs=None, afastamentoFinalXAbs=None,
 )
 
 

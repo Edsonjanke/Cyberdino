@@ -5712,7 +5712,7 @@ color: #FFFFFF;</string>
                   </widget>
                  </item>
                  <item>
-                  <widget class="GcodeTextEdit" name="gcodetextedit">
+                  <widget class="DinoGcodeTextEditCores" name="gcodetextedit">
                    <property name="font">
                     <font>
                      <family>DejaVu Sans Mono</family>
@@ -25073,6 +25073,11 @@ font: 10pt &quot;Barlow Condensed SemiBold&quot;;
   </customwidget>
   <customwidget>
    <class>DinoGcodeTextEdit</class>
+   <extends>QPlainTextEdit</extends>
+   <header>dino_widgets.dino_gcode_text_edit</header>
+  </customwidget>
+  <customwidget>
+   <class>DinoGcodeTextEditCores</class>
    <extends>QPlainTextEdit</extends>
    <header>dino_widgets.dino_gcode_text_edit</header>
   </customwidget>

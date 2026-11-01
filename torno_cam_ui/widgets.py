@@ -117,7 +117,9 @@ class TouchLine(QLineEdit):
 # procura primeiro.
 COR_COMENTARIO = "#7E8C90"
 COR_SELECIONADO = "#D8E2E5"      # sobre o azul do item destacado
-ROTULO_TIPO = {"PADRAO": u"Padrao", "FINO": u"Fina"}
+ROTULO_TIPO = {"PADRAO": u"Padrão", "FINO": u"Fina"}
+# a tabela de roscas (engine) guarda o texto sem acento; so a tela acentua
+ACENTO_COMENTARIO = {u"Padrao": u"Padrão", u"Conica 1:16": u"Cônica 1:16"}
 
 
 def _desenha_nome_e_comentario(painter, rect, fonte, nome, comentario, cor,
@@ -209,6 +211,7 @@ class ComboRoscas(QComboBox):
         # cai no rotulo do tipo (Padrao/Fina) quando nao vem
         self._coment = [it.get("comentario") or ROTULO_TIPO.get(it.get("tipo"), "")
                         for it in self._itens]
+        self._coment = [ACENTO_COMENTARIO.get(c, c) for c in self._coment]
         for i, it in enumerate(self._itens):
             self.addItem(it["nome"])
             self.setItemData(i, QBrush(QColor(cores[i])), Qt.ForegroundRole)
@@ -245,12 +248,26 @@ class ComboRoscas(QComboBox):
                                            QStyle.SC_ComboBoxEditField, self)
         _desenha_nome_e_comentario(p, rect, self.font(), texto, coment, cor)
 
+    def usar_estilo_celula(self):
+        """Visual de celula da faixa inferior das telas de ciclo (2026-11-01):
+        sem caixa, so' o texto na cor da rosca."""
+        self._celula = True
+        self._pintar_fechado(self.currentIndex())
+
     def _pintar_fechado(self, indice):
         """A caixa fechada mostra a cor da rosca escolhida. A fonte e' maior
         que a dos outros campos: a lista tem 97 roscas e e' escolhida no toque."""
         cor = "#FFFFFF"
         if 0 <= indice < len(self._itens):
             cor = self._itens[indice].get("cor", cor)
+        if getattr(self, "_celula", False):
+            self.setStyleSheet(
+                'QComboBox { background: transparent; border: none; color: %s;'
+                ' font-family: "Bebas Neue"; font-size: 22px; padding: 0px; min-height: 0px; }'
+                ' QComboBox::drop-down { border: none; width: 16px; }'
+                ' QComboBox QAbstractItemView { background: #1A1E24; font-family: "Bebas Neue";'
+                ' font-size: 20px; }' % cor)
+            return
         self.setStyleSheet(
             _SPIN_QSS
             + "\nQComboBox { color: %s; font: 18pt \"Barlow Condensed SemiBold\"; min-height: 46px; }"

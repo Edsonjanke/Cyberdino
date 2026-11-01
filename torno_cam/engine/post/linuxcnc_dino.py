@@ -6,15 +6,18 @@ Correcoes em relacao ao porte fiel:
 - Rosca linha-a-linha: G33 X Z K<passo>  (o fiel emitia G32 F, inexistente)
 - Comentarios: ASCII puro (sem Ø / acentos / travessao) — alguns setups do
   LinuxCNC engasgam com nao-ASCII entre parenteses
+- Comentarios sem parenteses por dentro: o LinuxCNC recusa o programa com
+  "Nested comment found" (ex.: "(Passe 11 (mola) ...)", titulo "Eixo (A)")
 - Ciclo de FURACAO (G81/G82/G83): LIBERADO e corrigido — ver
   format_cycle_call. Validado no interpretador rs274 com o INI do torno.
-- Demais ciclos fixos (desbaste G71 / canal G75 / rosca G76): bloqueados com
-  mensagem PT-BR ate serem validados (Fase 3); a UI mantem esses toggles
-  GERAR CICLO desabilitados
+- Desbaste G71 / G72: LIBERADOS no formato do LinuxCNC 2.9 (perfil numa sub
+  O-word), ver format_canned_rough_cycle. Validado no rs274 com o INI do torno.
+- Canal G75: nao existe no LinuxCNC, continua bloqueado (a UI trava o toggle)
 
 A furacao emite o RPM correto porque a UI passa RPM (nao Vc) no campo de
 velocidade — ver defaults/DRILL e o painel de furacao."""
 
+import re
 import unicodedata
 
 from .linuxcnc import LinuxCNCPost
@@ -34,19 +37,53 @@ def _ascii(text):
     return text.strip()
 
 
+# Comentarios que o engine escreve com parenteses por dentro (texto herdado
+# do EvoCAM, mantido nas estrategias por causa da paridade com os goldens).
+_COMENTARIOS_FIXOS = {
+    u"--- Desbaste ID (passes longitudinais) ---":
+        u"--- DESBASTE ID: PASSES LONGITUDINAIS ---",
+}
+
+
+def _sem_parenteses(text):
+    """Tira '(' e ')' de dentro do comentario: 'Passe 11 (mola) prof=0.6'
+    -> 'Passe 11: mola prof=0.6'. Vale para titulo e nome de ferramenta."""
+    text = _COMENTARIOS_FIXOS.get(text, text)
+    text = re.sub(r"\s*\(\s*", ": ", text)
+    text = re.sub(r"\s*\)\s*", " ", text)
+    return re.sub(r"^\s*:\s*", "", text)
+
+
 class LinuxCNCDinoPost(LinuxCNCPost):
     name = "LinuxCNC Dino"
     dialect = "linuxcnc-dino"
 
     def format_comment(self, text):
-        return "({})".format(_ascii(text))
+        return "({})".format(_ascii(_sem_parenteses(text)))
+
+    # ── G95 na primeira linha de avanco de cada operacao ────────────────────
+    # O G95 do cabecalho e' modal: com RUN FROM LINE no meio do programa (ou
+    # se um programa anterior deixou G94) a operacao herdaria o modo errado.
+    # Cada operacao repete o modo e o F na primeira linha que avanca:
+    # "G1 X22.533 Z-30 G95 F0.15". A troca de ferramenta abre a operacao.
+    def modal_feed(self, feed):
+        if feed is not None and self._avanco_pendente:
+            self._last_feed = None          # forca o F nessa linha
+        return self._com_modo(super(LinuxCNCDinoPost, self).modal_feed(feed))
+
+    def _com_modo(self, palavra_f):
+        if palavra_f and self._avanco_pendente:
+            self._avanco_pendente = False
+            return "{} {}".format(self._modo_avanco, palavra_f)
+        return palavra_f
 
     def format_tool_call(self, t):
+        self._avanco_pendente = True
         # A descricao do tool call tambem vai entre parenteses -> ASCII.
         from ..jsutil import js_num
         s = "T{} M6 G43 H{}".format(str(t.toolNumber).zfill(2), js_num(t.toolOffset))
         if t.description:
-            s += " ({})".format(_ascii(t.description))
+            s += " ({})".format(_ascii(_sem_parenteses(t.description)))
         return s
 
     def format_thread_feed(self, node):
@@ -67,6 +104,8 @@ class LinuxCNCDinoPost(LinuxCNCPost):
 
     def format_program_header(self, c):
         linhas = super(LinuxCNCDinoPost, self).format_program_header(c)
+        # 1a linha = titulo digitado pelo operador: passa pelo mesmo filtro
+        linhas[0] = self.format_comment(c.title)
         tol = self.TOLERANCIA_TRAJETORIA
         if tol is None:
             return linhas
@@ -88,9 +127,15 @@ class LinuxCNCDinoPost(LinuxCNCPost):
         self._sentido = "CW"
         self._rpm_max = None
         self._refrig = None
+        self._sub = 0
+        self._modo_avanco = "G95"
+        self._avanco_pendente = False
 
     def generate(self, config, operations):
         self._sentido, self._rpm_max, self._refrig = "CW", None, None
+        self._sub = 0
+        self._modo_avanco = "G94" if config.feedMode == "MIN" else "G95"
+        self._avanco_pendente = False
         return super(LinuxCNCDinoPost, self).generate(config, operations)
 
     def format_spindle_on(self, s):
@@ -141,7 +186,7 @@ class LinuxCNCDinoPost(LinuxCNCPost):
         if code == "G83":
             pausa_s = None
         linha = gline(code, word("X", cycle.x), word("Z", cycle.z),
-                      word("R", cycle.r), word("F", cycle.f),
+                      word("R", cycle.r), self._com_modo(word("F", cycle.f)),
                       word("Q", cycle.q), word("P", pausa_s))
         return "G17  (PLANO XY: EIXO DE FURACAO = Z)\n" + linha
 
@@ -152,8 +197,41 @@ class LinuxCNCDinoPost(LinuxCNCPost):
         raise NotImplementedError(
             "Ciclo fixo ainda nao validado neste controlador (use modo manual)")
 
+    # ── Desbaste G71 (eixo Z) / G72 (faceamento) do LinuxCNC 2.9 ────────────
+    # Formato: G71 Q<sub> D<sobremetal> I<passo> R<recuo> F<avanco>, com o
+    # perfil acabado numa sub O<sub>. O ciclo parte do ponto em que a
+    # ferramenta esta (a estrategia posiciona antes). Medido no rs274 com o
+    # INI do torno, em G7:
+    #   - I, D e R sao em RAIO (I2.5 -> passes de 5 em 5 no diametro);
+    #   - D vale em X e em Z (o ultimo passe para D antes da parede e do fundo);
+    #   - o 1o passe corre no proprio ponto inicial; no fim o ciclo percorre o
+    #     perfil e volta ao X inicial no Z do fim do perfil;
+    #   - interno funciona (X crescendo; o recuo vai para o centro).
+    # A sub vem antes da chamada, no meio do programa: o interpretador pula a
+    # definicao quando passa por ela. Um numero de sub por ciclo no programa.
     def format_canned_rough_cycle(self, node):
-        self._canned_bloqueado()
+        self._sub += 1
+        n = 100 + self._sub
+        codigo = node.cycleCode or "G71"
+        if node.finishStockZ:
+            sobra = abs(node.finishStockZ)
+        else:
+            sobra = abs(node.finishStockX or 0) / 2.0
+        linhas = ["O{} sub".format(n)]
+        for m in node.profile:
+            if m.type == "LINEAR":
+                linhas.append(gline("G1", word("X", m.x), word("Z", m.z)))
+            else:
+                linhas.append(gline("G2" if m.dir == "CW" else "G3",
+                                    word("X", m.x), word("Z", m.z),
+                                    word("I", m.i), word("K", m.k)))
+        linhas.append("O{} endsub".format(n))
+        linhas.append(gline(codigo, "Q{}".format(n), word("D", round(sobra, 4)),
+                            word("I", node.depthOfCut), word("R", node.retract),
+                            self._com_modo(word("F", node.roughFeed))))
+        if node.generateFinish:
+            linhas.append(gline("G70", "Q{}".format(n), word("F", node.finishFeed)))
+        return "\n".join(linhas)
 
     def format_canned_groove_cycle(self, node):
         self._canned_bloqueado()

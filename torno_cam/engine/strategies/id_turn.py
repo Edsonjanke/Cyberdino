@@ -19,6 +19,7 @@ from typing import List
 from ..nodes import ToolpathBuilder, Linear
 from ..sfm import calc_spindle_speed
 from ..jsutil import round4, js_round
+from . import chanfro, fim
 
 
 @dataclass
@@ -35,6 +36,28 @@ def _nullish(valor, alternativa):
     return alternativa if valor is None else valor
 
 
+def _chanfro_boca(p):
+    """Chanfro na boca do furo X FINAL (handoff 7.1 b); 0 = sem chanfro."""
+    c = chanfro.tamanho(p, "chamferSize")
+    if c > 0:
+        raio = p.filletRadius if p.filletRadius > 0 else 0.0
+        parede = abs(p.zStart - p.zEnd) - raio
+        if c > parede + 1e-9:
+            chanfro.nao_cabe(u"O chanfro", c, u"a parede do furo", parede)
+    return c
+
+
+def _chegada_com_chanfro(b, p, c, sx, target_r, z_clear):
+    """Entra pela linha do chanfro prolongada para fora da peca:
+    G0 X(D + 2C + 2e) Z(face + afastamento), G1 Z(face + e), G1 X(D) Z(face - C)."""
+    zd = -1 if p.zEnd < p.zStart else 1
+    x_fora = sx((target_r + c + chanfro.FOLGA) * 2)
+    b.rapid(x=x_fora, z=round4(z_clear))
+    b.linear(x=x_fora, z=round4(p.zStart - zd * chanfro.FOLGA), feed=p.finishingFPR)
+    b.linear(x=sx(target_r * 2), z=round4(p.zStart + zd * c), feed=p.finishingFPR,
+             comment=chanfro.comentario(c))
+
+
 def generate_id_turn(p):
     if getattr(p, "mode", "BASIC") == "EXTENDED":
         return _id_turn_avancado(p)
@@ -47,6 +70,9 @@ def generate_id_turn(p):
 def _id_turn_basico(p):
     b = ToolpathBuilder()
     is_metric = p.unitSystem == "metric"
+    # G96 com limite de RPM (D) quando a UI pede; o EvoCAM saia em G97 com a
+    # Vc no lugar do RPM (G97 S120 = 120 rpm). Sem a chave fica como era.
+    css = bool(getattr(p, "useConstantSurface", False))
 
     x_sign = -1 if p.initialX < 0 else 1
     start_r = abs(p.initialX) / 2
@@ -66,6 +92,8 @@ def _id_turn_basico(p):
         num_passes = max(1, int(math.ceil(total_rough / p.idRoughDOC)))
         doc_real = round4(total_rough / num_passes)
 
+    C = _chanfro_boca(p)
+
     b.comment(u"DESBASTE INT: {}".format(p.title))
     b.workOffset(p.workOffset)
     b.toolCall(p.toolNumber, p.toolOffset,
@@ -73,13 +101,20 @@ def _id_turn_basico(p):
 
     rough = calc_spindle_speed(sfm=p.roughingSFM, diameter=abs(p.initialX),
                                max_rpm=p.maxSpindleRPM, metric=is_metric,
-                               css_mode=False)
-    b.spindleOn(cssMode=False, dir=p.spindleDir, rpm=rough["rpm"],
+                               css_mode=css)
+    b.spindleOn(cssMode=css, dir=p.spindleDir, rpm=rough["rpm"],
                 sfm=rough["sfm"], maxRPM=p.maxSpindleRPM)
     if p.coolant != "OFF":
         b.coolantOn(p.coolant)
 
-    if p.useCannedCycle and not p.finishOnly:
+    # Flags da UI (sem elas, goldens do EvoCAM, fica como era):
+    # finishOnlyManual = SOMENTE ACABAMENTO tambem linha a linha;
+    # cicloLinuxCNC = G71 do LinuxCNC 2.9 so no desbaste, acabamento linha a
+    # linha.
+    so_acab = p.finishOnly and getattr(p, "finishOnlyManual", False)
+    ciclo_lcnc = getattr(p, "cicloLinuxCNC", False)
+
+    if p.useCannedCycle and not p.finishOnly and not ciclo_lcnc:
         b.comment("G71 CICLO AUTOMATICO DE DESBASTE INTERNO")
         b.rapid(x=sx((start_r - p.toolClearance) * 2), z=round4(z_clear))
         profile = [
@@ -99,6 +134,27 @@ def _id_turn_basico(p):
     else:
         b.rapid(x=sx(start_r * 2), z=round4(z_clear))
 
+        if p.useCannedCycle and not p.finishOnly:
+            # ponto inicial do G71: no furo de partida, acima da face
+            b.comment("G71 DESBASTE INTERNO, CICLO DO LINUXCNC")
+            b.cannedRoughCycle(
+                cycleCode="G71",
+                depthOfCut=p.idRoughDOC,
+                retract=p.toolClearance,
+                finishStockX=round4(-p.finishDOC * 2),
+                finishStockZ=round4(p.finishDOC),
+                roughFeed=p.roughingFPR,
+                finishFeed=p.finishingFPR,
+                profile=[Linear(x=sx(target_r * 2), feed=p.finishingFPR),
+                         Linear(z=round4(p.zEnd), feed=p.finishingFPR)],
+                generateFinish=False,
+            )
+            # o ciclo termina no furo de partida, no fundo: sobe em Z
+            b.rapid(z=round4(z_clear))
+            num_passes = 0
+        elif so_acab:
+            num_passes = 0
+
         atual_r = start_r
         for _i in range(num_passes):
             passe_r = round4(atual_r + doc_real)
@@ -112,22 +168,26 @@ def _id_turn_basico(p):
 
             atual_r = passe_r
 
-        if p.finishDOC > 0:
+        if p.finishDOC > 0 or C > 0 or so_acab:
             fin = calc_spindle_speed(sfm=p.finishingSFM, diameter=abs(p.finalX),
                                      max_rpm=p.maxSpindleRPM, metric=is_metric,
-                                     css_mode=False)
+                                     css_mode=css)
             b.comment("PASSE DE ACABAMENTO")
-            b.spindleSpeed(fin["rpm"], fin["sfm"], False)
+            b.spindleSpeed(fin["rpm"], fin["sfm"], css)
 
             fin_x = sx(target_r * 2)
-            b.rapid(x=sx((target_r - p.toolClearance) * 2), z=round4(z_clear))
-            b.linear(x=fin_x, z=round4(z_clear), feed=p.finishingFPR)
+            if C > 0:
+                _chegada_com_chanfro(b, p, C, sx, target_r, z_clear)
+            else:
+                b.rapid(x=sx((target_r - p.toolClearance) * 2), z=round4(z_clear))
+                b.linear(x=fin_x, z=round4(z_clear), feed=p.finishingFPR)
             b.linear(x=fin_x, z=round4(p.zEnd), feed=p.finishingFPR)
             b.linear(x=sx((target_r - p.toolClearance) * 2), z=round4(p.zEnd),
                      feed=p.finishingFPR)
 
     b.coolantOff()
     b.rapid(x=sx(start_r * 2), z=round4(z_clear))
+    fim.aplicar(b, p)
 
     return IDTurnResult(nodes=b.build(), numRoughPasses=num_passes,
                         actualDOC=doc_real,
@@ -140,6 +200,9 @@ def _id_turn_basico(p):
 def _id_turn_avancado(p):
     b = ToolpathBuilder()
     is_metric = p.unitSystem == "metric"
+    # G96 com limite de RPM (D) quando a UI pede; o EvoCAM saia em G97 com a
+    # Vc no lugar do RPM (G97 S120 = 120 rpm). Sem a chave fica como era.
+    css = bool(getattr(p, "useConstantSurface", False))
 
     x_sign = -1 if p.initialX < 0 else 1
     start_r = abs(p.initialX) / 2
@@ -161,8 +224,8 @@ def _id_turn_avancado(p):
 
     rough = calc_spindle_speed(sfm=p.roughingSFM, diameter=abs(p.initialX),
                                max_rpm=p.maxSpindleRPM, metric=is_metric,
-                               css_mode=False)
-    b.spindleOn(cssMode=False, dir=p.spindleDir, rpm=rough["rpm"],
+                               css_mode=css)
+    b.spindleOn(cssMode=css, dir=p.spindleDir, rpm=rough["rpm"],
                 sfm=rough["sfm"], maxRPM=p.maxSpindleRPM)
     if p.coolant != "OFF":
         b.coolantOn(p.coolant)
@@ -176,10 +239,15 @@ def _id_turn_avancado(p):
         doc_id = round4(total_id / num_id)
 
     safe_r = (R - p.finishDOC * 2) if R > 0 else 0
+    C = _chanfro_boca(p)
+    so_acab = p.finishOnly and getattr(p, "finishOnlyManual", False)
+    if so_acab:
+        num_id = 0              # sem passes longitudinais
     pilot_end = _nullish(getattr(p, "pilotEnd", None), p.zEnd)
     rough_z_end = round4(pilot_end)
 
-    b.comment("--- Desbaste ID (passes longitudinais) ---")
+    if not so_acab:
+        b.comment("--- Desbaste ID (passes longitudinais) ---")
     b.rapid(x=sx(start_r * 2), z=round4(z_clear))
 
     atual_r = start_r
@@ -221,7 +289,7 @@ def _id_turn_avancado(p):
     face_z_fim = round4(p.zEnd + p.finishDOC * 2)
     total_face = abs(face_z_ini - face_z_fim)
 
-    if total_face > 0.0001 and face_doc > 0:
+    if total_face > 0.0001 and face_doc > 0 and not so_acab:
         b.comment("--- Faceamento interno ---")
         num_face = max(1, int(math.ceil(total_face / face_doc)))
         doc_face = round4(total_face / num_face)
@@ -259,16 +327,19 @@ def _id_turn_avancado(p):
         b.rapid(x=sx(face_x_fim * 2), z=round4(z_clear))
 
     # ── acabamento ────────────────────────────────────────────────────────
-    if p.finishDOC > 0:
+    if p.finishDOC > 0 or C > 0 or so_acab:
         fin = calc_spindle_speed(sfm=p.finishingSFM, diameter=abs(p.finalX),
                                  max_rpm=p.maxSpindleRPM, metric=is_metric,
-                                 css_mode=False)
+                                 css_mode=css)
         b.comment("PASSE DE ACABAMENTO")
-        b.spindleSpeed(fin["rpm"], fin["sfm"], False)
+        b.spindleSpeed(fin["rpm"], fin["sfm"], css)
 
         fin_x = sx(target_r * 2)
-        b.rapid(x=sx((target_r - p.toolClearance) * 2), z=round4(z_clear))
-        b.linear(x=fin_x, z=round4(z_clear), feed=p.finishingFPR)
+        if C > 0:
+            _chegada_com_chanfro(b, p, C, sx, target_r, z_clear)
+        else:
+            b.rapid(x=sx((target_r - p.toolClearance) * 2), z=round4(z_clear))
+            b.linear(x=fin_x, z=round4(z_clear), feed=p.finishingFPR)
 
         if R > 0:
             b.linear(x=fin_x, z=round4(p.zEnd + R), feed=p.finishingFPR)
@@ -285,6 +356,7 @@ def _id_turn_avancado(p):
 
     b.coolantOff()
     b.rapid(x=sx(start_r * 2), z=round4(z_clear))
+    fim.aplicar(b, p)
 
     return IDTurnResult(nodes=b.build(), numRoughPasses=num_id,
                         actualDOC=doc_id,

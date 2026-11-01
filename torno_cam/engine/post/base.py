@@ -34,6 +34,10 @@ class PostProcessor:
     def format_cycle_cancel(self):
         return "G80"
 
+    # ── Parada do programa (USAR PAUSA NO FINAL) ─────────────────────────────
+    def format_pause(self):
+        return "M0"
+
     # ── Ciclos fixos: por padrao nao suportado ───────────────────────────────
     def format_canned_rough_cycle(self, node):
         raise NotImplementedError(
@@ -92,6 +96,8 @@ class PostProcessor:
             return cycle_line
         if t == "COMMENT":
             return self.format_comment(node.text)
+        if t == "PAUSE":
+            return self.format_pause()
         if t == "TOOL_CALL":
             return self.format_tool_call(node)
         if t == "WORK_OFFSET":

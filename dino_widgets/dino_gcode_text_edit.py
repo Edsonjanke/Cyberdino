@@ -7,17 +7,26 @@ verde executando, teal em pausa. Com o programa parado ela some.
 
 A seta segue a linha da máquina, não o cursor: se o operador rolar ou clicar
 em outra linha durante a usinagem, a seta continua na linha que está cortando.
+
+As cores do G-code são as mesmas do PROGRAMA da aba GERAR PGM (RealceGcode):
+G0 vermelho, corte verde, demais G teal, T/M amarelo, comentário cinza. O
+realce do qtpyvcp (YAML apontado pelo INI) fica de fora para não haver dois
+realces no mesmo documento. DinoGcodeTextEditCores é só a parte das cores
+(editor da aba ARQUIVO); DinoGcodeTextEdit soma a seta (aba PRINCIPAL).
 """
 
 import linuxcnc
 
-from qtpy.QtCore import Qt, QPointF
+from qtpy.QtCore import Qt, QPointF, QEvent
 from qtpy.QtGui import QColor, QPainter, QPen, QPolygonF
+from qtpy.QtWidgets import QPlainTextEdit
 
 from qtpyvcp.plugins import getPlugin
 from qtpyvcp.widgets.input_widgets.gcode_text_edit import (
     GcodeTextEdit, NumberMargin,
 )
+
+from torno_cam_ui.realce_gcode import RealceGcode
 
 STATUS = getPlugin('status')
 
@@ -69,7 +78,36 @@ class ArrowNumberMargin(NumberMargin):
         painter.end()
 
 
-class DinoGcodeTextEdit(GcodeTextEdit):
+class DinoGcodeTextEditCores(GcodeTextEdit):
+    """GcodeTextEdit com as cores do PROGRAMA do GERAR PGM (sem a seta)."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        # guardar a referência do realce (senão o GC leva)
+        self._realce = RealceGcode(self.document())
+
+    def setPlainText(self, p_str):
+        # o GcodeTextEdit cria um documento novo a cada programa carregado;
+        # o realce do qtpyvcp fica desligado e o documento novo ganha o nosso
+        ligado = self.syntax_highlighting
+        self.syntax_highlighting = False
+        try:
+            super().setPlainText(p_str)
+        finally:
+            self.syntax_highlighting = ligado
+        self._realce = RealceGcode(self.document())
+
+    def changeEvent(self, event):
+        # o GcodeTextEdit recria o realce do qtpyvcp a cada troca de fonte;
+        # aqui o evento vai direto para o QPlainTextEdit (o nosso realce não
+        # depende da fonte)
+        if event.type() == QEvent.FontChange:
+            QPlainTextEdit.changeEvent(self, event)
+            return
+        super().changeEvent(event)
+
+
+class DinoGcodeTextEdit(DinoGcodeTextEditCores):
 
     def __init__(self, parent=None):
         super().__init__(parent)

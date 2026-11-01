@@ -1,0 +1,620 @@
+{
+ "tela": "Desbaste interno (modo básico)",
+ "botao_operacao": "DESBASTE INT",
+ "arquivo_canvas": "LinuxCNCCiclo.dc.html",
+ "referencia": "telas/03-desbaste-int.png",
+ "fundo_com_rotulos": "fundos/com-rotulos/03-desbaste-int.png",
+ "fundo_sem_rotulos": "fundos/sem-rotulos/03-desbaste-int.png",
+ "svg": "fundos/svg/03-desbaste-int.svg",
+ "coordenadas": {
+  "viewBox": [
+   160.0,
+   -30.0,
+   1460.0,
+   747.0
+  ],
+  "png_tamanho": [
+   1869,
+   956
+  ],
+  "png_escala": 1.28,
+  "formula_png": "px = (x - 160) * 1.28 ; py = (y + 30) * 1.28"
+ },
+ "campos": [
+  {
+   "id": "ferramenta",
+   "rotulo": "FERRAMENTA :",
+   "valor_exemplo": "2",
+   "caixa": {
+    "x": 398.0,
+    "y": 35.0,
+    "w": 104.0,
+    "h": 50.0
+   },
+   "caixa_png": {
+    "x": 304.6,
+    "y": 83.2,
+    "w": 133.1,
+    "h": 64.0
+   },
+   "fonte_valor": 38.0
+  },
+  {
+   "id": "z_inicio",
+   "rotulo": "Z INÍCIO :",
+   "valor_exemplo": "2.50",
+   "caixa": {
+    "x": 528.0,
+    "y": 90.0,
+    "w": 154.0,
+    "h": 50.0
+   },
+   "caixa_png": {
+    "x": 471.0,
+    "y": 153.6,
+    "w": 197.1,
+    "h": 64.0
+   },
+   "fonte_valor": 38.0
+  },
+  {
+   "id": "z_fim",
+   "rotulo": "Z FIM :",
+   "valor_exemplo": "-30.00",
+   "caixa": {
+    "x": 420.0,
+    "y": 155.0,
+    "w": 153.0,
+    "h": 50.0
+   },
+   "caixa_png": {
+    "x": 332.8,
+    "y": 236.8,
+    "w": 195.8,
+    "h": 64.0
+   },
+   "fonte_valor": 38.0
+  },
+  {
+   "id": "chanfro",
+   "rotulo": "CHANFRO :",
+   "valor_exemplo": "0.50",
+   "caixa": {
+    "x": 715.0,
+    "y": 80.0,
+    "w": 100.0,
+    "h": 50.0
+   },
+   "caixa_png": {
+    "x": 710.4,
+    "y": 140.8,
+    "w": 128.0,
+    "h": 64.0
+   },
+   "fonte_valor": 38.0,
+   "novo": true
+  },
+  {
+   "id": "x_final",
+   "rotulo": "X FINAL :",
+   "valor_exemplo": "28.00",
+   "caixa": {
+    "x": 733.0,
+    "y": 188.0,
+    "w": 155.0,
+    "h": 50.0
+   },
+   "caixa_png": {
+    "x": 733.4,
+    "y": 279.0,
+    "w": 198.4,
+    "h": 64.0
+   },
+   "fonte_valor": 38.0,
+   "borda_teal_na_referencia": true
+  },
+  {
+   "id": "x_inicial",
+   "rotulo": "X INICIAL :",
+   "valor_exemplo": "20.00",
+   "caixa": {
+    "x": 689.0,
+    "y": 520.0,
+    "w": 155.0,
+    "h": 50.0
+   },
+   "caixa_png": {
+    "x": 677.1,
+    "y": 704.0,
+    "w": 198.4,
+    "h": 64.0
+   },
+   "fonte_valor": 38.0
+  },
+  {
+   "id": "prof_desbaste",
+   "rotulo": "PROF. DESBASTE :",
+   "valor_exemplo": "1.50",
+   "caixa": {
+    "x": 1294.0,
+    "y": 52.0,
+    "w": 154.0,
+    "h": 50.0
+   },
+   "caixa_png": {
+    "x": 1451.5,
+    "y": 105.0,
+    "w": 197.1,
+    "h": 64.0
+   },
+   "fonte_valor": 38.0
+  },
+  {
+   "id": "prof_acabamento",
+   "rotulo": "PROF. ACABAMENTO :",
+   "valor_exemplo": "0.20",
+   "caixa": {
+    "x": 1226.0,
+    "y": 124.0,
+    "w": 155.0,
+    "h": 50.0
+   },
+   "caixa_png": {
+    "x": 1364.5,
+    "y": 197.1,
+    "w": 198.4,
+    "h": 64.0
+   },
+   "fonte_valor": 38.0
+  },
+  {
+   "id": "afastamento_g0",
+   "rotulo": "AFASTAMENTO G0 :",
+   "valor_exemplo": "2.00",
+   "caixa": {
+    "x": 1159.0,
+    "y": 195.0,
+    "w": 155.0,
+    "h": 50.0
+   },
+   "caixa_png": {
+    "x": 1278.7,
+    "y": 288.0,
+    "w": 198.4,
+    "h": 64.0
+   },
+   "fonte_valor": 38.0
+  },
+  {
+   "id": "afastamento_final_z",
+   "rotulo": "Z :",
+   "valor_exemplo": "2.00",
+   "caixa": {
+    "x": 1293.0,
+    "y": 657.0,
+    "w": 120.0,
+    "h": 50.0
+   },
+   "caixa_png": {
+    "x": 1450.2,
+    "y": 879.4,
+    "w": 153.6,
+    "h": 64.0
+   },
+   "fonte_valor": 38.0,
+   "grupo": "faixa_padrao"
+  },
+  {
+   "id": "afastamento_final_x",
+   "rotulo": "X :",
+   "valor_exemplo": "2.00",
+   "caixa": {
+    "x": 1488.0,
+    "y": 657.0,
+    "w": 120.0,
+    "h": 50.0
+   },
+   "caixa_png": {
+    "x": 1699.8,
+    "y": 879.4,
+    "w": 153.6,
+    "h": 64.0
+   },
+   "fonte_valor": 38.0,
+   "grupo": "faixa_padrao"
+  }
+ ],
+ "opcoes": [
+  {
+   "texto": "SOMENTE ACABAMENTO",
+   "marcada": false,
+   "x": 172.0,
+   "y": 605.0,
+   "w": 316,
+   "h": 44,
+   "caixa_png": {
+    "x": 15.4,
+    "y": 812.8,
+    "w": 404.5,
+    "h": 56.3
+   },
+   "grupo": "faixa_padrao"
+  },
+  {
+   "texto": "GERAR CICLO",
+   "marcada": true,
+   "x": 498.0,
+   "y": 605.0,
+   "w": 316,
+   "h": 44,
+   "caixa_png": {
+    "x": 432.6,
+    "y": 812.8,
+    "w": 404.5,
+    "h": 56.3
+   },
+   "grupo": "faixa_padrao"
+  },
+  {
+   "texto": "USAR PAUSA NO FINAL",
+   "marcada": false,
+   "x": 172.0,
+   "y": 661.0,
+   "w": 316,
+   "h": 44,
+   "caixa_png": {
+    "x": 15.4,
+    "y": 884.5,
+    "w": 404.5,
+    "h": 56.3
+   },
+   "grupo": "faixa_padrao"
+  },
+  {
+   "texto": "CHAMAR FERRAMENTA NO FINAL",
+   "marcada": false,
+   "x": 498.0,
+   "y": 661.0,
+   "w": 316,
+   "h": 44,
+   "caixa_png": {
+    "x": 432.6,
+    "y": 884.5,
+    "w": 404.5,
+    "h": 56.3
+   },
+   "grupo": "faixa_padrao"
+  }
+ ],
+ "rotulos": [
+  {
+   "texto": "FERRAMENTA :",
+   "x": 386.0,
+   "y": 73.0,
+   "tamanho": 38.0,
+   "ancora": "end",
+   "cor": "#FFFFFF",
+   "largura": 176.5,
+   "caixa_aprox": [
+    209.5,
+    45.6,
+    176.5,
+    27.4
+   ]
+  },
+  {
+   "texto": "Z INÍCIO :",
+   "x": 516.0,
+   "y": 128.0,
+   "tamanho": 38.0,
+   "ancora": "end",
+   "cor": "#FFFFFF",
+   "largura": 109.9,
+   "caixa_aprox": [
+    406.1,
+    100.6,
+    109.9,
+    27.4
+   ]
+  },
+  {
+   "texto": "Z FIM :",
+   "x": 408.0,
+   "y": 193.0,
+   "tamanho": 38.0,
+   "ancora": "end",
+   "cor": "#FFFFFF",
+   "largura": 79.9,
+   "caixa_aprox": [
+    328.1,
+    165.6,
+    79.9,
+    27.4
+   ]
+  },
+  {
+   "texto": "CHANFRO :",
+   "x": 765.0,
+   "y": 70.0,
+   "tamanho": 38.0,
+   "ancora": "middle",
+   "cor": "#FFFFFF",
+   "largura": 126.8,
+   "caixa_aprox": [
+    701.6,
+    42.6,
+    126.8,
+    27.4
+   ]
+  },
+  {
+   "texto": "X FINAL :",
+   "x": 810.0,
+   "y": 178.0,
+   "tamanho": 38.0,
+   "ancora": "middle",
+   "cor": "#FFFFFF",
+   "largura": 107.6,
+   "caixa_aprox": [
+    756.2,
+    150.6,
+    107.6,
+    27.4
+   ]
+  },
+  {
+   "texto": "X INICIAL :",
+   "x": 766.0,
+   "y": 510.0,
+   "tamanho": 38.0,
+   "ancora": "middle",
+   "cor": "#FFFFFF",
+   "largura": 125.7,
+   "caixa_aprox": [
+    703.1,
+    482.6,
+    125.7,
+    27.4
+   ]
+  },
+  {
+   "texto": "PROF. DESBASTE :",
+   "x": 1282.0,
+   "y": 90.0,
+   "tamanho": 38.0,
+   "ancora": "end",
+   "cor": "#FFFFFF",
+   "largura": 215.4,
+   "caixa_aprox": [
+    1066.6,
+    62.6,
+    215.4,
+    27.4
+   ]
+  },
+  {
+   "texto": "PROF. ACABAMENTO :",
+   "x": 1214.0,
+   "y": 162.0,
+   "tamanho": 38.0,
+   "ancora": "end",
+   "cor": "#FFFFFF",
+   "largura": 256.8,
+   "caixa_aprox": [
+    957.2,
+    134.6,
+    256.8,
+    27.4
+   ]
+  },
+  {
+   "texto": "AFASTAMENTO G0 :",
+   "x": 1147.0,
+   "y": 233.0,
+   "tamanho": 38.0,
+   "ancora": "end",
+   "cor": "#FFFFFF",
+   "largura": 230.6,
+   "caixa_aprox": [
+    916.4,
+    205.6,
+    230.6,
+    27.4
+   ],
+   "trecho_colorido": {
+    "texto": "G0",
+    "cor": "#FF7B72"
+   }
+  },
+  {
+   "texto": "AFASTAMENTO FINAL",
+   "x": 1236.0,
+   "y": 645.0,
+   "tamanho": 30.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 219.3,
+   "caixa_aprox": [
+    1236.0,
+    623.4,
+    219.3,
+    21.6
+   ]
+  },
+  {
+   "texto": "Z :",
+   "x": 1283.0,
+   "y": 694.0,
+   "tamanho": 38.0,
+   "ancora": "end",
+   "cor": "#FFFFFF",
+   "largura": 29.0,
+   "caixa_aprox": [
+    1254.0,
+    666.6,
+    29.0,
+    27.4
+   ]
+  },
+  {
+   "texto": "X :",
+   "x": 1478.0,
+   "y": 694.0,
+   "tamanho": 38.0,
+   "ancora": "end",
+   "cor": "#FFFFFF",
+   "largura": 30.7,
+   "caixa_aprox": [
+    1447.3,
+    666.6,
+    30.7,
+    27.4
+   ]
+  }
+ ],
+ "notas": [
+  {
+   "texto": "USE VALORES NEGATIVOS",
+   "x": 906.0,
+   "y": 316.0,
+   "tamanho": 28.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 217.6,
+   "caixa_aprox": [
+    906.0,
+    295.8,
+    217.6,
+    20.2
+   ]
+  },
+  {
+   "texto": "DE X PARA A FERRAMENTA",
+   "x": 906.0,
+   "y": 346.0,
+   "tamanho": 28.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 229.3,
+   "caixa_aprox": [
+    906.0,
+    325.8,
+    229.3,
+    20.2
+   ]
+  },
+  {
+   "texto": "TRABALHAR NO LADO",
+   "x": 906.0,
+   "y": 376.0,
+   "tamanho": 28.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 182.7,
+   "caixa_aprox": [
+    906.0,
+    355.8,
+    182.7,
+    20.2
+   ]
+  },
+  {
+   "texto": "−X DA PEÇA",
+   "x": 906.0,
+   "y": 406.0,
+   "tamanho": 28.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 101.5,
+   "caixa_aprox": [
+    906.0,
+    385.8,
+    101.5,
+    20.2
+   ]
+  },
+  {
+   "texto": "A COMPENSAÇÃO DE RAIO DA FERRAMENTA NÃO É USADA",
+   "x": 1600.0,
+   "y": 500.0,
+   "tamanho": 24.0,
+   "ancora": "end",
+   "cor": "#A9B0B5",
+   "largura": 423.5,
+   "caixa_aprox": [
+    1176.5,
+    482.7,
+    423.5,
+    17.3
+   ]
+  }
+ ],
+ "faixa_inferior": [
+  {
+   "linha": "CONFIG.",
+   "itens": [
+    {
+     "rotulo": "MODO",
+     "valor": "BÁSICO",
+     "tipo": "lista"
+    },
+    {
+     "rotulo": "TÍTULO",
+     "valor": "DESBASTE INT",
+     "tipo": "texto"
+    },
+    {
+     "rotulo": "ZERO PEÇA",
+     "valor": "G54",
+     "tipo": "lista"
+    },
+    {
+     "rotulo": "FUSO",
+     "valor": "M3 HORÁRIO",
+     "tipo": "lista"
+    },
+    {
+     "rotulo": "REFRIGERAÇÃO",
+     "valor": "M8 FLUIDO",
+     "tipo": "lista"
+    }
+   ]
+  },
+  {
+   "linha": "CORTE",
+   "itens": [
+    {
+     "rotulo": "VC DESBASTE",
+     "valor": "120",
+     "unidade": "M/MIN",
+     "tipo": "numero"
+    },
+    {
+     "rotulo": "VC ACABAMENTO",
+     "valor": "145",
+     "unidade": "M/MIN",
+     "tipo": "numero"
+    },
+    {
+     "rotulo": "RPM MÁXIMA",
+     "valor": "1800",
+     "unidade": "RPM",
+     "tipo": "numero"
+    },
+    {
+     "rotulo": "AVANÇO DESBASTE",
+     "valor": "0.150",
+     "unidade": "MM/V",
+     "tipo": "numero"
+    },
+    {
+     "rotulo": "AVANÇO ACABAMENTO",
+     "valor": "0.080",
+     "unidade": "MM/V",
+     "tipo": "numero"
+    }
+   ]
+  }
+ ],
+ "programa_cabecalho": "T02 · G54"
+}

@@ -92,6 +92,38 @@ def _fator_canon_para_maquina(self):
 VTKCanon._program_to_machine_length_factor = _fator_canon_para_maquina
 
 
+# Locale numerico C (2026-11-01). O Qt aplica o locale do sistema (pt_BR,
+# virgula decimal) ao processo da tela. O interpretador que roda AQUI DENTRO
+# para desenhar o backplot (gcode.parse) le o perfil do G71/G72 com funcoes
+# da libc que seguem esse locale, e o desenho do programa inteiro falhava
+# com "Unknown control command in o word" (so' o desenho: na usinagem o
+# interpretador roda no task, sem o Qt). Conferido no container com o
+# VTKCanon real: pt_BR falha na linha do G71, C desenha todos os passes.
+# A interface nao depende disso (o Qt formata numeros pelo QLocale dele).
+# Vale na carga do modulo e de novo a cada programa (o VTKCanon e' criado a
+# cada carga), para nao depender da ordem de inicializacao.
+import locale as _locale
+
+
+def _locale_numerico_c():
+    try:
+        _locale.setlocale(_locale.LC_NUMERIC, "C")
+    except _locale.Error:
+        pass
+
+
+_locale_numerico_c()
+_vtkcanon_init_original = VTKCanon.__init__
+
+
+def _vtkcanon_init_locale_c(self, *args, **kwargs):
+    _locale_numerico_c()
+    _vtkcanon_init_original(self, *args, **kwargs)
+
+
+VTKCanon.__init__ = _vtkcanon_init_locale_c
+
+
 # Ferramenta no backplot (2026-10-25): no lugar da pastilha branca, uma
 # bolinha vermelha com anel em volta, como no desenho da tela de simulação.
 # A bolinha fica na ponta da ferramenta, o mesmo ponto em que a pastilha do

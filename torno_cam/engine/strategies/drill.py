@@ -4,6 +4,7 @@
 from ..nodes import ToolpathBuilder
 from ..sfm import calc_spindle_speed
 from ..jsutil import round4, js_round, js_num
+from . import fim
 
 
 def _auto_cycle_code(depth, diameter):
@@ -54,7 +55,18 @@ def generate_drill(p):
 
     b.rapid(x=0, z=approach_z)
 
-    if p.useCannedCycle:
+    # PASSO (Q) = 0 com a UI (forcePeckCycle): fura direto ate o Z FINAL num
+    # G81, com R no Z de aproximacao. O pos Dino poe G17 antes e G80/G18
+    # depois (em G18 o ciclo tentaria furar em Y). Com TEMPO ESPERA > 0 e o
+    # ciclo desligado continua como era (G1 + G4): trocar por G82 e ponto em
+    # aberto no handoff (secao 9, item 3).
+    peck_ui = getattr(p, "peckDepth", 0) or 0
+    q_zero = getattr(p, "forcePeckCycle", False) and peck_ui <= 0
+    if q_zero and (p.useCannedCycle or not p.dwellSeconds > 0):
+        b.comment("CICLO G81 - FURO DIRETO, PASSO Q = 0")
+        b.cycle(cycleCode="G81", x=0, z=depth, r=approach_z, f=feed,
+                p=(js_round(p.dwellSeconds * 1000) if p.dwellSeconds > 0 else None))
+    elif p.useCannedCycle:
         cycle_code = _cycle_code(p, total_depth)
         if cycle_code == "G83":
             peck = p.peckDepth if p.peckDepth > 0 else p.drillDiameter
@@ -85,4 +97,5 @@ def generate_drill(p):
     b.coolantOff()
     b.rapid(x=0, z=approach_z)
     b.spindleOff()
+    fim.aplicar(b, p)
     return b.build()

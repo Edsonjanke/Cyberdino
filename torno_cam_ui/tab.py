@@ -37,6 +37,8 @@ from .chamfer_panel import ChamferForm
 from .groove_panel import GrooveForm
 from .thread_panel import ThreadForm
 from . import state
+from .realce_gcode import RealceGcode
+from .ciclo_panel import espacamento
 
 try:
     from qtpyvcp.actions import program_actions
@@ -50,15 +52,17 @@ OPS = [
     (u"DESBASTE EXT", "OD_TURN", OD_FIELDS),
     (u"DESBASTE INT", "ID_TURN", None),
     (u"FURAR", "DRILL", DRILL_FIELDS),
-    (u"CHANFRO/RAIO", "CHAMFER", None),
-    (u"CANAL/CORTE", "GROOVE", None),
+    (u"CHANFRO / RAIO", "CHAMFER", None),
+    (u"CANAL / CORTE", "GROOVE", None),
     (u"ROSCA", "THREAD_EXTERNAL", None),
 ]
 
+# Visual das telas de ciclo (handoff telas de ciclo, 2026-11-01, secoes 2 e 6)
 _OP_BTN_QSS = """
 QPushButton {
     background: #5A6268; color: #FFFFFF; border: 2px solid #2E343C;
-    border-radius: 4px; padding: 8px; font: 13pt "Barlow Condensed SemiBold"; min-height: 44px;
+    border-radius: 4px; padding: 0px 8px; font-family: "Bebas Neue"; font-size: 20px;
+    min-height: 52px; max-height: 52px;
 }
 QPushButton:checked { background: #00838F; color: #FFFFFF; border-color: #00838F; }
 """
@@ -66,26 +70,34 @@ QPushButton:checked { background: #00838F; color: #FFFFFF; border-color: #00838F
 _ACT_QSS = """
 QPushButton {
     background: #5A6268; color: #FFFFFF; border: 2px solid #2E343C;
-    border-radius: 4px; padding: 8px; font: 13pt "Barlow Condensed SemiBold"; min-height: 46px;
+    border-radius: 4px; padding: 0px 6px; font-family: "Bebas Neue"; font-size: 18px;
+    min-height: 48px; max-height: 48px;
 }
 QPushButton:pressed { background: #4A5157; }
 """
 
 _PRIMARY_QSS = """
 QPushButton {
-    background: #157A30; color: white; border: 1px solid #0c5c22;
-    border-radius: 4px; padding: 8px; font: 14pt "Barlow Condensed SemiBold"; min-height: 52px;
+    background: #2FBF5A; color: #08130B; border: 2px solid #2FBF5A;
+    border-radius: 4px; padding: 0px 8px; font-family: "Bebas Neue"; font-size: 24px;
+    min-height: 60px; max-height: 60px;
 }
-QPushButton:pressed { background: #157a30; }
+QPushButton:pressed { background: #28A84F; }
 """
 
-_HEAD_QSS = 'QLabel { color: #A9B0B5; font: 14pt "Barlow Condensed SemiBold"; }'
-_HINT_QSS = 'QLabel { color: #A9B0B5; font: 9pt "Barlow Condensed SemiBold"; }'
-# Mesmas cores do editor de G-code da pagina principal (regra GcodeTextEdit
-# do probe_basic_custom.qss: fundo preto, texto branco).
-_PREVIEW_QSS = ('QPlainTextEdit { background:#0B0D10; color:#FFFFFF;'
-                ' border:1px solid #2E343C; border-radius:4px;'
-                ' font-family:"DejaVu Sans Mono", monospace; font-size:11pt; }')
+_PAINEL_QSS = ('QFrame#{nome} {{ background: #1A1E24; border: 1px solid #2E343C;'
+               ' border-radius: 8px; }}')
+_HEAD_QSS = ('QLabel { color: #A9B0B5; font-family: "Bebas Neue"; font-size: 16px;'
+             ' background: transparent; border: none; }')
+_CAB_QSS = ('QLabel { color: #A9B0B5; font-family: "Bebas Neue"; font-size: 14px;'
+            ' background: transparent; border: none; }')
+_HINT_QSS = ('QLabel { color: #A9B0B5; font: 9pt "Barlow Condensed SemiBold";'
+             ' background: transparent; border: none; }')
+# Editor do PROGRAMA: fonte mono 13 px (JetBrains Mono so' tem o Bold aqui,
+# entao vai a DejaVu Sans Mono, que o handoff da como alternativa)
+_PREVIEW_QSS = ('QPlainTextEdit { background:#0B0D10; color:#E7EAEE;'
+                ' border:2px solid #2E343C; border-radius:5px; padding:6px;'
+                ' font-family:"DejaVu Sans Mono", monospace; font-size:13px; }')
 
 
 # Widgets do ProbeBasic escondidos enquanto esta aba esta na frente, para o
@@ -131,14 +143,19 @@ class UserTab(QWidget):
     # ── Construcao da UI ─────────────────────────────────────────────────────
     def _build_ui(self):
         root = QHBoxLayout(self)
-        root.setContentsMargins(8, 8, 8, 8)
-        root.setSpacing(8)
+        root.setContentsMargins(16, 16, 16, 16)
+        root.setSpacing(16)
 
-        # Coluna 1: seletor de operacao
-        col1 = QVBoxLayout()
-        col1.setSpacing(6)
-        lab = QLabel(u"OPERACAO")
+        # Coluna 1: barra de operacoes (secao 2 do handoff telas de ciclo)
+        c1 = QFrame()
+        c1.setObjectName("painelOperacoes")
+        c1.setStyleSheet(_PAINEL_QSS.format(nome="painelOperacoes"))
+        col1 = QVBoxLayout(c1)
+        col1.setContentsMargins(16, 16, 16, 16)
+        col1.setSpacing(8)
+        lab = QLabel(u"OPERAÇÃO")
         lab.setStyleSheet(_HEAD_QSS)
+        espacamento(lab, 2.0)
         col1.addWidget(lab)
         self._op_group = QButtonGroup(self)
         self._op_group.setExclusive(True)
@@ -146,14 +163,17 @@ class UserTab(QWidget):
             btn = QPushButton(name)
             btn.setCheckable(True)
             btn.setStyleSheet(_OP_BTN_QSS)
+            espacamento(btn, 1.0)
             btn.clicked.connect(lambda _c=False, idx=i: self._select_op(idx))
             self._op_group.addButton(btn, i)
             col1.addWidget(btn)
         col1.addStretch(1)
         # Logo EVO no rodape da coluna (mono branco: a colorida some no fundo
-        # escuro — o texto dela tem contraste 1.22 contra #242729).
+        # escuro).
         self._logo = QLabel()
         self._logo.setAlignment(Qt.AlignCenter)
+        self._logo.setStyleSheet("QLabel { background: transparent; border: none;"
+                                 " padding: 10px 0px; }")
         try:
             from qtpy.QtGui import QPixmap
             _cam = os.path.join(_CONFIG_ROOT, "logo", "evo-horizontal-branco.png")
@@ -161,69 +181,65 @@ class UserTab(QWidget):
             if not _pix.isNull():
                 self._logo.setPixmap(_pix.scaledToWidth(
                     150, Qt.SmoothTransformation))
-                self._logo.setStyleSheet("QLabel { padding: 10px 0px; }")
         except Exception:
             pass
         col1.addWidget(self._logo)
-        c1 = QWidget()
-        c1.setLayout(col1)
         c1.setFixedWidth(190)
         root.addWidget(c1)
 
-        # Coluna 2: uma pagina por operacao.
-        # O scroll fica em CADA formulario simples, nunca em volta do stack:
-        # do contrario a largura minima dos formularios largos (grade de 2
-        # colunas) forcaria barra de rolagem tambem no painel da imagem,
-        # cortando o desenho.
+        # Coluna 2: uma pagina por operacao (desenho + faixa inferior).
         self._stack = QStackedWidget()
         for (name, key, fields) in OPS:
             saved = self._saved.get("params", {}).get(key)
-            base = saved if saved else default_params(key)
-            # FACE ja usa o painel conversational sobre a imagem de referencia;
-            # as demais operacoes seguem no formulario simples ate serem
-            # convertidas (uma de cada vez, apos validar).
+            base = default_params(key)
+            if saved:
+                # chaves novas (ex.: chanfro) entram com o default; o resto
+                # vem do que estava salvo
+                base.update(saved)
             if key == "FACE":
                 form = FaceForm(base)
-                page = form
             elif key == "DRILL":
                 form = DrillForm(base)
-                page = form
             elif key == "OD_TURN":
                 form = ODForm(base)
-                page = form
             elif key == "ID_TURN":
                 form = IDForm(base)
-                page = form
             elif key == "CHAMFER":
                 form = ChamferForm(base)
-                page = form
             elif key == "GROOVE":
                 form = GrooveForm(base)
-                page = form
             elif key == "THREAD_EXTERNAL":
                 form = ThreadForm(base)
-                page = form
             else:
                 form = OpForm(fields, base)
-                page = QScrollArea()
-                page.setWidgetResizable(True)
-                page.setWidget(form)
-                page.setFrameShape(QFrame.NoFrame)
+            page = form
             form.changed.connect(self._on_form_changed)
             self._forms.append(form)
             self._stack.addWidget(page)
         root.addWidget(self._stack, 1)
 
-        # Coluna 3: fila + preview + acoes
-        col3 = QVBoxLayout()
-        col3.setSpacing(6)
+        # Coluna 3: PROGRAMA (fila + G-code com realce + acoes), secao 6.2
+        c3 = QFrame()
+        c3.setObjectName("painelPrograma")
+        c3.setStyleSheet(_PAINEL_QSS.format(nome="painelPrograma"))
+        col3 = QVBoxLayout(c3)
+        col3.setContentsMargins(16, 16, 16, 16)
+        col3.setSpacing(8)
+        cab = QHBoxLayout()
         h = QLabel(u"PROGRAMA")
         h.setStyleSheet(_HEAD_QSS)
-        col3.addWidget(h)
+        espacamento(h, 2.0)
+        cab.addWidget(h)
+        cab.addStretch(1)
+        # resumo novo: ferramenta e zero peca da operacao na tela (so leitura)
+        self._resumo = QLabel(u"")
+        self._resumo.setStyleSheet(_CAB_QSS)
+        cab.addWidget(self._resumo)
+        col3.addLayout(cab)
 
         self._queue_list = QListWidget()
         self._queue_list.setStyleSheet(
-            'QListWidget { background:#1A1E24; color:#FFFFFF;'
+            'QListWidget { background:#0B0D10; color:#FFFFFF;'
             ' border:1px solid #2E343C; border-radius:4px; font: 11pt "Barlow Condensed SemiBold"; }')
         # Some quando a fila esta vazia (caso normal: uma operacao so) para o
         # G-code ocupar o espaco; reaparece do tamanho do conteudo ao ADICIONAR.
@@ -235,6 +251,9 @@ class UserTab(QWidget):
         self._preview = QPlainTextEdit()
         self._preview.setReadOnly(True)
         self._preview.setStyleSheet(_PREVIEW_QSS)
+        # realce de cores do G-code (G0 vermelho, corte verde, T/M amarelo,
+        # comentario cinza). Guardar a referencia, senao o GC leva.
+        self._realce = RealceGcode(self._preview.document())
         col3.addWidget(self._preview, 1)
 
         self._status = QLabel(u"")
@@ -244,23 +263,24 @@ class UserTab(QWidget):
 
         # botoes de acao
         row1 = QHBoxLayout()
+        row1.setSpacing(8)
         for text, slot in ((u"GERAR", self._on_gerar),
                            (u"ADICIONAR", self._on_adicionar),
                            (u"REMOVER", self._on_remover),
                            (u"LIMPAR", self._on_limpar)):
             b = QPushButton(text)
             b.setStyleSheet(_ACT_QSS)
+            espacamento(b, 1.0)
             b.clicked.connect(slot)
             row1.addWidget(b)
         col3.addLayout(row1)
 
         save = QPushButton(u"SALVAR + CARREGAR")
         save.setStyleSheet(_PRIMARY_QSS)
+        espacamento(save, 2.0)
         save.clicked.connect(self._on_salvar_carregar)
         col3.addWidget(save)
 
-        c3 = QWidget()
-        c3.setLayout(col3)
         c3.setFixedWidth(470)
         root.addWidget(c3)
 
@@ -379,18 +399,31 @@ class UserTab(QWidget):
                 title = self._queue[0][1].get("title", "PROGRAMA")
                 entries = [self._build_entry(lbl, prm) for (lbl, prm) in self._queue]
                 gcode = assemble_program(self._program_config(title), entries, self._post())
-                self._status.setText(u"Fila: {} operacao(oes)".format(len(self._queue)))
+                n = len(self._queue)
+                self._status.setText(u"Fila: {} {}".format(
+                    n, u"operação" if n == 1 else u"operações"))
             else:
                 params = self._current_form().collect()
+                self._atualizar_resumo(params)
                 entries = [self._build_entry(params.get("title", "OP"), params)]
                 gcode = assemble_program(self._program_config(params.get("title", "PROGRAMA")),
                                          entries, self._post())
                 self._status.setText(u"")
             self._set_preview_text(gcode)
         except EngineError as e:
+            # erro de geometria (ex.: chanfro que nao cabe): nao mostra G-code
+            self._set_preview_text(u"")
             self._status.setText(u"Erro: {}".format(e))
         except Exception as e:
             self._status.setText(u"Erro ao gerar: {}".format(e))
+
+    def _atualizar_resumo(self, params):
+        """'T02 · G54' no cabecalho do PROGRAMA (so leitura dos params)."""
+        try:
+            self._resumo.setText(u"T{:02d} · {}".format(
+                int(params.get("toolNumber", 0) or 0), params.get("workOffset", "")))
+        except Exception:
+            self._resumo.setText(u"")
 
     # ── Acoes ────────────────────────────────────────────────────────────────
     def _on_gerar(self):

@@ -3,6 +3,7 @@
 from ..nodes import ToolpathBuilder
 from ..threading_engine import ThreadingEngine, ThreadingInput
 from ..jsutil import round4, js_num
+from . import fim
 
 
 def generate_thread(p):
@@ -119,4 +120,5 @@ def generate_thread(p):
     b.coolantOff()
     b.rapid(x=x_clear, z=round4(p.zStart + p.clearance))
     b.spindleOff()
+    fim.aplicar(b, p)
     return b.build()

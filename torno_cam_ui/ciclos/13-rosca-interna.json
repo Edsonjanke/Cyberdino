@@ -1,0 +1,930 @@
+{
+ "tela": "Rosca interna",
+ "botao_operacao": "ROSCA",
+ "arquivo_canvas": "LinuxCNCRoscaInt.dc.html",
+ "referencia": "telas/13-rosca-interna.png",
+ "fundo_com_rotulos": "fundos/com-rotulos/13-rosca-interna.png",
+ "fundo_sem_rotulos": "fundos/sem-rotulos/13-rosca-interna.png",
+ "svg": "fundos/svg/13-rosca-interna.svg",
+ "coordenadas": {
+  "viewBox": [
+   160.0,
+   -30.0,
+   1460.0,
+   747.0
+  ],
+  "png_tamanho": [
+   1869,
+   956
+  ],
+  "png_escala": 1.28,
+  "formula_png": "px = (x - 160) * 1.28 ; py = (y + 30) * 1.28"
+ },
+ "campos": [
+  {
+   "id": "ferramenta",
+   "rotulo": "FERRAMENTA :",
+   "valor_exemplo": "1",
+   "caixa": {
+    "x": 404.0,
+    "y": 37.0,
+    "w": 83.0,
+    "h": 42.0
+   },
+   "caixa_png": {
+    "x": 312.3,
+    "y": 85.8,
+    "w": 106.2,
+    "h": 53.8
+   },
+   "fonte_valor": 34.0
+  },
+  {
+   "id": "fim_z",
+   "rotulo": "FIM Z :",
+   "valor_exemplo": "-25.00",
+   "caixa": {
+    "x": 517.0,
+    "y": 78.0,
+    "w": 123.0,
+    "h": 42.0
+   },
+   "caixa_png": {
+    "x": 457.0,
+    "y": 138.2,
+    "w": 157.4,
+    "h": 53.8
+   },
+   "fonte_valor": 34.0
+  },
+  {
+   "id": "inicio_z",
+   "rotulo": "INÍCIO Z :",
+   "valor_exemplo": "2.00",
+   "caixa": {
+    "x": 665.0,
+    "y": 78.0,
+    "w": 130.0,
+    "h": 42.0
+   },
+   "caixa_png": {
+    "x": 646.4,
+    "y": 138.2,
+    "w": 166.4,
+    "h": 53.8
+   },
+   "fonte_valor": 34.0
+  },
+  {
+   "id": "angulo_de_saida_taper",
+   "rotulo": "ÂNGULO DE SAÍDA TAPER :",
+   "valor_exemplo": "0.0000",
+   "caixa": {
+    "x": 175.0,
+    "y": 150.0,
+    "w": 130.0,
+    "h": 42.0
+   },
+   "caixa_png": {
+    "x": 19.2,
+    "y": 230.4,
+    "w": 166.4,
+    "h": 53.8
+   },
+   "fonte_valor": 34.0
+  },
+  {
+   "id": "afastamento_g0",
+   "rotulo": "AFASTAMENTO G0 :",
+   "valor_exemplo": "2.50",
+   "caixa": {
+    "x": 888.0,
+    "y": 87.0,
+    "w": 125.0,
+    "h": 42.0
+   },
+   "caixa_png": {
+    "x": 931.8,
+    "y": 149.8,
+    "w": 160.0,
+    "h": 53.8
+   },
+   "fonte_valor": 34.0
+  },
+  {
+   "id": "fim_x",
+   "rotulo": "FIM X :",
+   "valor_exemplo": "4.50",
+   "caixa": {
+    "x": 952.0,
+    "y": 177.0,
+    "w": 126.0,
+    "h": 42.0
+   },
+   "caixa_png": {
+    "x": 1013.8,
+    "y": 265.0,
+    "w": 161.3,
+    "h": 53.8
+   },
+   "fonte_valor": 34.0
+  },
+  {
+   "id": "rotacao_do_fuso_rpm",
+   "rotulo": "ROTAÇÃO DO FUSO (RPM) :",
+   "valor_exemplo": "700",
+   "caixa": {
+    "x": 1401.0,
+    "y": 160.0,
+    "w": 87.0,
+    "h": 42.0
+   },
+   "caixa_png": {
+    "x": 1588.5,
+    "y": 243.2,
+    "w": 111.4,
+    "h": 53.8
+   },
+   "fonte_valor": 34.0
+  },
+  {
+   "id": "profundidade_de_corte",
+   "rotulo": "PROFUNDIDADE DE CORTE :",
+   "valor_exemplo": "0.00",
+   "caixa": {
+    "x": 956.0,
+    "y": 326.0,
+    "w": 126.0,
+    "h": 42.0
+   },
+   "caixa_png": {
+    "x": 1018.9,
+    "y": 455.7,
+    "w": 161.3,
+    "h": 53.8
+   },
+   "fonte_valor": 34.0
+  },
+  {
+   "id": "rosca_polegadas",
+   "rotulo": "ROSCA POLEGADAS :",
+   "valor_exemplo": "0.00",
+   "caixa": {
+    "x": 1168.0,
+    "y": 482.0,
+    "w": 129.0,
+    "h": 42.0
+   },
+   "caixa_png": {
+    "x": 1290.2,
+    "y": 655.4,
+    "w": 165.1,
+    "h": 53.8
+   },
+   "fonte_valor": 34.0
+  },
+  {
+   "id": "passo_pol",
+   "rotulo": "PASSO (POL) :",
+   "valor_exemplo": "0.50",
+   "caixa": {
+    "x": 1350.0,
+    "y": 482.0,
+    "w": 129.0,
+    "h": 42.0
+   },
+   "caixa_png": {
+    "x": 1523.2,
+    "y": 655.4,
+    "w": 165.1,
+    "h": 53.8
+   },
+   "fonte_valor": 34.0
+  },
+  {
+   "id": "numero_de_passadas",
+   "rotulo": "NÚMERO DE PASSADAS :",
+   "valor_exemplo": "0",
+   "caixa": {
+    "x": 1256.0,
+    "y": 545.0,
+    "w": 53.0,
+    "h": 42.0
+   },
+   "caixa_png": {
+    "x": 1402.9,
+    "y": 736.0,
+    "w": 67.8,
+    "h": 53.8
+   },
+   "fonte_valor": 34.0
+  },
+  {
+   "id": "passadas_de_acabamento",
+   "rotulo": "PASSADAS DE ACABAMENTO :",
+   "valor_exemplo": "1",
+   "caixa": {
+    "x": 1499.0,
+    "y": 545.0,
+    "w": 45.0,
+    "h": 42.0
+   },
+   "caixa_png": {
+    "x": 1713.9,
+    "y": 736.0,
+    "w": 57.6,
+    "h": 53.8
+   },
+   "fonte_valor": 34.0
+  },
+  {
+   "id": "comprimento_da_rosca",
+   "rotulo": "COMPRIMENTO DA ROSCA :",
+   "valor_exemplo": "0.00",
+   "caixa": {
+    "x": 400.0,
+    "y": 528.0,
+    "w": 152.0,
+    "h": 42.0
+   },
+   "caixa_png": {
+    "x": 307.2,
+    "y": 714.2,
+    "w": 194.6,
+    "h": 53.8
+   },
+   "fonte_valor": 34.0
+  },
+  {
+   "id": "inicio_x",
+   "rotulo": "INÍCIO X :",
+   "valor_exemplo": "4.50",
+   "caixa": {
+    "x": 847.0,
+    "y": 548.0,
+    "w": 128.0,
+    "h": 42.0
+   },
+   "caixa_png": {
+    "x": 879.4,
+    "y": 739.8,
+    "w": 163.8,
+    "h": 53.8
+   },
+   "fonte_valor": 34.0
+  },
+  {
+   "id": "afastamento_final_z",
+   "rotulo": "Z :",
+   "valor_exemplo": "2.00",
+   "caixa": {
+    "x": 1293.0,
+    "y": 657.0,
+    "w": 120.0,
+    "h": 50.0
+   },
+   "caixa_png": {
+    "x": 1450.2,
+    "y": 879.4,
+    "w": 153.6,
+    "h": 64.0
+   },
+   "fonte_valor": 38.0,
+   "grupo": "faixa_padrao"
+  },
+  {
+   "id": "afastamento_final_x",
+   "rotulo": "X :",
+   "valor_exemplo": "2.00",
+   "caixa": {
+    "x": 1488.0,
+    "y": 657.0,
+    "w": 120.0,
+    "h": 50.0
+   },
+   "caixa_png": {
+    "x": 1699.8,
+    "y": 879.4,
+    "w": 153.6,
+    "h": 64.0
+   },
+   "fonte_valor": 38.0,
+   "grupo": "faixa_padrao"
+  }
+ ],
+ "opcoes": [
+  {
+   "texto": "SOMENTE ACABAMENTO",
+   "marcada": false,
+   "x": 172.0,
+   "y": 605.0,
+   "w": 316,
+   "h": 44,
+   "caixa_png": {
+    "x": 15.4,
+    "y": 812.8,
+    "w": 404.5,
+    "h": 56.3
+   },
+   "grupo": "faixa_padrao"
+  },
+  {
+   "texto": "GERAR CICLO",
+   "marcada": true,
+   "x": 498.0,
+   "y": 605.0,
+   "w": 316,
+   "h": 44,
+   "caixa_png": {
+    "x": 432.6,
+    "y": 812.8,
+    "w": 404.5,
+    "h": 56.3
+   },
+   "grupo": "faixa_padrao"
+  },
+  {
+   "texto": "USAR PAUSA NO FINAL",
+   "marcada": false,
+   "x": 172.0,
+   "y": 661.0,
+   "w": 316,
+   "h": 44,
+   "caixa_png": {
+    "x": 15.4,
+    "y": 884.5,
+    "w": 404.5,
+    "h": 56.3
+   },
+   "grupo": "faixa_padrao"
+  },
+  {
+   "texto": "CHAMAR FERRAMENTA NO FINAL",
+   "marcada": false,
+   "x": 498.0,
+   "y": 661.0,
+   "w": 316,
+   "h": 44,
+   "caixa_png": {
+    "x": 432.6,
+    "y": 884.5,
+    "w": 404.5,
+    "h": 56.3
+   },
+   "grupo": "faixa_padrao"
+  }
+ ],
+ "rotulos": [
+  {
+   "texto": "FERRAMENTA :",
+   "x": 392.0,
+   "y": 66.0,
+   "tamanho": 32.0,
+   "ancora": "end",
+   "cor": "#FFFFFF",
+   "largura": 150.4,
+   "caixa_aprox": [
+    241.6,
+    43.0,
+    150.4,
+    23.0
+   ]
+  },
+  {
+   "texto": "FIM Z :",
+   "x": 518.0,
+   "y": 70.0,
+   "tamanho": 32.0,
+   "ancora": "start",
+   "cor": "#FFFFFF",
+   "largura": 68.2,
+   "caixa_aprox": [
+    518.0,
+    47.0,
+    68.2,
+    23.0
+   ]
+  },
+  {
+   "texto": "INÍCIO Z :",
+   "x": 668.0,
+   "y": 70.0,
+   "tamanho": 32.0,
+   "ancora": "start",
+   "cor": "#FFFFFF",
+   "largura": 94.0,
+   "caixa_aprox": [
+    668.0,
+    47.0,
+    94.0,
+    23.0
+   ]
+  },
+  {
+   "texto": "ÂNGULO DE SAÍDA TAPER :",
+   "x": 175.0,
+   "y": 140.0,
+   "tamanho": 32.0,
+   "ancora": "start",
+   "cor": "#FFFFFF",
+   "largura": 266.8,
+   "caixa_aprox": [
+    175.0,
+    117.0,
+    266.8,
+    23.0
+   ]
+  },
+  {
+   "texto": "AFASTAMENTO G0 :",
+   "x": 951.0,
+   "y": 78.0,
+   "tamanho": 32.0,
+   "ancora": "middle",
+   "cor": "#FFFFFF",
+   "largura": 196.6,
+   "caixa_aprox": [
+    852.7,
+    55.0,
+    196.6,
+    23.0
+   ],
+   "trecho_colorido": {
+    "texto": "G0",
+    "cor": "#FF7B72"
+   }
+  },
+  {
+   "texto": "FIM X :",
+   "x": 955.0,
+   "y": 168.0,
+   "tamanho": 32.0,
+   "ancora": "start",
+   "cor": "#FFFFFF",
+   "largura": 69.6,
+   "caixa_aprox": [
+    955.0,
+    145.0,
+    69.6,
+    23.0
+   ]
+  },
+  {
+   "texto": "ROTAÇÃO DO FUSO (RPM) :",
+   "x": 1390.0,
+   "y": 190.0,
+   "tamanho": 32.0,
+   "ancora": "end",
+   "cor": "#FFFFFF",
+   "largura": 271.1,
+   "caixa_aprox": [
+    1118.9,
+    167.0,
+    271.1,
+    23.0
+   ]
+  },
+  {
+   "texto": "PROFUNDIDADE",
+   "x": 956.0,
+   "y": 292.0,
+   "tamanho": 32.0,
+   "ancora": "start",
+   "cor": "#FFFFFF",
+   "largura": 156.2,
+   "caixa_aprox": [
+    956.0,
+    269.0,
+    156.2,
+    23.0
+   ]
+  },
+  {
+   "texto": "DE CORTE :",
+   "x": 956.0,
+   "y": 318.0,
+   "tamanho": 32.0,
+   "ancora": "start",
+   "cor": "#FFFFFF",
+   "largura": 111.1,
+   "caixa_aprox": [
+    956.0,
+    295.0,
+    111.1,
+    23.0
+   ]
+  },
+  {
+   "texto": "ROSCA",
+   "x": 1168.0,
+   "y": 448.0,
+   "tamanho": 32.0,
+   "ancora": "start",
+   "cor": "#FFFFFF",
+   "largura": 66.7,
+   "caixa_aprox": [
+    1168.0,
+    425.0,
+    66.7,
+    23.0
+   ]
+  },
+  {
+   "texto": "POLEGADAS :",
+   "x": 1168.0,
+   "y": 474.0,
+   "tamanho": 32.0,
+   "ancora": "start",
+   "cor": "#FFFFFF",
+   "largura": 132.0,
+   "caixa_aprox": [
+    1168.0,
+    451.0,
+    132.0,
+    23.0
+   ]
+  },
+  {
+   "texto": "PASSO (POL) :",
+   "x": 1351.0,
+   "y": 474.0,
+   "tamanho": 32.0,
+   "ancora": "start",
+   "cor": "#FFFFFF",
+   "largura": 143.9,
+   "caixa_aprox": [
+    1351.0,
+    451.0,
+    143.9,
+    23.0
+   ]
+  },
+  {
+   "texto": "NÚMERO DE PASSADAS :",
+   "x": 1246.0,
+   "y": 576.0,
+   "tamanho": 32.0,
+   "ancora": "end",
+   "cor": "#FFFFFF",
+   "largura": 245.6,
+   "caixa_aprox": [
+    1000.4,
+    553.0,
+    245.6,
+    23.0
+   ]
+  },
+  {
+   "texto": "PASSADAS DE",
+   "x": 1335.0,
+   "y": 560.0,
+   "tamanho": 32.0,
+   "ancora": "start",
+   "cor": "#FFFFFF",
+   "largura": 139.3,
+   "caixa_aprox": [
+    1335.0,
+    537.0,
+    139.3,
+    23.0
+   ]
+  },
+  {
+   "texto": "ACABAMENTO :",
+   "x": 1335.0,
+   "y": 586.0,
+   "tamanho": 32.0,
+   "ancora": "start",
+   "cor": "#FFFFFF",
+   "largura": 152.8,
+   "caixa_aprox": [
+    1335.0,
+    563.0,
+    152.8,
+    23.0
+   ]
+  },
+  {
+   "texto": "COMPRIMENTO DA ROSCA :",
+   "x": 400.0,
+   "y": 520.0,
+   "tamanho": 32.0,
+   "ancora": "start",
+   "cor": "#FFFFFF",
+   "largura": 271.5,
+   "caixa_aprox": [
+    400.0,
+    497.0,
+    271.5,
+    23.0
+   ]
+  },
+  {
+   "texto": "INÍCIO X :",
+   "x": 848.0,
+   "y": 540.0,
+   "tamanho": 32.0,
+   "ancora": "start",
+   "cor": "#FFFFFF",
+   "largura": 95.4,
+   "caixa_aprox": [
+    848.0,
+    517.0,
+    95.4,
+    23.0
+   ]
+  },
+  {
+   "texto": "AFASTAMENTO FINAL",
+   "x": 1236.0,
+   "y": 645.0,
+   "tamanho": 30.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 219.3,
+   "caixa_aprox": [
+    1236.0,
+    623.4,
+    219.3,
+    21.6
+   ]
+  },
+  {
+   "texto": "Z :",
+   "x": 1283.0,
+   "y": 694.0,
+   "tamanho": 38.0,
+   "ancora": "end",
+   "cor": "#FFFFFF",
+   "largura": 29.0,
+   "caixa_aprox": [
+    1254.0,
+    666.6,
+    29.0,
+    27.4
+   ]
+  },
+  {
+   "texto": "X :",
+   "x": 1478.0,
+   "y": 694.0,
+   "tamanho": 38.0,
+   "ancora": "end",
+   "cor": "#FFFFFF",
+   "largura": 30.7,
+   "caixa_aprox": [
+    1447.3,
+    666.6,
+    30.7,
+    27.4
+   ]
+  }
+ ],
+ "notas": [
+  {
+   "texto": "USA REDUÇÃO CONSTANTE",
+   "x": 955.0,
+   "y": 394.0,
+   "tamanho": 22.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 180.6,
+   "caixa_aprox": [
+    955.0,
+    378.2,
+    180.6,
+    15.8
+   ]
+  },
+  {
+   "texto": "DA ÁREA, ENTÃO AS",
+   "x": 955.0,
+   "y": 416.0,
+   "tamanho": 22.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 135.0,
+   "caixa_aprox": [
+    955.0,
+    400.2,
+    135.0,
+    15.8
+   ]
+  },
+  {
+   "texto": "PROFUNDIDADES DE CORTE",
+   "x": 955.0,
+   "y": 438.0,
+   "tamanho": 22.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 184.5,
+   "caixa_aprox": [
+    955.0,
+    422.2,
+    184.5,
+    15.8
+   ]
+  },
+  {
+   "texto": "FICAM MENORES.",
+   "x": 955.0,
+   "y": 460.0,
+   "tamanho": 22.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 118.1,
+   "caixa_aprox": [
+    955.0,
+    444.2,
+    118.1,
+    15.8
+   ]
+  },
+  {
+   "texto": "ÂNGULO DE ENTRADA",
+   "x": 955.0,
+   "y": 482.0,
+   "tamanho": 22.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 144.8,
+   "caixa_aprox": [
+    955.0,
+    466.2,
+    144.8,
+    15.8
+   ]
+  },
+  {
+   "texto": "COMPOSTO DE 30 GRAUS.",
+   "x": 955.0,
+   "y": 504.0,
+   "tamanho": 22.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 173.9,
+   "caixa_aprox": [
+    955.0,
+    488.2,
+    173.9,
+    15.8
+   ]
+  },
+  {
+   "texto": "RECOMENDA-SE 3X O PASSO",
+   "x": 400.0,
+   "y": 592.0,
+   "tamanho": 22.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 193.7,
+   "caixa_aprox": [
+    400.0,
+    576.2,
+    193.7,
+    15.8
+   ]
+  },
+  {
+   "texto": "USE VALORES NEGATIVOS",
+   "x": 172.0,
+   "y": 505.0,
+   "tamanho": 26.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 202.8,
+   "caixa_aprox": [
+    172.0,
+    486.3,
+    202.8,
+    18.7
+   ]
+  },
+  {
+   "texto": "DE X PARA A FERRAMENTA",
+   "x": 172.0,
+   "y": 531.0,
+   "tamanho": 26.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 213.7,
+   "caixa_aprox": [
+    172.0,
+    512.3,
+    213.7,
+    18.7
+   ]
+  },
+  {
+   "texto": "TRABALHAR NO LADO",
+   "x": 172.0,
+   "y": 557.0,
+   "tamanho": 26.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 170.2,
+   "caixa_aprox": [
+    172.0,
+    538.3,
+    170.2,
+    18.7
+   ]
+  },
+  {
+   "texto": "−X DA PEÇA",
+   "x": 172.0,
+   "y": 583.0,
+   "tamanho": 26.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 94.6,
+   "caixa_aprox": [
+    172.0,
+    564.3,
+    94.6,
+    18.7
+   ]
+  },
+  {
+   "texto": "M4 = ROSCA DIREITA (TORRE ATRÁS DO CENTRO)",
+   "x": 846.0,
+   "y": 664.0,
+   "tamanho": 22.0,
+   "ancora": "start",
+   "cor": "#A9B0B5",
+   "largura": 335.3,
+   "caixa_aprox": [
+    846.0,
+    648.2,
+    335.3,
+    15.8
+   ]
+  }
+ ],
+ "faixa_inferior": [
+  {
+   "linha": "ROSCA",
+   "itens": [
+    {
+     "rotulo": "TABELA",
+     "valor": "MÉTRICA",
+     "tipo": "lista"
+    },
+    {
+     "rotulo": "ROSCA",
+     "valor": "M5 X 0.5 FINA",
+     "tipo": "lista"
+    },
+    {
+     "rotulo": "LADO",
+     "valor": "INTERNA",
+     "tipo": "lista"
+    },
+    {
+     "rotulo": "TIPO",
+     "valor": "MÉTRICA (PASSO)",
+     "tipo": "lista"
+    },
+    {
+     "rotulo": "PASSES MOLA",
+     "valor": "2",
+     "tipo": "texto"
+    }
+   ]
+  },
+  {
+   "linha": "CONFIG.",
+   "itens": [
+    {
+     "rotulo": "Ø MENOR (0 = AUTO)",
+     "valor": "0.000",
+     "unidade": "MM",
+     "tipo": "numero"
+    },
+    {
+     "rotulo": "ZERO PEÇA",
+     "valor": "G54",
+     "tipo": "lista"
+    },
+    {
+     "rotulo": "FUSO",
+     "valor": "M3 HORÁRIO",
+     "tipo": "lista"
+    },
+    {
+     "rotulo": "REFRIGERAÇÃO",
+     "valor": "M8 FLUIDO",
+     "tipo": "lista"
+    },
+    {
+     "rotulo": "AVANÇO",
+     "valor": "0.000",
+     "unidade": "MM/V",
+     "tipo": "numero"
+    }
+   ]
+  }
+ ],
+ "programa_cabecalho": "T01 · G54"
+}

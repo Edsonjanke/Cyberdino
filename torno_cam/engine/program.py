@@ -39,6 +39,23 @@ def entry_from_nodes(title, nodes):
     return OperationEntry(title=title, tool_call=tool_call, nodes=filtered)
 
 
+def _resolve_primeira_ferramenta(entries):
+    """Troca as marcas FIRST_TOOL_CALL (CHAMAR FERRAMENTA NO FINAL) pela
+    ferramenta da primeira operacao do programa. Nao mexe nas entradas
+    originais."""
+    if not entries or not any(n.type == "FIRST_TOOL_CALL"
+                              for e in entries for n in e.nodes):
+        return entries
+    primeira = entries[0].tool_call
+    saida = []
+    for e in entries:
+        nos = [ToolCall(toolNumber=primeira.toolNumber,
+                        toolOffset=primeira.toolOffset, description="")
+               if n.type == "FIRST_TOOL_CALL" else n for n in e.nodes]
+        saida.append(OperationEntry(title=e.title, tool_call=e.tool_call, nodes=nos))
+    return saida
+
+
 def assemble_program(config, entries, post):
     """Gera o G-code final de um programa (varias operacoes, um cabecalho)."""
-    return post.generate(config, entries)
+    return post.generate(config, _resolve_primeira_ferramenta(entries))

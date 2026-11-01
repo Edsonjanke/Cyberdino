@@ -13,11 +13,11 @@ from .widgets import TouchDoubleSpin, TouchIntSpin, TouchCombo, TouchLine
 # ── Opcoes de combo reutilizaveis ────────────────────────────────────────────
 WCS = [("G54", "G54"), ("G55", "G55"), ("G56", "G56"),
        ("G57", "G57"), ("G58", "G58"), ("G59", "G59")]
-DIRS = [("M3 horario", "CW"), ("M4 anti-horario", "CCW")]
-COOL = [("M8 fluido", "FLOOD"), ("M7 nevoa", "MIST"), ("Ar", "AIR"), ("Sem", "OFF")]
-YESNO = [("Nao", False), ("Sim", True)]
-SIDES = [("Externa", "EXTERNAL"), ("Interna", "INTERNAL")]
-TTYPE = [("Metrica (passo)", "metric"), ("Imperial (fios/pol)", "imperial")]
+DIRS = [(u"M3 HORÁRIO", "CW"), (u"M4 ANTI-HORÁRIO", "CCW")]
+COOL = [(u"M8 FLUIDO", "FLOOD"), (u"M7 NÉVOA", "MIST"), (u"AR", "AIR"), (u"SEM", "OFF")]
+YESNO = [(u"NÃO", False), (u"SIM", True)]
+SIDES = [(u"EXTERNA", "EXTERNAL"), (u"INTERNA", "INTERNAL")]
+TTYPE = [(u"MÉTRICA (PASSO)", "metric"), (u"POLEGADA (FIOS/POL)", "imperial")]
 
 
 def F(key, label, kind, **kw):

@@ -250,6 +250,13 @@ GcodeTextEdit {
     qproperty-marginCurrentLineColor: #FFFFFF;
 }
 
+/* editores da PRINCIPAL e do ARQUIVO: texto base igual ao PROGRAMA do
+   GERAR PGM; os códigos ganham cor pelo RealceGcode (dino_gcode_text_edit.py).
+   O seletor vale também para o DinoGcodeTextEdit, que herda desta classe. */
+DinoGcodeTextEditCores {
+    color: #E7EAEE;
+}
+
 QScrollArea {
     border: none;
 }

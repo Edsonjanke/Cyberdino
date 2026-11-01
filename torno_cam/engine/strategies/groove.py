@@ -12,6 +12,7 @@ import math
 from ..nodes import ToolpathBuilder
 from ..sfm import calc_spindle_speed
 from ..jsutil import round4
+from . import fim
 
 
 def generate_groove(p):
@@ -140,7 +141,9 @@ def _canal(p):
         if p.finishDOC > 0:
             acabamento()
     else:
-        for d in range(n_prof):
+        # SOMENTE ACABAMENTO: pula os mergulhos de desbaste
+        so_acab = bool(getattr(p, "finishOnly", False))
+        for d in range(0 if so_acab else n_prof):
             prof_r = round4(start_r - doc_prof * (d + 1))
             ant_r = start_r if d == 0 else round4(start_r - doc_prof * d)
             prof_x = sx(prof_r * 2)
@@ -162,11 +165,12 @@ def _canal(p):
                 b.rapid(z=round4(pl_z))
                 b.linear(x=prof_x, z=round4(pl_z), feed=p.plungeFPR)
 
-        if p.finishDOC > 0:
+        if p.finishDOC > 0 or so_acab:
             acabamento()
 
     b.coolantOff()
     b.rapid(x=sx(clear_r * 2), z=round4(z_clear))
+    fim.aplicar(b, p)
     return b.build()
 
 
@@ -206,7 +210,16 @@ def _corte(p):
 
     b.rapid(x=sx(clear_r * 2), z=round4(z_corte + abs(p.toolClearance)))
 
-    if tem_quebra:
+    if tem_quebra and getattr(p, "quebraCantoDesenho", False):
+        # como no desenho aprovado: desce a 45 graus de (D, Zc + w) ate
+        # (D - 2w, Zc) e sai direto para D + 2 x AFASTAMENTO no mesmo Z.
+        # Opcional (a UI liga) para a paridade com os goldens continuar.
+        w = p.edgeBreak
+        b.comment("QUEBRA DE ARESTA")
+        b.rapid(x=sx(start_r * 2), z=round4(z_corte + w))
+        b.linear(x=sx((start_r - w) * 2), z=round4(z_corte), feed=p.plungeFPR)
+        b.rapid(x=sx(clear_r * 2), z=round4(z_corte))
+    elif tem_quebra:
         b.comment("QUEBRA DE ARESTA")
         b.rapid(x=sx(start_r * 2), z=round4(z_corte))
         b.linear(x=sx((start_r - p.edgeBreak) * 2),
@@ -232,4 +245,5 @@ def _corte(p):
     b.rapid(x=sx(clear_r * 2), z=round4(z_corte))
     b.coolantOff()
     b.rapid(x=sx(clear_r * 2), z=round4(z_corte + abs(p.toolClearance)))
+    fim.aplicar(b, p)
     return b.build()

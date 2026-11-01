@@ -1,225 +1,56 @@
 # -*- coding: utf-8 -*-
-"""CHANFRO / RAIO — painel conversational com 4 variantes.
+"""CHANFRO / RAIO, telas 06 a 09 do padrao novo (handoff telas de ciclo,
+2026-11-01): modo (CHANFRO/RAIO) x lado (EXTERNO/INTERNO) = 4 desenhos.
+Trocar modo ou lado troca o desenho e os campos; os valores ficam."""
 
-modo (CHANFRO/RAIO) x lado (EXTERNO/INTERNO) = 4 desenhos diferentes, cada um
-com o seu conjunto de campos. Trocar modo ou lado troca a imagem e os campos;
-os valores digitados ficam nos widgets e sobrevivem a troca.
+from .ciclo_form import (CicloForm, celulas_config, celulas_corte,
+                         DICA_SO_ACABAMENTO)
 
-Retangulos medidos com torno_cam_ui/tools/detecta_caixas.py
-(cham_od / cham_id / rad_od / rad_id).
-"""
-
-import copy
-
-from qtpy.QtWidgets import (QWidget, QVBoxLayout, QGridLayout, QLabel, QFrame,
-                            QSizePolicy)
-from qtpy.QtCore import Signal
-
-from .image_panel import ImageOverlayPanel, OverlayEdit
-from .widgets import TouchDoubleSpin, TouchIntSpin, TouchCombo, TouchLine
-from .panels import WCS, DIRS, COOL
-
-MODOS = [(u"Chanfro", "CHAMFER"), (u"Raio", "RADIUS")]
-LADOS = [(u"Externo", "OD"), (u"Interno", "ID")]
-
-# opcoes por campo (o dicionario de cada chave vale em todas as variantes)
-OPC = {
-    "toolNumber":    dict(integer=True, minimum=1),
-    "chamferAngle":  dict(minimum=1.0),
-    "roughingDOC":   dict(minimum=0.001),
-    "finishDOC":     dict(minimum=0.0),
-    "toolClearance": dict(minimum=0.0),
-}
-MAXC = {"toolNumber": 2, "chamferAngle": 3, "roughingDOC": 5,
-        "finishDOC": 5, "toolClearance": 5, "x": 7, "zStart": 7, "zEnd": 7}
-
-# variante -> (imagem, aspect do container, {campo: retangulo medido})
-VARIANTES = {
-    # desenho em PT-BR (2560x1440), retangulos remedidos
-    "CHAMFER_OD": ("chamfer-od-bg.png", 2560.0 / 1440.0, {
-        "toolNumber":    (0.12578, 0.02569, 0.08906, 0.06944),
-        "zEnd":          (0.23203, 0.12292, 0.11094, 0.06597),
-        "zStart":        (0.35508, 0.12292, 0.11367, 0.06597),
-        "finishDOC":     (0.85469, 0.17014, 0.11836, 0.07083),
-        "roughingDOC":   (0.58555, 0.23264, 0.11758, 0.07222),
-        "chamferAngle":  (0.41484, 0.34861, 0.11250, 0.07083),
-        "x":             (0.04961, 0.43194, 0.12422, 0.07361),
-        "toolClearance": (0.58555, 0.45694, 0.11758, 0.07153),
-    }),
-    "CHAMFER_ID": ("chamfer-id-bg.png", 1445.0 / 720.0, {
-        "toolNumber":    (0.14385, 0.00972, 0.06570, 0.08056),
-        "zEnd":          (0.18811, 0.10694, 0.12102, 0.07917),
-        "zStart":        (0.31950, 0.10694, 0.12172, 0.07917),
-        "roughingDOC":   (0.66598, 0.14444, 0.12172, 0.08056),
-        "toolClearance": (0.61480, 0.24306, 0.12172, 0.08056),
-        "x":             (0.05048, 0.27222, 0.12172, 0.08056),
-        "finishDOC":     (0.84094, 0.50694, 0.12172, 0.08056),
-        "chamferAngle":  (0.38174, 0.56111, 0.10858, 0.08056),
-    }),
-    "RADIUS_OD": ("radius-od-bg.png", 1442.0 / 720.0, {
-        "toolNumber":    (0.07346, 0.01528, 0.08108, 0.07917),
-        "zEnd":          (0.18850, 0.11250, 0.12128, 0.07778),
-        "zStart":        (0.32017, 0.11250, 0.12197, 0.07778),
-        "finishDOC":     (0.85586, 0.16944, 0.12128, 0.07917),
-        "roughingDOC":   (0.57519, 0.24306, 0.12128, 0.07778),
-        "x":             (0.05128, 0.45556, 0.12197, 0.07917),
-        "toolClearance": (0.57519, 0.47778, 0.12128, 0.07917),
-    }),
-    # desenho em PT-BR (2560x1440), retangulos remedidos
-    "RADIUS_ID": ("radius-id-bg.png", 2560.0 / 1440.0, {
-        "toolNumber":    (0.12031, 0.02639, 0.09062, 0.06806),
-        "zEnd":          (0.20938, 0.12917, 0.12031, 0.06389),
-        "zStart":        (0.34961, 0.12917, 0.11680, 0.06389),
-        "finishDOC":     (0.71562, 0.18333, 0.09492, 0.06250),
-        "roughingDOC":   (0.86367, 0.20556, 0.09688, 0.06458),
-        "toolClearance": (0.70430, 0.28472, 0.10977, 0.06389),
-        "chamferAngle":  (0.42500, 0.44514, 0.11641, 0.06875),
-        "x":             (0.05820, 0.44722, 0.11523, 0.06528),
-    }),
-}
-
-_LABEL_QSS = 'QLabel { color: #A9B0B5; font: 9pt "Barlow Condensed SemiBold"; }'
+MODOS = [(u"CHANFRO", "CHAMFER"), (u"RAIO", "RADIUS")]
+LADOS = [(u"EXTERNO", "OD"), (u"INTERNO", "ID")]
 
 
-class ChamferForm(QWidget):
-    """Mesma interface dos outros forms (changed / collect / load)."""
+class ChamferForm(CicloForm):
+    TELAS = {
+        "CHAMFER_OD": "06-chanfro-externo",
+        "CHAMFER_ID": "07-chanfro-interno",
+        "RADIUS_OD":  "08-raio-externo",
+        "RADIUS_ID":  "09-raio-interno",
+    }
+    OPERACAO = "CHAMFER"
+    CHAVES_DE_TELA = ("mode", "side")
+    CAMPOS = {
+        "ferramenta":              ("toolNumber",    dict(integer=True, minimum=1)),
+        "z_final":                 ("zEnd",          {}),
+        "z_fim":                   ("zEnd",          {}),
+        "z_inicial":               ("zStart",        {}),
+        "z_inicio":                ("zStart",        {}),
+        "x":                       ("x",             {}),
+        "angulo_do_chanfro_graus": ("chamferAngle",  dict(minimum=1.0)),
+        "angulo_de_entrada_graus": ("chamferAngle",  dict(minimum=1.0)),
+        "passe_acabamento":        ("finishDOC",     dict(minimum=0.0)),
+        "prof_acabamento":         ("finishDOC",     dict(minimum=0.0)),
+        "passe_desbaste":          ("roughingDOC",   dict(minimum=0.001)),
+        "prof_desbaste":           ("roughingDOC",   dict(minimum=0.001)),
+        "afastamento_g0":          ("toolClearance", dict(minimum=0.0)),
+    }
 
-    changed = Signal()
+    LIGADAS = {"finishOnly": DICA_SO_ACABAMENTO}
 
-    def __init__(self, default_params, parent=None):
-        super(ChamferForm, self).__init__(parent)
-        self.params = copy.deepcopy(default_params)
-        self._edits = {}
-        self._extra = {}
+    def _chave_tela(self):
+        chave = "{}_{}".format(self.params.get("mode", "CHAMFER"),
+                               self.params.get("side", "OD"))
+        return chave if chave in self.TELAS else "CHAMFER_OD"
 
-        root = QVBoxLayout(self)
-        root.setContentsMargins(0, 0, 0, 0)
-        root.setSpacing(6)
+    def linhas_faixa(self):
+        modo = ("mode", u"MODO", "combo", MODOS, "")
+        lado = ("side", u"LADO", "combo", LADOS, "")
+        return [(u"CONFIG.", celulas_config(modo, lado)),
+                (u"CORTE", celulas_corte())]
 
-        variante = self._variante()
-        imagem, aspect, _r = VARIANTES[variante]
-        self._panel = ImageOverlayPanel(imagem, aspect=aspect)
-        root.addWidget(self._panel, 1)
-
-        # um campo por chave (uniao das 4 variantes)
-        chaves = set()
-        for _img, _asp, rects in VARIANTES.values():
-            chaves.update(rects)
-        for key in sorted(chaves):
-            e = OverlayEdit(**OPC.get(key, {}))
-            e.committed.connect(self._on_changed)
-            self._edits[key] = e
-
-        root.addWidget(self._build_strip())
-        self._aplicar_variante()
-        self.load(self.params)
-
-    # ── variante (modo x lado) ──────────────────────────────────────────
-    def _variante(self):
-        modo = self.params.get("mode", "CHAMFER")
-        lado = self.params.get("side", "OD")
-        chave = "{}_{}".format(modo, lado)
-        return chave if chave in VARIANTES else "CHAMFER_OD"
-
-    def _aplicar_variante(self):
-        imagem, aspect, rects = VARIANTES[self._variante()]
-        itens = [(self._edits[k], r, MAXC.get(k, 7)) for k, r in rects.items()]
-        self._panel.reconfigurar(imagem, aspect, itens)
-
-    def _on_variante_mudou(self, *_a):
-        for chave in ("mode", "side"):
-            w = self._extra.get(chave)
-            if w is not None:
-                self.params[chave] = w.committed_value()
-        self._aplicar_variante()
-        self._on_changed()
-
-    # ── faixa com o que nao esta no desenho ─────────────────────────────
-    def _build_strip(self):
-        box = QFrame()
-        box.setStyleSheet('QFrame { background: #1A1E24; border: 1px solid #2E343C;'
-                          ' border-radius: 4px; }')
-        grid = QGridLayout(box)
-        grid.setContentsMargins(8, 6, 8, 6)
-        grid.setHorizontalSpacing(10)
-        grid.setVerticalSpacing(4)
-
-        specs = [
-            ("mode",          u"Modo",         "combo", MODOS),
-            ("side",          u"Lado",         "combo", LADOS),
-            ("title",         u"Titulo",       "text"),
-            ("workOffset",    u"Zero peca",    "combo", WCS),
-            ("spindleDir",    u"Fuso",         "combo", DIRS),
-            ("coolant",       u"Refrigeracao", "combo", COOL),
-            ("roughingSFM",   u"Vc desb",      "num",   dict(decimals=0, suffix="m/min", step=5)),
-            ("finishingSFM",  u"Vc acab",      "num",   dict(decimals=0, suffix="m/min", step=5)),
-            ("maxSpindleRPM", u"RPM max",      "int",   dict(suffix="rpm", step=50)),
-            ("roughingFPR",   u"Av desb",      "num",   dict(decimals=3, suffix="mm/v", step=0.01)),
-            ("finishingFPR",  u"Av acab",      "num",   dict(decimals=3, suffix="mm/v", step=0.01)),
-        ]
-        for i, spec in enumerate(specs):
-            key, label, kind = spec[0], spec[1], spec[2]
-            col = i % 6
-            row = (i // 6) * 2
-            lab = QLabel(label)
-            lab.setStyleSheet(_LABEL_QSS)
-            if kind == "text":
-                w = TouchLine()
-                w.textChanged.connect(self._on_changed)
-            elif kind == "combo":
-                w = TouchCombo(spec[3])
-                if key in ("mode", "side"):
-                    w.currentIndexChanged.connect(self._on_variante_mudou)
-                else:
-                    w.currentIndexChanged.connect(self._on_changed)
-            elif kind == "int":
-                w = TouchIntSpin(**spec[3])
-                w.valueChanged.connect(self._on_changed)
-            else:
-                w = TouchDoubleSpin(**spec[3])
-                w.valueChanged.connect(self._on_changed)
-            w.setMinimumWidth(70)
-            w.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
-            self._extra[key] = w
-            grid.addWidget(lab, row, col)
-            grid.addWidget(w, row + 1, col)
-            grid.setColumnStretch(col, 1)
-        return box
-
-    # ── interface usada pela aba ────────────────────────────────────────
-    def _on_changed(self, *_a):
-        self.changed.emit()
-
-    def load(self, params):
-        self.params = copy.deepcopy(params)
-        for key, e in self._edits.items():
-            v = self.params.get(key, 0)
-            e.blockSignals(True)
-            e.set_value(v if v is not None else 0)
-            e.blockSignals(False)
-        for key, w in self._extra.items():
-            v = self.params.get(key)
-            w.blockSignals(True)
-            if isinstance(w, TouchCombo):
-                w.set_value(v)
-            elif isinstance(w, TouchLine):
-                w.set_value(v if v is not None else "")
-            else:
-                w.setValue(v if v is not None else 0)
-            w.blockSignals(False)
-        self._aplicar_variante()
-
-    def collect(self):
-        for key, e in self._edits.items():
-            self.params[key] = e.commit()
-        self.params["toolOffset"] = self.params.get("toolNumber", 1)
-        for key, w in self._extra.items():
-            self.params[key] = w.committed_value()
-        self.params["operationType"] = "CHAMFER"
+    def _pos_collect(self, params):
         # Arco do modo RAIO com geometria exata (senao o LinuxCNC recusa:
         # "Radius to end of arc differs from radius to start").
-        self.params["fixArcOvercut"] = True
+        params["fixArcOvercut"] = True
         # o engine usa chamferLength so como rotulo; mantem coerente com o Z
-        self.params["chamferLength"] = abs(self.params.get("zEnd", 0)
-                                           - self.params.get("zStart", 0))
-        return copy.deepcopy(self.params)
+        params["chamferLength"] = abs(params.get("zEnd", 0) - params.get("zStart", 0))

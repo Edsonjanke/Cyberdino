@@ -11,6 +11,7 @@ from typing import List
 from ..nodes import ToolpathBuilder, Linear, Arc
 from ..sfm import calc_spindle_speed
 from ..jsutil import round4, js_round, js_num
+from . import chanfro, fim
 
 
 @dataclass
@@ -74,10 +75,28 @@ def generate_od_turn(p):
 
     R = p.filletRadius
 
-    if p.useCannedCycle and not p.finishOnly:
-        b.comment("G71 CICLO AUTOMATICO DE DESBASTE")
-        b.rapid(x=sx(clear_r * 2), z=round4(z_clear))
+    # chanfros de entrada (ponta do X FINAL) e de saida (ressalto no X
+    # INICIAL), handoff 7.1 c. zd = sentido do corte em Z (-1 no normal).
+    c_ent = chanfro.tamanho(p, "chamferEntry")
+    c_sai = chanfro.tamanho(p, "chamferExit")
+    zd = -1 if p.zEnd < p.zStart else 1
+    raio_pe = R if R > 0 else 0.0
+    if c_ent > 0:
+        if c_ent > target_r + 1e-9:
+            chanfro.nao_cabe(u"O chanfro de entrada", c_ent, u"o raio do X FINAL", target_r)
+        if c_ent + raio_pe > abs(p.zStart - p.zEnd) + 1e-9:
+            chanfro.nao_cabe(u"O chanfro de entrada", c_ent, u"o comprimento em Z",
+                             abs(p.zStart - p.zEnd) - raio_pe)
+    if c_sai > 0 and c_sai + raio_pe > start_r - target_r + 1e-9:
+        chanfro.nao_cabe(u"O chanfro de saída", c_sai, u"o ressalto",
+                         start_r - target_r - raio_pe)
 
+    # cicloLinuxCNC (a UI liga): o G71 do LinuxCNC 2.9 faz so o desbaste, com
+    # o perfil numa sub; o acabamento continua linha a linha. Sem a flag
+    # (goldens do EvoCAM) fica como era.
+    ciclo_lcnc = getattr(p, "cicloLinuxCNC", False)
+
+    def perfil():
         profile = [Linear(x=sx(target_r * 2), feed=p.finishingFPR)]
         if R > 0:
             z_travel = abs(p.zStart - p.zEnd)
@@ -91,6 +110,13 @@ def generate_od_turn(p):
                                    dir="CW" if x_sign > 0 else "CCW"))
         else:
             profile.append(Linear(z=round4(p.zEnd), feed=p.finishingFPR))
+        return profile
+
+    if p.useCannedCycle and not p.finishOnly and not ciclo_lcnc:
+        b.comment("G71 CICLO AUTOMATICO DE DESBASTE")
+        b.rapid(x=sx(clear_r * 2), z=round4(z_clear))
+
+        profile = perfil()
 
         b.cannedRoughCycle(
             depthOfCut=p.roughingDOC,
@@ -105,6 +131,27 @@ def generate_od_turn(p):
     else:
         if not p.finishOnly:
             b.rapid(x=sx(clear_r * 2), z=round4(z_clear))
+
+        if p.useCannedCycle and not p.finishOnly:
+            # ponto inicial do G71: no diametro bruto, acima da face
+            b.comment("G71 DESBASTE, CICLO DO LINUXCNC")
+            b.rapid(x=sx(start_r * 2), z=round4(z_clear))
+            b.cannedRoughCycle(
+                cycleCode="G71",
+                depthOfCut=p.roughingDOC,
+                retract=p.toolClearance,
+                finishStockX=round4(p.finishDOC * 2),
+                finishStockZ=round4(p.finishDOC),
+                roughFeed=p.roughingFPR,
+                finishFeed=p.finishingFPR,
+                profile=perfil(),
+                generateFinish=False,
+            )
+            # o ciclo termina no diametro bruto, no pe do ressalto: sai em X
+            # e depois em Z
+            b.rapid(x=sx(clear_r * 2))
+            b.rapid(z=round4(z_clear))
+            num_passes = 0
 
         arc_cx = target_r + R
         arc_cz = p.zEnd + R
@@ -139,7 +186,7 @@ def generate_od_turn(p):
             b.rapid(x=sx(retract_r * 2), z=round4(z_clear))
             current_r = pass_r
 
-        if p.finishOnly or p.finishDOC > 0:
+        if p.finishOnly or p.finishDOC > 0 or c_ent > 0 or c_sai > 0:
             b.comment("PASSE DE ACABAMENTO")
             if not p.finishOnly:
                 fin_spindle = calc_spindle_speed(sfm=p.finishingSFM, diameter=abs_dia_final,
@@ -147,8 +194,18 @@ def generate_od_turn(p):
                                                  css_mode=p.useConstantSurface)
                 b.spindleSpeed(fin_spindle["rpm"], fin_spindle["sfm"], fin_spindle["cssMode"])
 
-            b.rapid(x=sx((target_r + p.toolClearance) * 2), z=round4(z_clear))
-            b.linear(feed=p.finishingFPR, x=sx(target_r * 2), z=round4(z_clear))
+            if c_ent > 0:
+                # chega pela linha do chanfro: X = D - 2C - 2e, Z = face + e
+                x_fora = sx((target_r - c_ent - chanfro.FOLGA) * 2)
+                b.rapid(x=x_fora, z=round4(z_clear))
+                b.linear(feed=p.finishingFPR, x=x_fora,
+                         z=round4(p.zStart - zd * chanfro.FOLGA))
+                b.linear(feed=p.finishingFPR, x=sx(target_r * 2),
+                         z=round4(p.zStart + zd * c_ent),
+                         comment=chanfro.comentario(c_ent, u"ENTRADA"))
+            else:
+                b.rapid(x=sx((target_r + p.toolClearance) * 2), z=round4(z_clear))
+                b.linear(feed=p.finishingFPR, x=sx(target_r * 2), z=round4(z_clear))
 
             if p.filletRadius > 0:
                 z_travel = abs(p.zStart - p.zEnd)
@@ -164,10 +221,20 @@ def generate_od_turn(p):
             else:
                 b.linear(feed=p.finishingFPR, x=sx(target_r * 2), z=round4(p.zEnd))
 
-            b.linear(feed=p.finishingFPR, x=sx((start_r + 1) * 2), z=round4(p.zEnd))
+            if c_sai > 0:
+                # sobe a face do ressalto ate o inicio do chanfro e sai a 45
+                z_sai = round4(p.zEnd + zd * c_sai)
+                b.linear(feed=p.finishingFPR, x=sx((start_r - c_sai) * 2), z=round4(p.zEnd))
+                b.linear(feed=p.finishingFPR, x=sx(start_r * 2), z=z_sai,
+                         comment=chanfro.comentario(c_sai, u"SAIDA"))
+                # afasta 1 mm no raio, como no fim do passe sem chanfro
+                b.linear(feed=p.finishingFPR, x=sx((start_r + 1) * 2), z=z_sai)
+            else:
+                b.linear(feed=p.finishingFPR, x=sx((start_r + 1) * 2), z=round4(p.zEnd))
 
     b.coolantOff()
     b.rapid(x=sx(clear_r * 2), z=round4(z_clear))
+    fim.aplicar(b, p)
 
     nodes = b.build()
 

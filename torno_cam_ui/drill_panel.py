@@ -1,141 +1,63 @@
 # -*- coding: utf-8 -*-
-"""FURACAO — painel conversational sobre a imagem de referencia.
+"""FURAR, tela 05 do padrao novo (handoff telas de ciclo, 2026-11-01).
 
-Mesma ideia do faceamento, mas a geometria do desenho e outra: o container do
-app tem aspect ratio 1440x720 (= o da propria imagem, sem faixa preta) e cada
-campo tem largura/altura em PORCENTAGEM do container — a caixa E o campo,
-ancorada pelo canto superior-esquerdo. Coordenadas copiadas do DrillPanel.tsx.
-"""
+RPM, avanco e bicada saem da tabela de furacao (torno_cam/engine/furacao.py)
+ao trocar o MATERIAL ou o diametro da broca; o operador pode sobrescrever.
+GERAR CICLO esta liberado: o dialeto LinuxCNCDinoPost corrige plano (G17),
+unidade da pausa (segundos) e usa G82 quando ha pausa."""
 
-import copy
-
-from qtpy.QtWidgets import (QWidget, QVBoxLayout, QGridLayout, QLabel, QFrame,
-                            QSizePolicy)
-from qtpy.QtCore import Signal
-
-from .image_panel import ImageOverlayPanel, OverlayEdit, OverlayToggle, responsive
-from .widgets import TouchDoubleSpin, TouchIntSpin, TouchCombo, TouchLine
-from .panels import WCS, DIRS, COOL
 from torno_cam.engine import furacao
 
-# aspect ratio do container no app (igual ao da imagem: 1440x720)
-DRILL_AR = 2560.0 / 1440.0
+from .ciclo_form import CicloForm, celulas_config
 
-# Retangulos MEDIDOS no proprio drill-bg.png (fracao da imagem: x, y, larg, alt).
-FIELDS = [
-    ("toolNumber",    (0.13281, 0.01528, 0.08984, 0.07153), 2, dict(integer=True, minimum=1)),
-    ("zStart",        (0.35781, 0.05347, 0.11797, 0.07292), 6, {}),
-    ("toolClearance", (0.50000, 0.15069, 0.11914, 0.07222), 5, dict(minimum=0.0)),
-    ("peckDepth",     (0.16914, 0.21806, 0.11719, 0.07292), 5, dict(minimum=0.0)),
-    ("roughingSFM",   (0.88242, 0.25278, 0.10391, 0.07500), 4, dict(integer=True, minimum=1)),
-    ("drillDiameter", (0.54961, 0.48125, 0.10703, 0.08611), 5, dict(minimum=0.001)),
-    ("dwellSeconds",  (0.88203, 0.49444, 0.10430, 0.07431), 4, dict(minimum=0.0)),
-    ("zEnd",          (0.21719, 0.80000, 0.12695, 0.07500), 7, {}),
-]
+# nomes com acento so' na tela (o engine guarda a chave: ACO, INOX, ALUMINIO)
+NOME_MATERIAL = {"ACO": u"AÇO 1045", "INOX": u"INOX 304", "ALUMINIO": u"ALUMÍNIO"}
 
-TOGGLE = ("useCannedCycle", 8.0, 65.0, u"GERAR CICLO", "#4caf50")
-
-_LABEL_QSS = 'QLabel { color: #A9B0B5; font: 9pt "Barlow Condensed SemiBold"; }'
+DICA_CICLO = (u"Gera ciclo fixo G81/G82/G83 (com G17 no lugar de G18, "
+              u"como o LinuxCNC exige para furar em Z).")
 
 
-class DrillForm(QWidget):
-    """Mesma interface do OpForm/FaceForm (changed / collect / load)."""
+class DrillForm(CicloForm):
+    TELAS = {"DRILL": "05-furar"}
+    OPERACAO = "DRILL"
+    CAMPOS = {
+        "ferramenta":       ("toolNumber",    dict(integer=True, minimum=1)),
+        "z_inicial":        ("zStart",        {}),
+        "afastamento_g0":   ("toolClearance", dict(minimum=0.0)),
+        "passo_q":          ("peckDepth",     dict(minimum=0.0)),
+        "rotacao_rpm":      ("roughingSFM",   dict(integer=True, minimum=1)),
+        "da_broca":         ("drillDiameter", dict(minimum=0.001)),
+        "tempo_espera_seg": ("dwellSeconds",  dict(minimum=0.0)),
+        "z_final":          ("zEnd",          {}),
+    }
+    LIGADAS = {"useCannedCycle": DICA_CICLO}
 
-    changed = Signal()
-
-    def __init__(self, default_params, parent=None):
-        super(DrillForm, self).__init__(parent)
-        self.params = copy.deepcopy(default_params)
-        self._edits = {}
-        self._toggles = {}
-        self._extra = {}
-
-        root = QVBoxLayout(self)
-        root.setContentsMargins(0, 0, 0, 0)
-        root.setSpacing(6)
-
-        self._panel = ImageOverlayPanel("drill-bg.png", aspect=DRILL_AR)
-        root.addWidget(self._panel, 1)
-
-        def input_font(cw):
-            return responsive(cw, 14, 0.024, 28)
-
-        def label_font(cw):
-            return responsive(cw, 11, 0.014, 16)
-
-        for key, rect, max_chars, opts in FIELDS:
-            e = OverlayEdit(**opts)
-            e.committed.connect(self._on_changed)
-            self._edits[key] = e
-            if key == "drillDiameter":
-                e.committed.connect(self._aplicar_tabela)
-            self._panel.add_box_item(e, rect, max_chars=max_chars)
-
-        key, top, left, texto, cor = TOGGLE
-        t = OverlayToggle(texto, cor)
-        t.toggled.connect(self._on_changed)
-        self._toggles[key] = t
-        self._panel.add_item(t, top, left, font_fn=label_font)
-        # Ciclo de furacao LIBERADO: o dialeto LinuxCNCDinoPost corrige plano
-        # (G17), unidade da pausa (segundos) e usa G82 quando ha pausa.
-        t.setToolTip(u"Gera ciclo fixo G81/G82/G83 (com G17 no lugar de G18, "
-                     u"como o LinuxCNC exige para furar em Z).")
-
-        root.addWidget(self._build_strip())
-        self.load(self.params)
-
-    # ── faixa com o que nao esta no desenho ─────────────────────────────
-    def _build_strip(self):
-        box = QFrame()
-        box.setStyleSheet('QFrame { background: #1A1E24; border: 1px solid #2E343C;'
-                          ' border-radius: 4px; }')
-        grid = QGridLayout(box)
-        grid.setContentsMargins(8, 6, 8, 6)
-        grid.setHorizontalSpacing(10)
-        grid.setVerticalSpacing(4)
-
-        specs = [
-            ("material",      u"Material",     "combo",
-             [(furacao.MATERIAIS[k]["nome"], k) for k in furacao.ORDEM]),
-            ("title",         u"Titulo",       "text"),
-            ("workOffset",    u"Zero peca",    "combo", WCS),
-            ("spindleDir",    u"Fuso",         "combo", DIRS),
-            ("coolant",       u"Refrigeracao", "combo", COOL),
-            ("maxSpindleRPM", u"RPM max",      "int",   dict(suffix="rpm", step=50)),
-            ("roughingFPR",   u"Avanco",       "num",   dict(decimals=3, suffix="mm/v", step=0.01)),
+    def linhas_faixa(self):
+        materiais = [(NOME_MATERIAL.get(k, furacao.MATERIAIS[k]["nome"]), k)
+                     for k in furacao.ORDEM]
+        material = ("material", u"MATERIAL", "combo", materiais, "")
+        corte = [
+            ("maxSpindleRPM", u"RPM MÁXIMA", "int", dict(step=50),               "RPM"),
+            ("roughingFPR",   u"AVANÇO",     "num", dict(decimals=3, step=0.01), "MM/V"),
         ]
-        for i, spec in enumerate(specs):
-            key, label, kind = spec[0], spec[1], spec[2]
-            lab = QLabel(label)
-            lab.setStyleSheet(_LABEL_QSS)
-            if kind == "text":
-                w = TouchLine()
-                w.textChanged.connect(self._on_changed)
-            elif kind == "combo":
-                w = TouchCombo(spec[3])
-                if key == "material":
-                    w.currentIndexChanged.connect(self._aplicar_tabela)
-                else:
-                    w.currentIndexChanged.connect(self._on_changed)
-            elif kind == "int":
-                w = TouchIntSpin(**spec[3])
-                w.valueChanged.connect(self._on_changed)
-            else:
-                w = TouchDoubleSpin(**spec[3])
-                w.valueChanged.connect(self._on_changed)
-            w.setMinimumWidth(70)
-            w.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Fixed)
-            self._extra[key] = w
-            grid.addWidget(lab, 0, i)
-            grid.addWidget(w, 1, i)
-            grid.setColumnStretch(i, 1)
-        return box
+        return [(u"CONFIG.", celulas_config(material)),
+                (u"CORTE", corte)]
 
-    # ── tabela de parametros de corte ───────────────────────────────────
+    def _ao_editar(self, chave):
+        if chave == "drillDiameter":
+            self._aplicar_tabela()
+        else:
+            self._on_changed()
+
+    def _ao_mudar_extra(self, chave):
+        if chave == "material":
+            self._aplicar_tabela()
+        else:
+            super(DrillForm, self)._ao_mudar_extra(chave)
+
     def _aplicar_tabela(self, *_a):
         """Preenche RPM, avanco e bicada a partir do material + diametro da
-        broca (ver torno_cam/engine/furacao.py). O operador pode sobrescrever
-        qualquer campo depois — a tabela e' ponto de partida, nao trava."""
+        broca. A tabela e' ponto de partida, nao trava."""
         try:
             w = self._extra.get("material")
             material = w.committed_value() if w is not None else "ACO"
@@ -157,46 +79,10 @@ class DrillForm(QWidget):
             pass
         self._on_changed()
 
-    # ── interface usada pela aba ────────────────────────────────────────
-    def _on_changed(self, *_a):
-        self.changed.emit()
-
-    def load(self, params):
-        self.params = copy.deepcopy(params)
-        for key, e in self._edits.items():
-            v = self.params.get(key, 0)
-            e.blockSignals(True)
-            e.set_value(v if v is not None else 0)
-            e.blockSignals(False)
-        for key, t in self._toggles.items():
-            t.blockSignals(True)
-            t.setChecked(bool(self.params.get(key, False)))
-            t.blockSignals(False)
-        for key, w in self._extra.items():
-            v = self.params.get(key)
-            w.blockSignals(True)
-            if isinstance(w, TouchCombo):
-                w.set_value(v)
-            elif isinstance(w, TouchLine):
-                w.set_value(v if v is not None else "")
-            else:
-                w.setValue(v if v is not None else 0)
-            w.blockSignals(False)
-        self._panel.relayout()
-
-    def collect(self):
-        for key, e in self._edits.items():
-            self.params[key] = e.commit()
-        self.params["toolOffset"] = self.params.get("toolNumber", 1)
+    def _pos_collect(self, params):
         # o campo do desenho e RPM (nao Vc): o engine usa roughingSFM como
         # rotacao quando css_mode=False, entao o valor vai direto.
-        self.params["finishingSFM"] = self.params.get("roughingSFM")
-        for key, t in self._toggles.items():
-            self.params[key] = bool(t.isChecked())
-        for key, w in self._extra.items():
-            self.params[key] = w.committed_value()
-        self.params["operationType"] = "DRILL"
+        params["finishingSFM"] = params.get("roughingSFM")
         # A bicada digitada vale: sem isso o app so usaria G83 acima de 3x o
-        # diametro e um furo raso sairia direto, ignorando o PECK DEPTH.
-        self.params["forcePeckCycle"] = True
-        return copy.deepcopy(self.params)
+        # diametro e um furo raso sairia direto, ignorando o PASSO (Q).
+        params["forcePeckCycle"] = True

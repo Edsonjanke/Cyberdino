@@ -7,10 +7,7 @@ from .id_turn import generate_id_turn
 from .chamfer import generate_chamfer
 from .groove import generate_groove
 from .thread import generate_thread
-
-
-class EngineError(Exception):
-    """Erro de geracao com mensagem em PT-BR para exibir na UI."""
+from .erros import EngineError
 
 
 def build_nodes(p):

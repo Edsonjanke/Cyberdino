@@ -45,9 +45,19 @@ def test_comentario_sem_nao_ascii():
     g.encode("ascii")
 
 
-def test_ciclo_fixo_bloqueado():
+def test_ciclo_de_canal_bloqueado():
+    # G75 nao existe no LinuxCNC
     with pytest.raises(NotImplementedError):
-        _gen("OD_TURN", useCannedCycle=True)
+        _gen("GROOVE", useCannedCycle=True)
+
+
+def test_g71_no_formato_do_linuxcnc():
+    # perfil numa sub antes da chamada; I, D e R em raio
+    g = _gen("OD_TURN", useCannedCycle=True)
+    linhas = g.splitlines()
+    i = linhas.index("O101 sub")
+    assert linhas[i:i + 5] == ["O101 sub", "G1 X38", "G1 Z-38", "O101 endsub",
+                               "G71 Q101 D0.25 I2.5 R2.5 G95 F0.25"], g
 
 
 def test_travessao_sanitizado():

@@ -14,6 +14,7 @@ import math
 from ..nodes import ToolpathBuilder
 from ..sfm import calc_spindle_speed
 from ..jsutil import round4, js_num
+from . import fim
 
 
 def generate_chamfer(p):
@@ -118,10 +119,13 @@ def generate_chamfer(p):
 
         b.linear(x=sx(saida_r * 2), z=saida_z, feed=avanco)
 
-    if tem_acab:
+    # SOMENTE ACABAMENTO: so o passe final, no avanco e na Vc de acabamento
+    so_acab = bool(getattr(p, "finishOnly", False))
+
+    if tem_acab or so_acab:
         prof_desb = max(0, prof_perp - sobremetal)
         n_desb = (max(1, int(math.ceil(prof_desb / p.roughingDOC)))
-                  if prof_desb > 0.0001 else 0)
+                  if prof_desb > 0.0001 and not so_acab else 0)
         for i in range(n_desb - 1, -1, -1):
             d = round4(sobremetal + i * p.roughingDOC)
             passe(d, p.roughingFPR, i == n_desb - 1)
@@ -131,7 +135,7 @@ def generate_chamfer(p):
                                  css_mode=True)
         b.comment(u"ACABAMENTO {}".format(u"RAIO" if is_raio else u"CHANFRO"))
         b.spindleSpeed(fin["rpm"], fin["sfm"], True)
-        passe(0, p.finishingFPR, False)
+        passe(0, p.finishingFPR, so_acab)
     else:
         for i in range(n_total - 1, -1, -1):
             d = round4(i * p.roughingDOC)
@@ -141,5 +145,6 @@ def generate_chamfer(p):
     b.rapid(z=round4(p.zStart + folga))
     b.rapid(x=sx((raio + folga if is_od else raio - folga) * 2))
     b.spindleOff()
+    fim.aplicar(b, p)
 
     return b.build()

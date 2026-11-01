@@ -25,6 +25,7 @@ class Linear:
     x: Optional[float] = None
     z: Optional[float] = None
     y: Optional[float] = None
+    comment: Optional[str] = None     # sai na mesma linha: G1 X Z (texto)
     type: str = "LINEAR"
 
 
@@ -168,6 +169,20 @@ class CannedThreadCycle:
     type: str = "CANNED_THREAD_CYCLE"
 
 
+@dataclass
+class Pause:
+    """Parada do programa (M0): USAR PAUSA NO FINAL."""
+    type: str = "PAUSE"
+
+
+@dataclass
+class FirstToolCall:
+    """Marca 'chamar a ferramenta da primeira operacao do programa'
+    (CHAMAR FERRAMENTA NO FINAL). Resolvida em program.assemble_program,
+    que e' quem conhece a primeira operacao."""
+    type: str = "FIRST_TOOL_CALL"
+
+
 class ToolpathBuilder:
     """Builder fluente que espelha ToolpathBuilder.ts."""
 
@@ -212,8 +227,8 @@ class ToolpathBuilder:
         self._nodes.append(Rapid(x=x, z=z, y=y))
         return self
 
-    def linear(self, feed, x=None, z=None, y=None):
-        self._nodes.append(Linear(feed=feed, x=x, z=z, y=y))
+    def linear(self, feed, x=None, z=None, y=None, comment=None):
+        self._nodes.append(Linear(feed=feed, x=x, z=z, y=y, comment=comment))
         return self
 
     def arc(self, x, z, i, k, feed, dir):
@@ -244,6 +259,23 @@ class ToolpathBuilder:
     def cannedThreadCycle(self, **kw):
         self._nodes.append(CannedThreadCycle(**kw))
         return self
+
+    def pause(self):
+        self._nodes.append(Pause())
+        return self
+
+    def firstToolCall(self):
+        self._nodes.append(FirstToolCall())
+        return self
+
+    def spindle_stopped(self):
+        """True se o ultimo comando de fuso foi M5 (para nao repetir)."""
+        for n in reversed(self._nodes):
+            if n.type == "SPINDLE_OFF":
+                return True
+            if n.type in ("SPINDLE_ON", "SPINDLE_SPEED"):
+                return False
+        return False
 
     def build(self):
         return list(self._nodes)

@@ -58,7 +58,10 @@ class LinuxCNCPost(PostProcessor):
         return gline("G0", word("X", m.x), word("Z", m.z))
 
     def format_linear(self, m):
-        return gline("G1", word("X", m.x), word("Z", m.z), self.modal_feed(m.feed))
+        linha = gline("G1", word("X", m.x), word("Z", m.z), self.modal_feed(m.feed))
+        if getattr(m, "comment", None):
+            linha += " " + self.format_comment(m.comment)
+        return linha
 
     def format_arc(self, m):
         return gline("G2" if m.dir == "CW" else "G3",
