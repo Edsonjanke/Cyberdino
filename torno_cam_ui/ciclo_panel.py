@@ -374,6 +374,7 @@ _FAIXA_QSS = """
 QFrame#faixaInferior {{ background: {painel}; border: 1px solid {borda}; border-radius: 8px; }}
 QLabel[faixaLinha="true"] {{ color: {texto2}; font-family: "{f}"; font-size: 15px; background: transparent; border: none; }}
 QWidget[celulaFaixa="true"] {{ background: {visor}; border-radius: 6px; }}
+QWidget[celulaFaixa="true"][celulaAberta="true"] {{ border: 2px solid {ativo}; }}
 QLabel[celulaRotulo="true"] {{ color: {texto2}; font-family: "{f}"; font-size: 12px; background: transparent; border: none; }}
 QLabel[celulaUnidade="true"] {{ color: {texto2}; font-family: "{f}"; font-size: 13px; background: transparent; border: none; }}
 QComboBox[celulaValor="true"] {{ background: transparent; border: none; color: {texto}; font-family: "{f}"; font-size: 22px; padding: 0px; min-height: 0px; }}

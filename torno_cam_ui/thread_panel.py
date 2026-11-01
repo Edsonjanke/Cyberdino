@@ -13,7 +13,7 @@ import math
 from torno_cam.engine import roscas
 
 from .ciclo_form import CicloForm, celulas_config
-from .widgets import ComboRoscas
+from .seletor_rosca import ComboSeletorRosca, SeletorRosca
 from .panels import WCS, DIRS, COOL, SIDES, TTYPE
 
 TABELAS = [(u"MÉTRICA", roscas.TAB_METRICA),
@@ -77,12 +77,58 @@ class ThreadForm(CicloForm):
 
     def _criar_extra(self, chave, tipo, arg):
         if tipo == "roscas":
-            w = ComboRoscas(self._itens_da_tabela())
+            # a celula abre o SeletorRosca por cima do desenho (artboard
+            # "seletor de rosca"); por dentro continua o combo da tabela
+            w = ComboSeletorRosca(self._itens_da_tabela(), self._abrir_seletor)
             w.currentIndexChanged.connect(self._aplicar_rosca)
             return w
         return super(ThreadForm, self)._criar_extra(chave, tipo, arg)
 
+    # ── seletor de rosca ───────────────────────────────────────────────
+    def _abrir_seletor(self):
+        combo = self._extra.get("rosca")
+        if combo is None:
+            return
+        if getattr(self, "_seletor", None) is None:
+            self._seletor = SeletorRosca(self)
+            self._seletor.escolhida.connect(self._ao_escolher_rosca)
+            self._seletor.fechado.connect(lambda: combo.set_aberto(False))
+        self._seletor.abrir(combo.itens(), combo.item_atual(),
+                            self._lado() == "INTERNAL", self._panel.geometry(),
+                            self._centro_da_celula(combo))
+        combo.set_aberto(True)
+
+    def _centro_da_celula(self, combo):
+        cel = combo.parentWidget() or combo
+        return cel.mapTo(self, cel.rect().center()).x()
+
+    def _fechar_seletor(self):
+        if getattr(self, "_seletor", None) is not None:
+            self._seletor.fechar()
+
+    def _ao_escolher_rosca(self, it):
+        """APLICAR ROSCA: troca a rosca do combo. Se for a mesma, aplica de
+        novo (o operador pode ter mexido no X e quer o valor da tabela)."""
+        combo = self._extra.get("rosca")
+        antes = combo.currentIndex()
+        combo.set_value(it["nome"])
+        if combo.currentIndex() == antes:
+            self._aplicar_rosca()
+
+    def resizeEvent(self, ev):
+        super(ThreadForm, self).resizeEvent(ev)
+        s = getattr(self, "_seletor", None)
+        if s is not None and s.isVisible():
+            s.posicionar(self._panel.geometry(),
+                         self._centro_da_celula(self._extra["rosca"]))
+
+    def hideEvent(self, ev):
+        self._fechar_seletor()          # trocou de operacao ou de aba
+        super(ThreadForm, self).hideEvent(ev)
+
     def _ao_mudar_extra(self, chave):
+        if chave in ("side", "tabela"):
+            self._fechar_seletor()
         if chave == "side":
             w = self._extra.get("side")
             if w is not None:

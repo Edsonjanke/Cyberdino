@@ -1237,6 +1237,158 @@ def _wire_auto_clear_backplot():
     STATUS.interp_state.notify(on_interp)
 
 
+# ── Menus que se ocultam sozinhos (2026-11-01, pedido do Edson) ─────────────
+# O menu VISTA do backplot (vtk_control_buttons) e a barra lateral direita
+# (side_bar: JOG, status, modos MAN/AUTO/MDI, edicao) ficam recolhidos numa
+# alca estreita com o nome em pe, e a tela ganha a largura deles. Um toque na
+# alca abre; fecha sozinho 1,5 s depois que o mouse sai ou 6 s sem uso (na
+# tela de toque nao ha "mouse saiu"). Cada toque num botao do menu conta como
+# uso, entao da para apertar ZOOM ou o JOG varias vezes, e um botao segurado
+# (jog continuo) nunca e' recolhido no meio.
+class _AlcaMenu(QPushButton):
+    """Faixa estreita com o nome em pe. Fundo, borda, cor e fonte vem do .qss
+    (QPushButton[alcaMenu=...]); aqui so o texto e a seta.
+
+    lado = de que lado da tela o menu fica: 'esquerda' ou 'direita'."""
+
+    def __init__(self, texto, lado, parent=None):
+        super(_AlcaMenu, self).__init__(parent)
+        self.setObjectName("alca_" + texto.lower())
+        self.setProperty("alcaMenu", lado)
+        self.setToolTip(u"Mostrar ou esconder o menu " + texto)
+        self.texto, self.lado = texto, lado
+        self.aberto = False
+
+    def paintEvent(self, ev):
+        super(_AlcaMenu, self).paintEvent(ev)
+        from qtpy.QtCore import Qt as _Qt, QRectF
+        from qtpy.QtGui import QPainter, QPalette, QFont
+        p = QPainter(self)
+        p.setRenderHint(QPainter.TextAntialiasing)
+        p.setPen(self.palette().color(QPalette.ButtonText))
+        w, h = self.width(), self.height()
+        # seta no alto, maior que o texto: aponta para onde o menu vai
+        para_direita = self.aberto == (self.lado == "direita")
+        seta = QFont(self.font())
+        seta.setPixelSize(int(max(self.font().pixelSize(), 12) * 2))
+        p.setFont(seta)
+        p.drawText(QRectF(0, 4, w, 40), _Qt.AlignCenter,
+                   u"›" if para_direita else u"‹")
+        p.setFont(self.font())
+        p.translate(w / 2.0, h / 2.0)
+        p.rotate(-90)
+        p.drawText(QRectF(-h / 2.0, -w / 2.0, h, w), _Qt.AlignCenter, self.texto)
+        p.end()
+
+
+class _MenuAutoOcultar(QObject):
+    TEMPO_SEM_USO = 6000      # ms aberto sem nenhum toque
+    TEMPO_SAIDA = 1500        # ms depois que o mouse sai do menu
+
+    def __init__(self, menu, alca):
+        super(_MenuAutoOcultar, self).__init__(menu)
+        self.menu, self.alca = menu, alca
+        self.suspenso = False
+        self.timer = QTimer(self)
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.recolher)
+        alca.clicked.connect(self.alternar)
+        for w in [menu] + menu.findChildren(QWidget):
+            w.installEventFilter(self)
+        self.recolher()
+
+    def alternar(self):
+        if self.menu.isVisible():
+            self.recolher()
+        else:
+            self.abrir()
+
+    def abrir(self):
+        if self.suspenso:
+            return
+        self.menu.show()
+        self.alca.aberto = True
+        self.alca.update()
+        self.timer.start(self.TEMPO_SEM_USO)
+
+    def recolher(self):
+        # nao fecha no meio de um toque (botao ainda afundado)
+        if any(b.isDown() for b in self.menu.findChildren(QPushButton)):
+            self.timer.start(self.TEMPO_SAIDA)
+            return
+        self.timer.stop()
+        self.menu.hide()
+        self.alca.aberto = False
+        self.alca.update()
+
+    def suspender(self, ligado):
+        """Tela cheia de outra aba (GERAR PGM): menu e alca somem juntos e,
+        ao sair, voltam recolhidos."""
+        self.suspenso = bool(ligado)
+        self.timer.stop()
+        self.menu.hide()
+        self.alca.aberto = False
+        self.alca.setVisible(not ligado)
+
+    def eventFilter(self, obj, ev):
+        try:
+            if not self.menu.isVisible():
+                return False
+        except RuntimeError:          # janela fechando: o menu ja foi apagado
+            return False
+        t = ev.type()
+        if t == QEvent.Leave and obj is self.menu:
+            self.timer.start(self.TEMPO_SAIDA)
+        elif t in (QEvent.Enter, QEvent.MouseButtonPress, QEvent.MouseButtonRelease,
+                   QEvent.HoverMove, QEvent.Wheel):
+            self.timer.start(self.TEMPO_SEM_USO)
+        return False
+
+
+def _layout_que_contem(widget):
+    """O layout que tem o widget como item direto (pode estar aninhado
+    dentro do layout do pai, caso do side_bar)."""
+    pai = widget.parentWidget()
+    pendentes = [pai.layout()] if pai is not None and pai.layout() is not None else []
+    while pendentes:
+        lay = pendentes.pop()
+        if lay.indexOf(widget) >= 0:
+            return lay
+        for i in range(lay.count()):
+            filho = lay.itemAt(i).layout()
+            if filho is not None:
+                pendentes.append(filho)
+    return None
+
+
+# (objectName do menu, nome na alca, lado da tela)
+_MENUS_AUTO_OCULTAR = (
+    ("vtk_control_buttons", u"VISTA", "esquerda"),
+    ("side_bar",            u"MENU",  "direita"),
+)
+
+
+def _wire_menus_auto_ocultar():
+    from qtpy.QtWidgets import QSizePolicy
+    for nome, texto, lado in _MENUS_AUTO_OCULTAR:
+        menu = None
+        for top in QApplication.topLevelWidgets():
+            menu = top.findChild(QWidget, nome)
+            if menu is not None:
+                break
+        lay = _layout_que_contem(menu) if menu is not None else None
+        if lay is None:
+            LOG.warning("Menu %s: %s ou o layout dele nao encontrado", texto, nome)
+            continue
+        alca = _AlcaMenu(texto, lado, menu.parentWidget())
+        alca.setFixedWidth(28)
+        alca.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+        # entre o menu e o resto da tela: a esquerda do menu do lado direito,
+        # na borda (antes) do menu do lado esquerdo
+        lay.insertWidget(lay.indexOf(menu), alca)
+        menu._dino_auto_ocultar = _MenuAutoOcultar(menu, alca)   # ref pro GC
+
+
 _G96_D_RE = re.compile(r'G96\b[^;(\n]*?\bD\s*([0-9.]+)', re.IGNORECASE)
 _g96_d_lines = []   # paralelos, sorted by line: [(line_num, d_value)]
 
@@ -2240,6 +2392,7 @@ class UserTab(QWidget):
         QTimer.singleShot(0, _wire_gcode_top_buttons)
         QTimer.singleShot(0, _wire_edit_mode)
         QTimer.singleShot(0, _wire_auto_clear_backplot)
+        QTimer.singleShot(0, _wire_menus_auto_ocultar)
         QTimer.singleShot(0, _wire_speed_readouts)
         QTimer.singleShot(0, _start_spindle_controller)
         QTimer.singleShot(0, _wire_touch_off_wear_clear)

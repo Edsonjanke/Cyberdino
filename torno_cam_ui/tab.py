@@ -357,7 +357,13 @@ class UserTab(QWidget):
         continua funcionando normalmente (so nao entra em tela cheia)."""
         try:
             for w in self._chrome():
-                w.setVisible(not ligado)
+                ctl = getattr(w, "_dino_auto_ocultar", None)
+                if ctl is not None:
+                    # menu que se oculta sozinho (customs.py): some com a
+                    # alca e volta recolhido, nao aberto
+                    ctl.suspender(ligado)
+                else:
+                    w.setVisible(not ligado)
 
             # Sem levantar este teto (680px no .ui) o espaco liberado fica
             # vazio e a imagem nao cresce.
@@ -552,6 +558,21 @@ class UserTab(QWidget):
         base = os.path.basename(path)
         self._status.setText(
             u"Carregado: {}".format(base) if loaded else u"Gravado: {}".format(base))
+        if loaded:
+            self._ir_para_principal()
+
+    def _ir_para_principal(self):
+        """Depois de carregar, vai para a aba PRINCIPAL, a do G-code e do
+        backplot (pedido do Edson, 2026-11-01). Se o carregamento falhou,
+        fica aqui com o erro na tela. Acha a aba pelo objectName (main_tab),
+        como o botao AUTO do painel no customs.py: o titulo leva o atalho."""
+        abas = self._tab_widget()
+        if abas is None:
+            return
+        for i in range(abas.count()):
+            if abas.widget(i).objectName() == "main_tab":
+                abas.setCurrentIndex(i)
+                return
 
     # ── Persistencia ─────────────────────────────────────────────────────────
     def _persist(self):

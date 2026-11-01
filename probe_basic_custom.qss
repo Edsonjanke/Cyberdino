@@ -833,6 +833,42 @@ QWidget#vtk_control_buttons {
     border-right: 1px solid #2E343C;
 }
 
+/* Alças dos menus que se ocultam sozinhos (VISTA do backplot e MENU, a
+   barra lateral direita; customs.py). O nome em pé e a seta são desenhados
+   no paintEvent com a cor e a fonte daqui. A borda fica do lado da tela. */
+QPushButton[alcaMenu="esquerda"],
+QPushButton[alcaMenu="direita"] {
+    min-width: 28px;
+    max-width: 28px;
+    padding: 0px;
+    background: #1A1E24;
+    border: none;
+    color: #A9B0B5;
+    font-family: "Barlow Condensed SemiBold";
+    font-size: 15px;
+    font-weight: normal;
+}
+
+QPushButton[alcaMenu="esquerda"] {
+    border-right: 1px solid #2E343C;
+}
+
+QPushButton[alcaMenu="direita"] {
+    border-left: 1px solid #2E343C;
+}
+
+QPushButton[alcaMenu="esquerda"]:hover,
+QPushButton[alcaMenu="direita"]:hover {
+    background: #222830;
+    color: #FFFFFF;
+}
+
+QPushButton[alcaMenu="esquerda"]:pressed,
+QPushButton[alcaMenu="direita"]:pressed {
+    background: #00838F;
+    color: #FFFFFF;
+}
+
 QWidget#vtk_control_buttons QPushButton {
     background: #5A6268;
     border: 2px solid #2E343C;
